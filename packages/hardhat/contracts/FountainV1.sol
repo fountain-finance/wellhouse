@@ -406,12 +406,12 @@ contract FountainV1 {
         // Save if the message sender is contributing to this Money pool for the first time.
         bool _isNewSustainer = _currentMp.sustainments[_beneficiary] == 0;
 
-        // TODO: Not working.`Returned error: VM Exception while processing transaction: revert`
-        //https://ethereum.stackexchange.com/questions/60028/testing-transfer-of-tokens-with-truffle
-        // Got it working in tests using MockContract, but need to verify it works in testnet.
-        // Move the full sustainment amount to this address.
         require(
-            _currentMp.want.transferFrom(msg.sender, address(this), _amount),
+            _currentMp.want.safeTransferFrom(
+                msg.sender,
+                address(this),
+                _amount
+            ),
             "Fountain::sustain: ERC20 transfer failed"
         );
 
@@ -498,7 +498,10 @@ contract FountainV1 {
     function _performCollectRedistributions(address _sustainer, uint256 _amount)
         private
     {
-        dai.safeTransferFrom(address(this), _sustainer, _amount);
+        require(
+            dai.safeTransferFrom(address(this), _sustainer, _amount),
+            "Fountain::_performCollectRedistributions: ERC20 transfer failed"
+        );
         emit CollectRedistributions(_sustainer, _amount);
     }
 
@@ -508,7 +511,10 @@ contract FountainV1 {
     function _performCollectSustainments(address _owner, uint256 _amount)
         private
     {
-        dai.safeTransferFrom(address(this), _owner, _amount);
+        require(
+            dai.safeTransferFrom(address(this), _sustainer, _amount),
+            "Fountain::_performCollectSustainments: ERC20 transfer failed"
+        );
         emit CollectSustainments(_owner, _amount);
     }
 
