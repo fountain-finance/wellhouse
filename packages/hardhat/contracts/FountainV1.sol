@@ -274,6 +274,10 @@ contract FountainV1 {
         mpCount = 0;
     }
 
+    function whatTimeIsIt() external returns (uint256) {
+        return now;
+    }
+
     /// @dev Configures the sustainability target and duration of the sender's current Money pool if it hasn't yet received sustainments, or
     /// @dev sets the properties of the Money pool that will take effect once the current Money pool expires.
     /// @param _target The sustainability target to set.
@@ -406,14 +410,7 @@ contract FountainV1 {
         // Save if the message sender is contributing to this Money pool for the first time.
         bool _isNewSustainer = _currentMp.sustainments[_beneficiary] == 0;
 
-        require(
-            _currentMp.want.safeTransferFrom(
-                msg.sender,
-                address(this),
-                _amount
-            ),
-            "Fountain::sustain: ERC20 transfer failed"
-        );
+        _currentMp.want.safeTransferFrom(msg.sender, address(this), _amount);
 
         // Increment the sustainments to the Money pool made by the message sender.
         _currentMp.sustainments[_beneficiary] = _currentMp.sustainments[
@@ -498,10 +495,7 @@ contract FountainV1 {
     function _performCollectRedistributions(address _sustainer, uint256 _amount)
         private
     {
-        require(
-            dai.safeTransferFrom(address(this), _sustainer, _amount),
-            "Fountain::_performCollectRedistributions: ERC20 transfer failed"
-        );
+        dai.safeTransferFrom(address(this), _sustainer, _amount);
         emit CollectRedistributions(_sustainer, _amount);
     }
 
@@ -511,10 +505,7 @@ contract FountainV1 {
     function _performCollectSustainments(address _owner, uint256 _amount)
         private
     {
-        require(
-            dai.safeTransferFrom(address(this), _sustainer, _amount),
-            "Fountain::_performCollectSustainments: ERC20 transfer failed"
-        );
+        dai.safeTransferFrom(address(this), _owner, _amount);
         emit CollectSustainments(_owner, _amount);
     }
 
