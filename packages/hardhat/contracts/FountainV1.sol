@@ -690,6 +690,7 @@ contract FountainV1 {
         MoneyPool storage _newMp = mps[mpCount];
         _newMp.owner = _owner;
         _newMp.total = 0;
+        _newMp.tapped = 0;
         _newMp.exists = true;
         _newMp.version = 1;
 
