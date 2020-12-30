@@ -310,18 +310,6 @@ contract FountainV1 {
         return _mpId;
     }
 
-    /// @dev Contribute a specified amount to the sustainability of the specified address's active Money pool.
-    /// @dev If the amount results in surplus, redistribute the surplus proportionally to sustainers of the Money pool.
-    /// @param _owner The owner of the Money pool to sustain.
-    /// @param _amount Amount of sustainment.
-    /// @return mpId The ID of the Money pool that was successfully sustained.
-    function sustain(address _owner, uint256 _amount)
-        external
-        returns (uint256)
-    {
-        return _sustain(_owner, _amount, _owner);
-    }
-
     /// @dev Overloaded from above with the addition of:
     /// @param _owner The owner of the Money pool to sustain.
     /// @param _amount Amount of sustainment.
