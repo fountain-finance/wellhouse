@@ -1,0 +1,18 @@
+<div class="header">
+  <div *ngIf="(accounts$ | async)?.length" class="tabs">
+    <span class="tab" routerLink="create" routerLinkActive="active">Create</span>
+    <span class="tab" routerLink="sustain" routerLinkActive="active">Sustain</span>
+  </div>
+
+  <div class="account">
+    Account:
+    <span *ngIf="accounts$ | async as accounts">{{ accounts[0] }}</span>
+    <span>
+      <button *ngIf="!(accounts$ | async)?.length" (click)="connectAccount()">
+        Connect account
+      </button>
+    </span>
+  </div>
+</div>
+
+<router-outlet></router-outlet>

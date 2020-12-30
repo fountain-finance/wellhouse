@@ -1,0 +1,36 @@
+.header {
+  display: flex;
+  align-items: baseline;
+  padding: 10px 0;
+  margin-bottom: 80px;
+  border-bottom: 1px solid black;
+}
+
+.account {
+  flex: 1;
+  text-align: right;
+}
+
+.tabs {
+  .tab {
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.5;
+    }
+
+    &.active {
+      color: blue;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+
+    &:not(:last-of-type) {
+      margin-right: 20px;
+    }
+  }
+}
