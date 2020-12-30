@@ -82,7 +82,7 @@
         "type": "uint256"
       }
     ],
-    "name": "CollectSustainements",
+    "name": "CollectSustainments",
     "type": "event"
   },
   {
@@ -179,19 +179,13 @@
     "type": "event"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [],
     "name": "collectRedistributions",
     "outputs": [
       {
-        "internalType": "bool",
+        "internalType": "uint256",
         "name": "",
-        "type": "bool"
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -199,11 +193,6 @@
   },
   {
     "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      },
       {
         "internalType": "address",
         "name": "_from",
@@ -213,9 +202,9 @@
     "name": "collectRedistributionsFromAddress",
     "outputs": [
       {
-        "internalType": "bool",
+        "internalType": "uint256",
         "name": "",
-        "type": "bool"
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -223,11 +212,6 @@
   },
   {
     "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      },
       {
         "internalType": "address[]",
         "name": "_from",
@@ -237,28 +221,22 @@
     "name": "collectRedistributionsFromAddresses",
     "outputs": [
       {
-        "internalType": "bool",
+        "internalType": "uint256",
         "name": "",
-        "type": "bool"
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [],
     "name": "collectSustainments",
     "outputs": [
       {
-        "internalType": "bool",
+        "internalType": "uint256",
         "name": "",
-        "type": "bool"
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -317,6 +295,11 @@
     "name": "getActiveMp",
     "outputs": [
       {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
         "internalType": "contract IERC20",
         "name": "want",
         "type": "address"
@@ -343,26 +326,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "balance",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_owner",
-        "type": "address"
-      }
-    ],
-    "name": "getActiveMpId",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
+        "name": "total",
         "type": "uint256"
       }
     ],
@@ -380,6 +344,11 @@
     "name": "getMp",
     "outputs": [
       {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
         "internalType": "contract IERC20",
         "name": "want",
         "type": "address"
@@ -406,26 +375,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "balance",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "sustainer",
-        "type": "address"
-      }
-    ],
-    "name": "getRedistributionBalance",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
+        "name": "total",
         "type": "uint256"
       }
     ],
@@ -459,9 +409,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "_mpId",
+        "type": "uint256"
       }
     ],
     "name": "getSustainmentBalance",
@@ -510,6 +460,11 @@
     "name": "getUpcomingMp",
     "outputs": [
       {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
         "internalType": "contract IERC20",
         "name": "want",
         "type": "address"
@@ -536,26 +491,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "balance",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_owner",
-        "type": "address"
-      }
-    ],
-    "name": "getUpcomingMpId",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
+        "name": "total",
         "type": "uint256"
       }
     ],
@@ -602,60 +538,6 @@
         "type": "uint256"
       }
     ],
-    "name": "mps",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IERC20",
-        "name": "want",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "target",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "balance",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "start",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "duration",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "exists",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint8",
-        "name": "version",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
     "name": "previousMpIds",
     "outputs": [
       {
@@ -671,11 +553,21 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "_owner",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_beneficiary",
         "type": "address"
       }
     ],
-    "name": "redistributionPool",
+    "name": "sustain",
     "outputs": [
       {
         "internalType": "uint256",
@@ -683,7 +575,7 @@
         "type": "uint256"
       }
     ],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -708,49 +600,6 @@
       }
     ],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "sustainabilityPool",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "sustainedAddressesBySustainer",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   }
 ]
