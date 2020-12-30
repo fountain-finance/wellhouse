@@ -315,7 +315,7 @@ contract FountainV1 is IFountainV1 {
     /// @dev Overloaded from above with the addition of:
     /// @param _owner The owner of the Money pool to sustain.
     /// @param _amount Amount of sustainment.
-    /// @param _beneficiary The address to associate with this sustainment. The mes.sender is making this sustainment on the beneficiary's behalf.
+    /// @param _beneficiary The address to associate with this sustainment. This is usually mes.sender, but can be something else if the sender is making this sustainment on the beneficiary's behalf.
     /// @return mpId The ID of the Money pool that was successfully sustained.
     function sustain(
         address _owner,
