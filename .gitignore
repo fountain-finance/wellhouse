@@ -7,6 +7,7 @@ packages/hardhat/*.txt
 **/node_modules
 packages/hardhat/artifacts
 packages/react-app/src/contracts
+packages/ng-app/src/app/contracts
 packages/hardhat/cache
 
 docker/**/data

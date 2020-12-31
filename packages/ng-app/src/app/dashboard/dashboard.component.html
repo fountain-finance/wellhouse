@@ -12,7 +12,9 @@
     </span>
 
     <span>
-      <button *ngIf="!(wallet$ | async)" (click)="connectAccount()">Connect wallet</button>
+      <button *ngIf="(wallet$ | async) === undefined" (click)="connectAccount()">
+        Connect wallet
+      </button>
     </span>
   </div>
 </div>

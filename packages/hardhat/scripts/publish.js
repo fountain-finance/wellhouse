@@ -2,7 +2,8 @@ const fs = require("fs");
 const chalk = require("chalk");
 const bre = require("hardhat");
 
-const publishDir = "../react-app/src/contracts";
+// const publishDir = "../react-app/src/contracts";
+const publishDir = "../ng-app/src/app/contracts";
 const graphDir = "../subgraph";
 const ngAppDir = "../ng-app";
 
