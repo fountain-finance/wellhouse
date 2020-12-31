@@ -2,11 +2,11 @@ import { ChangeDetectorRef, Component, Inject } from '@angular/core'
 import { FormControl, FormGroup } from '@angular/forms'
 import { BehaviorSubject, ReplaySubject } from 'rxjs'
 import { take } from 'rxjs/operators'
-import { abi } from 'src/app/core/constants/abi'
+import { FountainV1Abi } from 'src/app/core/constants/abis/FountainV1'
 import { DAI } from 'src/app/core/constants/dai'
 import { fountainAddress } from 'src/app/core/constants/fountain-address'
 import { WEB3 } from 'src/app/core/constants/web3'
-import { AccountsService } from 'src/app/core/services/accounts.service'
+import { AccountService } from 'src/app/core/services/account.service'
 
 @Component({
   selector: 'app-create-pool',
@@ -28,7 +28,7 @@ export class CreatePoolComponent {
 
   constructor(
     @Inject(WEB3) private web3: Web3,
-    private accountsService: AccountsService,
+    private accountService: AccountService,
     private cdf: ChangeDetectorRef
   ) {}
 
@@ -36,15 +36,15 @@ export class CreatePoolComponent {
     const target = this.web3.eth.abi.encodeParameter('uint256', this.form.value.target)
     const duration = this.web3.eth.abi.encodeParameter('uint256', this.form.value.duration)
 
-    this.accountsService.accounts$
+    this.accountService.wallet$
       .pipe(take(1))
-      .subscribe(async accounts => this.configureMoneyPool(accounts[0], target, duration))
+      .subscribe(async account => this.configureMoneyPool(account, target, duration))
   }
 
   private async configureMoneyPool(from: string, target: string, duration: string) {
     this.pendingTx.next(true)
 
-    const contract = new this.web3.eth.Contract(abi, fountainAddress)
+    const contract = new this.web3.eth.Contract(FountainV1Abi, fountainAddress)
     const want = DAI
 
     console.log(
