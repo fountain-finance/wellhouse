@@ -33,7 +33,9 @@ export class AccountService {
     this.balance.next(balance)
   }
 
-  connectAccount = async () => this.loadAccount(new Web3Provider(await web3Modal.connect()))
+  getUserProvider = async () => new Web3Provider(await web3Modal.connect())
+
+  connectAccount = async () => this.loadAccount(await this.getUserProvider())
 
   logout = async () => {
     this.wallet.next(undefined)
@@ -51,7 +53,7 @@ const getUserAddress = async (provider: Web3Provider): Promise<string> => {
 }
 
 const burnerProvider = () => {
-  let burnerConfig = {
+  const burnerConfig = {
     rpcUrl: undefined,
     privateKey: undefined,
   }

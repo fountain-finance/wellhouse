@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common'
+import { HttpClientModule } from '@angular/common/http'
 import { NgModule } from '@angular/core'
 import { ReactiveFormsModule } from '@angular/forms'
 
@@ -9,7 +10,7 @@ import { DashboardComponent } from './dashboard.component'
 
 @NgModule({
   declarations: [DashboardComponent, CreatePoolComponent, SustainComponent],
-  imports: [CommonModule, DashboardRoutingModule, ReactiveFormsModule],
+  imports: [CommonModule, DashboardRoutingModule, ReactiveFormsModule, HttpClientModule],
   exports: [DashboardComponent],
 })
 export class DashboardModule {}

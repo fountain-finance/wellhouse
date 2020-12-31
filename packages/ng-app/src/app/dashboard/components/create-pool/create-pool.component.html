@@ -30,11 +30,4 @@
   <button [attr.disabled]="pendingTx$ | async" type="submit">
     {{ (pendingTx$ | async) ? '⏳ creating...' : 'Create' }}
   </button>
-  <br />
-  <br />
-  <div *ngIf="txHash$ | async as hash">Tx hash: {{ hash }}</div>
-  <br />
-  <div *ngIf="submitMessage$ | async as message">
-    <b>{{ message }}</b>
-  </div>
 </form>
