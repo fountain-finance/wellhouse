@@ -3,10 +3,10 @@ import { FormControl, FormGroup } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
 import { ReplaySubject, Subscription } from 'rxjs'
 import { filter, map, take, withLatestFrom } from 'rxjs/operators'
-import { abi } from 'src/app/core/constants/abi'
+import { FountainV1Abi } from 'src/app/core/constants/abis/FountainV1'
 import { fountainAddress } from 'src/app/core/constants/fountain-address'
 import { WEB3 } from 'src/app/core/constants/web3'
-import { AccountsService } from 'src/app/core/services/accounts.service'
+import { AccountService } from 'src/app/core/services/account.service'
 
 @Component({
   selector: 'app-sustain',
@@ -36,7 +36,7 @@ export class SustainComponent implements OnInit, OnDestroy {
 
   constructor(
     @Inject(WEB3) private web3: Web3,
-    private accountsService: AccountsService,
+    private accountService: AccountService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -58,24 +58,23 @@ export class SustainComponent implements OnInit, OnDestroy {
   submitSustainAmount() {
     const amount = this.web3.eth.abi.encodeParameter('uint256', this.sustainAmountForm.value.amount)
 
-    this.accountsService.accounts$.pipe(take(1)).subscribe(accounts =>
+    this.accountService.wallet$.pipe(take(1)).subscribe(account =>
       this.contract.methods.sustain(this.moneyPoolId, amount).send({
-        from: accounts[0],
+        from: account,
       })
     )
   }
 
   private get contract() {
-    return new this.web3.eth.Contract(abi, fountainAddress)
+    return new this.web3.eth.Contract(FountainV1Abi, fountainAddress)
   }
 
   // Whenever money pool ID updates, get latest MP info
   private get onMoneyPoolIdChange$() {
     return this.moneyPoolId$.pipe(
       filter(a => !!a),
-      withLatestFrom(this.accountsService.accounts$),
-      map(([moneyPoolId, accounts]) => {
-        const account = accounts[0]
+      withLatestFrom(this.accountService.wallet$),
+      map(([moneyPoolId, account]) => {
         // this.getDuration(moneyPoolId, account)
         // this.getSustainabilitTarget(moneyPoolId, account)
         // this.getCurrentSustainment(moneyPoolId, account)

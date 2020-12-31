@@ -9,6 +9,25 @@
 .account {
   flex: 1;
   text-align: right;
+
+  .logout {
+    margin-left: 20px;
+    color: blue;
+    font-weight: 500;
+    font-size: small;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.5;
+    }
+  }
+
+  .highlight {
+    margin-right: 10px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: #00000015;
+  }
 }
 
 .tabs {
