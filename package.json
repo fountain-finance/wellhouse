@@ -18,7 +18,7 @@
     "chain": "yarn workspace @scaffold-eth/hardhat chain",
     "node": "yarn workspace @scaffold-eth/hardhat chain",
     "test": "yarn workspace @scaffold-eth/hardhat test",
-    "start": "yarn workspace @fountain.finance/app start",
+    "start": "yarn workspace react-fountain start",
     "compile": "yarn workspace @scaffold-eth/hardhat compile",
     "deploy": "yarn workspace @scaffold-eth/hardhat deploy",
     "watch": "yarn workspace @scaffold-eth/hardhat watch",
@@ -52,7 +52,11 @@
     ],
     "nohoist": [
       "**/@graphprotocol/graph-ts",
-      "**/@graphprotocol/graph-ts/**"
+      "**/@graphprotocol/graph-ts/**",
+      "**/babel-jest",
+      "**/babel-jest/**",
+      "**/webpack",
+      "**/webpack/**"
     ]
   }
 }
