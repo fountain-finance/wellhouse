@@ -58,7 +58,15 @@
       "**/babel-jest",
       "**/babel-jest/**",
       "**/webpack",
-      "**/webpack/**"
+      "**/webpack/**",
+      "**/react-dom",
+      "**/react-dom/**",
+      "**/react-router-dom",
+      "**/react-router-dom/**",
+      "**/react",
+      "**/react/**",
+      "**/react-scripts",
+      "**/react-scripts/**"
     ]
   }
 }
