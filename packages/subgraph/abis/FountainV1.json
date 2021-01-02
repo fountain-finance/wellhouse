@@ -180,7 +180,20 @@
   },
   {
     "inputs": [],
-    "name": "collectRedistributions",
+    "name": "collectAllRedistributions",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "collectAllSustainments",
     "outputs": [
       {
         "internalType": "uint256",
@@ -195,11 +208,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_from",
+        "name": "_owner",
         "type": "address"
       }
     ],
-    "name": "collectRedistributionsFromAddress",
+    "name": "collectRedistributionsFromOwner",
     "outputs": [
       {
         "internalType": "uint256",
@@ -214,11 +227,11 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "_from",
+        "name": "_owners",
         "type": "address[]"
       }
     ],
-    "name": "collectRedistributionsFromAddresses",
+    "name": "collectRedistributionsFromOwners",
     "outputs": [
       {
         "internalType": "uint256",
@@ -230,13 +243,24 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_mpId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
     "name": "collectSustainments",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "bool",
         "name": "",
-        "type": "uint256"
+        "type": "bool"
       }
     ],
     "stateMutability": "nonpayable",
@@ -321,11 +345,6 @@
       },
       {
         "internalType": "uint256",
-        "name": "sustainerCount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
         "name": "total",
         "type": "uint256"
       }
@@ -366,11 +385,6 @@
       {
         "internalType": "uint256",
         "name": "duration",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "sustainerCount",
         "type": "uint256"
       },
       {
@@ -486,11 +500,6 @@
       },
       {
         "internalType": "uint256",
-        "name": "sustainerCount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
         "name": "total",
         "type": "uint256"
       }
@@ -565,30 +574,6 @@
         "internalType": "address",
         "name": "_beneficiary",
         "type": "address"
-      }
-    ],
-    "name": "sustain",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_owner",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
       }
     ],
     "name": "sustain",
