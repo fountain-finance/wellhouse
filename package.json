@@ -53,6 +53,8 @@
     "nohoist": [
       "**/@graphprotocol/graph-ts",
       "**/@graphprotocol/graph-ts/**",
+      "**/@typescript-eslint/parser/",
+      "**/@typescript-eslint/parser/**",
       "**/babel-jest",
       "**/babel-jest/**",
       "**/webpack",
