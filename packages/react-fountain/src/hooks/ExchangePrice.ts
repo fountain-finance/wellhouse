@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { daiAddress } from './../constants/dai-address'
 import { usePoller } from './Poller'
 
-export default function useExchangePrice(mainnetProvider: JsonRpcProvider, pollTime = 1000) {
+export function useExchangePrice(mainnetProvider: JsonRpcProvider, pollTime = 10000) {
   const [price, setPrice] = useState(0)
 
   /* 💵 get the price of ETH from 🦄 Uniswap: */

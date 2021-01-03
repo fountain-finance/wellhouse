@@ -1,16 +1,16 @@
-import { Web3Provider, JsonRpcProvider } from '@ethersproject/providers'
+import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers'
 import BurnerProvider from 'burner-provider'
 import { useMemo } from 'react'
 
 import { infuraId } from './../constants/infura-id'
 
-const UserProvider = (injectedProvider?: Web3Provider, localProvider?: JsonRpcProvider) =>
-  useMemo(() => {
+export function useUserProvider(injectedProvider?: Web3Provider, localProvider?: JsonRpcProvider) {
+  return useMemo(() => {
     if (injectedProvider) {
       console.log('🦊 Using injected provider')
       return injectedProvider
     }
-    if (!localProvider) return undefined
+    if (!localProvider || process.env.NODE_ENV === 'production') return undefined
 
     let burnerConfig: {
       privateKey?: string
@@ -46,5 +46,4 @@ const UserProvider = (injectedProvider?: Web3Provider, localProvider?: JsonRpcPr
       return new Web3Provider(new BurnerProvider(burnerConfig))
     }
   }, [injectedProvider, localProvider])
-
-export default UserProvider
+}

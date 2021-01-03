@@ -1,15 +1,24 @@
-import { Web3Provider } from '@ethersproject/providers'
-import { useCallback, useState } from 'react'
+import { JsonRpcProvider } from '@ethersproject/providers'
+import { useLayoutEffect, useState } from 'react'
 
 import { localProvider } from '../constants/local-provider'
-import { mainnetProvider } from '../constants/mainnet-provider'
-import { web3Modal } from '../constants/web3-modal'
-import useUserProvider from '../hooks/UserProvider'
 import Account from './Account'
+import Faucet from './Faucet'
 import Tab from './Tab'
 
-export default function Navbar() {
-  const [injectedProvider, setInjectedProvider] = useState<Web3Provider>()
+export default function Navbar({
+  userProvider,
+  onConnectWallet,
+}: {
+  userProvider?: JsonRpcProvider
+  onConnectWallet: VoidFunction
+}) {
+  const [address, setAddress] = useState<string>()
+
+  // https://github.com/austintgriffith/eth-hooks/blob/master/src/UserAddress.ts
+  useLayoutEffect(() => {
+    userProvider?.getSigner().getAddress().then(setAddress)
+  }, [userProvider, setAddress])
 
   // Key tabs by index
   const tabs = [
@@ -22,12 +31,14 @@ export default function Navbar() {
     key,
   }))
 
-  const loadWeb3Modal = useCallback(async () => {
-    const provider = await web3Modal.connect()
-    setInjectedProvider(new Web3Provider(provider))
-  }, [setInjectedProvider])
+  console.log('local', localProvider?.connection?.url)
+  console.log('user', userProvider?.connection?.url)
 
-  const userProvider = useUserProvider(injectedProvider, localProvider)
+  const showFaucet =
+    localProvider?.connection?.url?.indexOf('localhost') >= 0 &&
+    userProvider?.connection?.url.includes('unknown') &&
+    !process.env.REACT_APP_PROVIDER &&
+    address
 
   return (
     <div
@@ -39,13 +50,17 @@ export default function Navbar() {
         borderBottom: '1px solid lightgrey',
       }}
     >
-      {tabs}
-      <Account
-        userProvider={userProvider}
-        localProvider={localProvider}
-        mainnetProvider={mainnetProvider}
-        loadWeb3Modal={loadWeb3Modal}
-      ></Account>
+      <div>{tabs}</div>
+      <div>
+        {showFaucet ? (
+          <span style={{ marginRight: 30 }}>
+            <Faucet address={address} />
+          </span>
+        ) : (
+          ''
+        )}
+        <Account userProvider={userProvider} loadWeb3Modal={onConnectWallet} address={address}></Account>
+      </div>
     </div>
   )
 }
