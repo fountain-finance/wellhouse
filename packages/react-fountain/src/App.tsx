@@ -27,7 +27,7 @@ function App() {
 
   const userProvider = useUserProvider(injectedProvider, localProvider)
 
-  console.log('userProvider', userProvider)
+  console.log('using provider:', userProvider)
 
   const notifier = createNotifier({
     provider: userProvider,
@@ -42,9 +42,7 @@ function App() {
 
       <BrowserRouter>
         <Switch>
-          <Route exact path="/">
-            some /
-          </Route>
+          <Route exact path="/"></Route>
           <Route exact path="/create">
             <CreateMp notifier={notifier} contracts={contracts} />
           </Route>

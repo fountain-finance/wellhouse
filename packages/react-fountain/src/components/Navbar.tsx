@@ -31,9 +31,6 @@ export default function Navbar({
     key,
   }))
 
-  console.log('local', localProvider?.connection?.url)
-  console.log('user', userProvider?.connection?.url)
-
   const showFaucet =
     localProvider?.connection?.url?.indexOf('localhost') >= 0 &&
     userProvider?.connection?.url.includes('unknown') &&

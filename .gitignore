@@ -36,3 +36,5 @@ yarn-debug.log*
 yarn-error.log*
 
 .idea
+
+react-fountain/.eslintcache
