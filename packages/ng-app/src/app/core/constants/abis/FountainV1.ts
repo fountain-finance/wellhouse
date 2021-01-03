@@ -16,7 +16,7 @@ export const FountainV1Abi = [
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "id",
+        "name": "mpId",
         "type": "uint256"
       },
       {
@@ -71,6 +71,12 @@ export const FountainV1Abi = [
     "inputs": [
       {
         "indexed": true,
+        "internalType": "uint256",
+        "name": "mpId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "owner",
         "type": "address"
@@ -80,6 +86,12 @@ export const FountainV1Abi = [
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "contract IERC20",
+        "name": "want",
+        "type": "address"
       }
     ],
     "name": "CollectSustainments",
@@ -91,7 +103,7 @@ export const FountainV1Abi = [
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "id",
+        "name": "mpId",
         "type": "uint256"
       },
       {
@@ -128,7 +140,7 @@ export const FountainV1Abi = [
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "id",
+        "name": "mpId",
         "type": "uint256"
       },
       {
@@ -147,7 +159,7 @@ export const FountainV1Abi = [
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "id",
+        "name": "mpId",
         "type": "uint256"
       },
       {
@@ -180,7 +192,7 @@ export const FountainV1Abi = [
   },
   {
     "inputs": [],
-    "name": "collectRedistributions",
+    "name": "collectAllRedistributions",
     "outputs": [
       {
         "internalType": "uint256",
@@ -195,11 +207,11 @@ export const FountainV1Abi = [
     "inputs": [
       {
         "internalType": "address",
-        "name": "_from",
+        "name": "_owner",
         "type": "address"
       }
     ],
-    "name": "collectRedistributionsFromAddress",
+    "name": "collectRedistributionsFromOwner",
     "outputs": [
       {
         "internalType": "uint256",
@@ -214,11 +226,11 @@ export const FountainV1Abi = [
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "_from",
+        "name": "_owners",
         "type": "address[]"
       }
     ],
-    "name": "collectRedistributionsFromAddresses",
+    "name": "collectRedistributionsFromOwners",
     "outputs": [
       {
         "internalType": "uint256",
@@ -230,13 +242,24 @@ export const FountainV1Abi = [
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_mpId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
     "name": "collectSustainments",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "bool",
         "name": "",
-        "type": "uint256"
+        "type": "bool"
       }
     ],
     "stateMutability": "nonpayable",
@@ -321,11 +344,6 @@ export const FountainV1Abi = [
       },
       {
         "internalType": "uint256",
-        "name": "sustainerCount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
         "name": "total",
         "type": "uint256"
       }
@@ -366,11 +384,6 @@ export const FountainV1Abi = [
       {
         "internalType": "uint256",
         "name": "duration",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "sustainerCount",
         "type": "uint256"
       },
       {
@@ -486,11 +499,6 @@ export const FountainV1Abi = [
       },
       {
         "internalType": "uint256",
-        "name": "sustainerCount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
         "name": "total",
         "type": "uint256"
       }
@@ -568,19 +576,6 @@ export const FountainV1Abi = [
       }
     ],
     "name": "sustain",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "whatTimeIsIt",
     "outputs": [
       {
         "internalType": "uint256",

@@ -3,7 +3,6 @@ import { useState } from 'react'
 import Web3 from 'web3'
 
 import { ContractName } from '../constants/contract-name'
-import { daiAddress } from '../constants/dai-address'
 import { Notifier } from '../models/notifier'
 
 export default function CreateMp({
@@ -17,10 +16,10 @@ export default function CreateMp({
   const [duration, setDuration] = useState<number>()
 
   function onSubmit() {
-    if (!notifier || !contracts?.FountainV1) return
+    if (!notifier || !contracts?.FountainV1 || !contracts?.Token) return
     const target_ = eth.abi.encodeParameter('uint256', target)
     const duration_ = eth.abi.encodeParameter('uint256', duration)
-    notifier(contracts.FountainV1.configureMp(target_, duration_, daiAddress))
+    notifier(contracts.FountainV1.configureMp(target_, duration_, contracts.Token.address))
   }
 
   const eth = new Web3(Web3.givenProvider).eth
