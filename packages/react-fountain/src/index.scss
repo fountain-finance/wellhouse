@@ -3,7 +3,7 @@ body {
   /* font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif; */
-    font-family: 'DM Mono', monospace;
+  font-family: 'DM Mono', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -11,7 +11,7 @@ body {
 code {
   /* font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace; */
-    font-family: 'DM Mono', monospace;
+  font-family: 'DM Mono', monospace;
 }
 
 div,
@@ -19,4 +19,8 @@ p,
 button,
 a {
   font-family: 'DM Mono', monospace;
+}
+
+label {
+  font-weight: 500;
 }

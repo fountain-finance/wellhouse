@@ -1,7 +1,16 @@
 import { useEffect, useRef } from 'react'
 
-export const usePoller = function (fn: VoidFunction, delay = 2000) {
+export function usePoller(fn: VoidFunction, delay = 2000) {
   let savedCallback = useRef<VoidFunction>()
+
+  // run at start too
+  useEffect(
+    function () {
+      fn()
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   // Remember the latest fn.
   useEffect(
@@ -24,12 +33,5 @@ export const usePoller = function (fn: VoidFunction, delay = 2000) {
       }
     },
     [delay],
-  )
-
-  // run at start too
-  useEffect(
-    () => fn(),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
   )
 }

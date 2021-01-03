@@ -2,6 +2,7 @@ import { BigNumber } from '@ethersproject/bignumber'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { formatEther } from '@ethersproject/units'
 import React, { useState } from 'react'
+
 import { usePoller } from '../hooks/Poller'
 
 export default function Balance({
@@ -11,7 +12,7 @@ export default function Balance({
   dollarMultiplier,
 }: {
   address?: string
-  provider: JsonRpcProvider
+  provider?: JsonRpcProvider
   balance?: BigNumber
   dollarMultiplier: number
 }) {
@@ -19,11 +20,11 @@ export default function Balance({
   const [_balance, setBalance] = useState<BigNumber>()
 
   // get updated balance
-  usePoller(async () => {
+  usePoller(() => {
     if (!address || !provider) return
 
     try {
-      setBalance(await provider.getBalance(address))
+      provider.getBalance(address).then(setBalance)
     } catch (e) {
       console.log(e)
     }
@@ -43,6 +44,8 @@ export default function Balance({
       ? `$${(floatBalance * dollarMultiplier).toFixed(2)}`
       : `${floatBalance.toFixed(4)}ETH`
 
+  if (!address) return null
+
   return (
     <span
       style={{
@@ -50,9 +53,7 @@ export default function Balance({
         padding: 8,
         cursor: 'pointer',
       }}
-      onClick={() => {
-        setDollarMode(!dollarMode)
-      }}
+      onClick={() => setDollarMode(!dollarMode)}
     >
       {displayBalance}
     </span>
