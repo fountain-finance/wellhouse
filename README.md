@@ -85,6 +85,6 @@ The frontend has three different providers that provide different levels of acce
 
 ---
 
-## 🛳 Ship it!
+## Deploying frontend
 
-TBD
+Deployment is managed via a CI workflow defined in `.github/workflows/main.yaml`, which runs for all commits to the `main` branch and depends on github secrets `GCP_PROD_SA_KEY` and `INFURA_ID`. The react app is packaged and published to the fountain.finance Google Cloud App Engine. Once new deployment versions have been published, they must be manually promoted before they become live.

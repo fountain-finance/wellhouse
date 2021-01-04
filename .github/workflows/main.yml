@@ -65,4 +65,4 @@ jobs:
         with:
           deliverables: packages/app/dist/app.yaml
           credentials: ${{ secrets.GCP_PROD_SA_KEY }}
-          promote: true
+          promote: false
