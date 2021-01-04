@@ -1,5 +1,5 @@
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 import { mainnetProvider } from '../constants/mainnet-provider'
 import { web3Modal } from '../constants/web3-modal'

@@ -1,9 +1,7 @@
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { useLayoutEffect, useState } from 'react'
 
-import { localProvider } from '../constants/local-provider'
 import Account from './Account'
-import Faucet from './Faucet'
 import Tab from './Tab'
 
 export default function Navbar({
@@ -31,11 +29,11 @@ export default function Navbar({
     key,
   }))
 
-  const showFaucet =
-    localProvider?.connection?.url?.indexOf('localhost') >= 0 &&
-    userProvider?.connection?.url.includes('unknown') &&
-    !process.env.REACT_APP_PROVIDER &&
-    address
+  // const showFaucet =
+  //   localProvider?.connection?.url?.indexOf('localhost') >= 0 &&
+  //   userProvider?.connection?.url.includes('unknown') &&
+  //   !process.env.REACT_APP_PROVIDER &&
+  //   address
 
   return (
     <div
@@ -49,13 +47,13 @@ export default function Navbar({
     >
       <div>{tabs}</div>
       <div>
-        {showFaucet ? (
+        {/* {showFaucet ? (
           <span style={{ marginRight: 30 }}>
             <Faucet address={address} />
           </span>
         ) : (
           ''
-        )}
+        )} */}
         <Account userProvider={userProvider} loadWeb3Modal={onConnectWallet} address={address}></Account>
       </div>
     </div>
