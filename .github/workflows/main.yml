@@ -51,13 +51,13 @@ jobs:
           steps.cache-yarn.outputs.cache-hit != 'true' ||
           steps.cache-node-modules.outputs.cache-hit != 'true'
 
+      - name: 'Set env var'
+        if: github.ref == 'refs/heads/main'
+        run: node packages/app/scripts/compile-env ${{ secrets.INFURA_ID }}
+
       - name: 'Build React app for GCP App Engine'
         if: github.ref == 'refs/heads/main'
         run: yarn app:build-ae
-
-      - name: 'Set env var'
-        if: github.ref == 'refs/heads/main'
-        run: node packages/app/scripts/compile-app-yaml ${{ secrets.INFURA_ID }}
 
       - name: 'Deploy to GCP App Engine'
         if: github.ref == 'refs/heads/main'
