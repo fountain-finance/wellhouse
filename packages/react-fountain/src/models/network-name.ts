@@ -1,1 +1,5 @@
-export type NetworkName = 'temp' | 'ropsten' | 'mainnet'
+export enum NetworkName {
+  local = 'local',
+  ropsten = 'ropsten',
+  mainnet = 'mainnet',
+}

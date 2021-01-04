@@ -6,9 +6,9 @@ import { useEffect, useState } from 'react'
 import { ContractName } from '../constants/contract-name'
 
 const network: NetworkName =
-  process.env.NODE_ENV === 'production' ? 'ropsten' : (process.env.REACT_APP_DEV_NETWORK as NetworkName) ?? 'local'
-
-const contractsDir = `../contracts/${network}`
+  process.env.NODE_ENV === 'production'
+    ? NetworkName.ropsten
+    : (process.env.REACT_APP_DEV_NETWORK as NetworkName) ?? NetworkName.local
 
 export function useContractLoader(signerOrProvider?: JsonRpcProvider | JsonRpcSigner) {
   const [contracts, setContracts] = useState<Partial<Record<ContractName, Contract>>>()

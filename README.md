@@ -50,13 +50,26 @@ Copies contract artifacts to git-tracked directory: packages/react-fountain/src/
 yarn deploy-mainnet
 ```
 
-
 ### ropsten
 
 Copies contract artifacts to git-tracked directory: packages/react-fountain/src/contracts/ropsten
 ```bash
 yarn deploy-ropsten
 ```
+---
+
+## react-fountain .env
+
+reference `packages/react-fountain/.example.env`
+
+```bash
+REACT_APP_INFURA_ID=
+REACT_APP_PROVIDER=
+REACT_APP_DEV_NETWORK=
+```
+`REACT_APP_INFURA_ID`: Your [Infura](https://infura.io/) key.
+
+`REACT_APP_DEV_NETWORK`: (options: `local`, `ropsten`, `mainnet`) network used by frontend during development. Requires contract artifacts to be present in `packages/react-fountain/src/contracts/\<network-name>` which are generated after a deployment to that network.
 
 ---
 
