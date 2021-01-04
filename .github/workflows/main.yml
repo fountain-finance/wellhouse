@@ -55,6 +55,10 @@ jobs:
         if: github.ref == 'refs/heads/sandbox'
         run: yarn app:build-ae
 
+      - name: 'Set env var'
+        if: github.ref == 'refs/heads/sandbox'
+        run: node packages/app/scripts/compile-app-yaml ${{ secrets.INFURA_ID }}
+
       - name: 'Deploy to GCP App Engine'
         if: github.ref == 'refs/heads/sandbox'
         uses: GoogleCloudPlatform/github-actions/appengine-deploy@master
