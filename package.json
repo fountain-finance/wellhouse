@@ -12,7 +12,7 @@
   "scripts": {
     "app:build": "yarn workspace @fountain.finance/app build --max-old-space-size=12288",
     "app:build-ae": "yarn app:build && yarn bundle-ae-dist",
-    "bundle-ae-dist": "cd packages/app && rm -rf dist && cp -R build dist && cp app.yaml dist/app.yaml",
+    "bundle-ae-dist": "cd packages/app && rm -rf dist && mkdir dist && cp -R build dist/ && cp app.yaml dist/app.yaml",
     "app:eject": "yarn workspace @fountain.finance/app eject",
     "app:test": "yarn workspace @fountain.finance/app test",
     "start": "yarn workspace @fountain.finance/app start",
