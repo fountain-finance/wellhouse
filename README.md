@@ -2,7 +2,7 @@
 
 [fountain.finance](https://fountain.finance)
 
-forked from [🏗 scaffold-eth](https://github.com/austintgriffith/scaffold-eth)
+Built with [🏗 scaffold-eth](https://github.com/austintgriffith/scaffold-eth)
 
 ---
 
@@ -64,7 +64,6 @@ reference `packages/app/.example.env`
 
 ```bash
 REACT_APP_INFURA_ID=
-REACT_APP_PROVIDER=
 REACT_APP_DEV_NETWORK=
 ```
 `REACT_APP_INFURA_ID`: Your [Infura](https://infura.io/) key.
