@@ -3,28 +3,31 @@ import { useState } from 'react'
 import Web3 from 'web3'
 
 import { ContractName } from '../constants/contract-name'
-import { Notifier } from '../models/notifier'
+import { Transactor } from '../models/transactor'
 
 export default function CreateMp({
-  notifier,
+  transactor,
   contracts,
 }: {
-  notifier?: Notifier
+  transactor?: Transactor
   contracts?: Partial<Record<ContractName, Contract>>
 }) {
   const [target, setTarget] = useState<number>()
   const [duration, setDuration] = useState<number>()
 
-  function onSubmit() {
-    if (!notifier || !contracts?.Fountain || !contracts?.Token) return
-    const target_ = eth.abi.encodeParameter('uint256', target)
-    const duration_ = eth.abi.encodeParameter('uint256', duration)
-    notifier(contracts.Fountain.configureMp(target_, duration_, contracts.Token.address))
-  }
-
   const eth = new Web3(Web3.givenProvider).eth
 
-  if (!notifier || !contracts) return null
+  function onSubmit() {
+    if (!transactor || !contracts?.Fountain || !contracts?.Token) return
+    const target_ = eth.abi.encodeParameter('uint256', target)
+    const duration_ = eth.abi.encodeParameter('uint256', duration)
+    transactor(
+      contracts.Fountain.configureMp(target_, duration_, contracts.Token.address),
+      e => (window.location.href = '/mp'),
+    )
+  }
+
+  if (!transactor || !contracts) return null
 
   return (
     <div style={{ padding: 20 }}>

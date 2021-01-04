@@ -1,9 +1,10 @@
-import { Contract } from '@ethersproject/contracts';
-import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
-import { useEffect, useState } from 'react';
+import { Contract } from '@ethersproject/contracts'
+import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers'
+import { useEffect, useState } from 'react'
 
-import { ContractName } from '../constants/contract-name';
-import { NetworkName } from '../models/network-name';
+import { ContractName } from '../constants/contract-name'
+import { Contracts } from '../models/contracts'
+import { NetworkName } from '../models/network-name'
 
 const network: NetworkName =
   process.env.NODE_ENV === 'production'
@@ -11,7 +12,7 @@ const network: NetworkName =
     : (process.env.REACT_APP_DEV_NETWORK as NetworkName) ?? NetworkName.local
 
 export function useContractLoader(signerOrProvider?: JsonRpcProvider | JsonRpcSigner) {
-  const [contracts, setContracts] = useState<Partial<Record<ContractName, Contract>>>()
+  const [contracts, setContracts] = useState<Partial<Contracts>>()
 
   useEffect(() => {
     async function loadContracts() {
@@ -23,10 +24,13 @@ export function useContractLoader(signerOrProvider?: JsonRpcProvider | JsonRpcSi
 
         const contractList: ContractName[] = require(`../contracts/${network}/contracts.js`)
 
-        const newContracts = contractList.reduce((accumulator, contractName) => {
-          accumulator[contractName] = loadContract(contractName, signer)
-          return accumulator
-        }, {} as Record<ContractName, Contract>)
+        const newContracts = contractList.reduce(
+          (accumulator, contractName) => ({
+            ...accumulator,
+            [contractName]: loadContract(contractName, signer),
+          }),
+          {} as Contracts,
+        )
 
         setContracts(newContracts)
       } catch (e) {
@@ -49,7 +53,7 @@ async function isProviderWithAccounts(signerOrProvider: JsonRpcSigner | JsonRpcP
   }
 }
 
-const loadContract = (contractName: string, signerOrProvider: JsonRpcSigner | JsonRpcProvider): Contract => {
+const loadContract = (contractName: ContractName, signerOrProvider: JsonRpcSigner | JsonRpcProvider): Contract => {
   // TODO why does path not parse correctly when `../contracts/${network}` is stored as variable?
   const contract = new Contract(
     require(`../contracts/${network}/${contractName}.address.js`),
