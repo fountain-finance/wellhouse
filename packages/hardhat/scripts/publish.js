@@ -2,11 +2,8 @@ const fs = require("fs");
 const chalk = require("chalk");
 const bre = require("hardhat");
 
-// const publishDir = "../react-app/src/contracts";
-// const publishDir = "../ng-app/src/app/contracts";
-const publishDir = "../react-fountain/src/contracts";
+const publishDir = "../react-fountain/src/contracts/temp";
 const graphDir = "../subgraph";
-const ngAppDir = "../ng-app";
 
 function publishContract(contractName) {
   console.log(
@@ -15,6 +12,7 @@ function publishContract(contractName) {
     "to",
     chalk.yellow(publishDir)
   );
+
   try {
     let contract = fs
       .readFileSync(
@@ -60,14 +58,6 @@ function publishContract(contractName) {
     fs.writeFileSync(
       `${graphDir}/abis/${contractName}.json`,
       JSON.stringify(contract.abi, null, 2)
-    );
-    fs.writeFileSync(
-      `${ngAppDir}/src/app/core/constants/abis/${contractName}.ts`,
-      `export const ${contractName}Abi = ${JSON.stringify(
-        contract.abi,
-        null,
-        2
-      )}`
     );
 
     return true;

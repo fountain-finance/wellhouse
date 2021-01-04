@@ -11,7 +11,7 @@ export function useExchangePrice(mainnetProvider: JsonRpcProvider, pollTime = 10
   /* 💵 get the price of ETH from 🦄 Uniswap: */
   const pollPrice = () => {
     async function getPrice() {
-      const DAI = new Token(mainnetProvider.network ? mainnetProvider.network.chainId : 1, daiAddress, 18)
+      const DAI = new Token(mainnetProvider.network?.chainId ?? 1, daiAddress, 18)
       const pair = await Fetcher.fetchPairData(DAI, WETH[DAI.chainId], mainnetProvider)
       const route = new Route([pair], WETH[DAI.chainId])
       setPrice(parseFloat(route.midPrice.toSignificant(6)))
