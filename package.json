@@ -11,6 +11,8 @@
   "private": true,
   "scripts": {
     "app:build": "yarn workspace @fountain.finance/app build --max-old-space-size=12288",
+    "app:build-ae": "yarn app:build && yarn bundle-ae-dist",
+    "bundle-ae-dist": "rm -rf dist && cd packages/app && mkdir dist && mkdir dist/app && cp -R build/ dist/app/ && cp app.yaml dist/app.yaml",
     "app:eject": "yarn workspace @fountain.finance/app eject",
     "app:test": "yarn workspace @fountain.finance/app test",
     "start": "yarn workspace @fountain.finance/app start",

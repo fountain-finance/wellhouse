@@ -1,0 +1,12 @@
+runtime: python27
+api_version: 1
+threadsafe: true
+default_expiration: '1s'
+handlers:
+  - url: /(.*\.(css|html|ico|js|svg|otf))
+    static_files: app/\1
+    upload: app/(.*\.(css|html|ico|js|svg|otf))
+  - url: /.*
+    static_files: app/index.html
+    upload: app/index.html
+    secure: always
