@@ -6,9 +6,8 @@ packages/hardhat/*.txt
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 **/node_modules
 packages/hardhat/artifacts
-packages/react-app/src/contracts
-packages/react-fountain/src/contracts/temp
-packages/react-fountain/src/contracts/local
+packages/app/src/contracts/temp
+packages/app/src/contracts/local
 packages/hardhat/cache
 
 docker/**/data
@@ -29,6 +28,7 @@ build
 # misc
 .DS_Store
 .env*
+.eslintcache*
 
 # debug
 npm-debug.log*
@@ -36,5 +36,3 @@ yarn-debug.log*
 yarn-error.log*
 
 .idea
-
-packages/react-fountain/.eslintcache

@@ -2,7 +2,7 @@ const fs = require("fs");
 const chalk = require("chalk");
 const bre = require("hardhat");
 
-const publishDir = "../react-fountain/src/contracts/temp";
+const publishDir = "../app/src/contracts/temp";
 const graphDir = "../subgraph";
 
 function publishContract(contractName) {

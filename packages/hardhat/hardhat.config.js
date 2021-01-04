@@ -6,15 +6,6 @@ require("@nomiclabs/hardhat-waffle");
 
 const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 
-/*
-      📡 This is where you configure your deploy configuration for 🏗 scaffold-eth
-
-      check out `packages/scripts/deploy.js` to customize your deployment
-
-      out of the box it will auto deploy anything in the `contracts` folder and named *.sol
-      plus it will use *.args for constructor args
-*/
-
 //
 // Select the network you want to deploy to here:
 //
@@ -35,12 +26,6 @@ function mnemonic() {
 
 module.exports = {
   defaultNetwork,
-
-  // don't forget to set your provider like:
-  // REACT_APP_PROVIDER=https://dai.poa.network in packages/react-app/.env
-  // (then your frontend will talk to your contracts on the live network!)
-  // (you will need to restart the `yarn run start` dev server after editing the .env)
-
   networks: {
     localhost: {
       url: "http://localhost:8545",
