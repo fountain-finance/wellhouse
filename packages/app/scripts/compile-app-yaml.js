@@ -7,7 +7,7 @@ const infuraId = args[0]
 if (!infuraId) console.log('WARNING: missing Infura ID')
 
 const vars = `env_variables:
-  REACT_APP_INFURA_ID: ${infuraId}
+  REACT_APP_INFURA_ID: "${infuraId}"
 `
 
 fs.appendFileSync('packages/app/dist/app.yaml', vars);
