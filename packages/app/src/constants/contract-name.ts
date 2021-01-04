@@ -1,4 +1,4 @@
 export enum ContractName {
-  FountainV1 = 'FountainV1',
+  Fountain = 'Fountain',
   Token = 'Token',
 }

@@ -3,11 +3,11 @@ schema:
   file: ./src/schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: FountainV1
+    name: Fountain
     network: localhost
     source:
-      address: "{{FountainV1Address}}"
-      abi: FountainV1
+      address: "{{FountainAddress}}"
+      abi: Fountain
       startBlock: 1
     mapping:
       kind: ethereum/events
@@ -17,8 +17,8 @@ dataSources:
         - Purpose
         - Sender
       abis:
-        - name: FountainV1
-          file: ./abis/FountainV1.json
+        - name: Fountain
+          file: ./abis/Fountain.json
       eventHandlers:
         - event: SetPurpose(address,string)
           handler: handleSetPurpose

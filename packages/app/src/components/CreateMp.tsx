@@ -16,10 +16,10 @@ export default function CreateMp({
   const [duration, setDuration] = useState<number>()
 
   function onSubmit() {
-    if (!notifier || !contracts?.FountainV1 || !contracts?.Token) return
+    if (!notifier || !contracts?.Fountain || !contracts?.Token) return
     const target_ = eth.abi.encodeParameter('uint256', target)
     const duration_ = eth.abi.encodeParameter('uint256', duration)
-    notifier(contracts.FountainV1.configureMp(target_, duration_, contracts.Token.address))
+    notifier(contracts.Fountain.configureMp(target_, duration_, contracts.Token.address))
   }
 
   const eth = new Web3(Web3.givenProvider).eth
