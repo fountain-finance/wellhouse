@@ -1,4 +1,4 @@
-export const FountainV1Abi = [
+export const FountainAbi = [
   {
     inputs: [
       {
