@@ -1,9 +1,9 @@
-import { Contract } from '@ethersproject/contracts'
-import { NetworkName } from '../models/network-name'
-import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers'
-import { useEffect, useState } from 'react'
+import { Contract } from '@ethersproject/contracts';
+import { JsonRpcProvider, JsonRpcSigner } from '@ethersproject/providers';
+import { useEffect, useState } from 'react';
 
-import { ContractName } from '../constants/contract-name'
+import { ContractName } from '../constants/contract-name';
+import { NetworkName } from '../models/network-name';
 
 const network: NetworkName =
   process.env.NODE_ENV === 'production'
@@ -24,7 +24,6 @@ export function useContractLoader(signerOrProvider?: JsonRpcProvider | JsonRpcSi
         const contractList: ContractName[] = require(`../contracts/${network}/contracts.js`)
 
         const newContracts = contractList.reduce((accumulator, contractName) => {
-          console.log('name', contractName)
           accumulator[contractName] = loadContract(contractName, signer)
           return accumulator
         }, {} as Record<ContractName, Contract>)

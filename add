@@ -1,3 +1,0 @@
-Follow scaffold-eth bootstrapping tutorial:  https://www.youtube.com/watch?v=T5ylzOTkn-Q&t=426s (no need for graph stuff for now).
-
-You'll want to use the Token address printed on screen after `yarn deploy` as your MP's `want` token.
