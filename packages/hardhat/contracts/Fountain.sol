@@ -139,7 +139,7 @@ contract Fountain is IFountain {
         override
         returns (
             uint256 number,
-            address owner
+            address owner,
             IERC20 want,
             uint256 target,
             uint256 start,
@@ -169,7 +169,7 @@ contract Fountain is IFountain {
         override
         returns (
             uint256 number,
-            address owner
+            address owner,
             IERC20 want,
             uint256 target,
             uint256 start,

@@ -44,6 +44,7 @@ interface IFountain {
         view
         returns (
             uint256 _number,
+            address _owner_,
             IERC20 _want,
             uint256 _target,
             uint256 _start,
@@ -56,6 +57,7 @@ interface IFountain {
         view
         returns (
             uint256 _number,
+            address _owner_,
             IERC20 _want,
             uint256 _target,
             uint256 _start,
@@ -68,6 +70,7 @@ interface IFountain {
         view
         returns (
             uint256 _number,
+            address _owner_,
             IERC20 _want,
             uint256 _target,
             uint256 _start,
