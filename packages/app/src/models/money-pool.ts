@@ -7,4 +7,5 @@ export interface MoneyPool {
   target: BigNumber
   total: BigNumber
   want: string
+  owner: string
 }

@@ -249,6 +249,11 @@
         "type": "uint256"
       },
       {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
         "internalType": "contract IERC20",
         "name": "want",
         "type": "address"
@@ -291,6 +296,11 @@
         "internalType": "uint256",
         "name": "number",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
       },
       {
         "internalType": "contract IERC20",
@@ -400,8 +410,13 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "number",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
       },
       {
         "internalType": "contract IERC20",

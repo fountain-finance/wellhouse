@@ -7,14 +7,16 @@ import { useCallback, useEffect, useState } from 'react'
 import { BrowserRouter, Route, Switch } from 'react-router-dom'
 
 import CreateMp from './components/CreateMp'
+import Gimme from './components/Gimme'
 import Navbar from './components/Navbar'
+import Owner from './components/Owner'
+import ViewMp from './components/ViewMp'
 import { localProvider } from './constants/local-provider'
 import { web3Modal } from './constants/web3-modal'
 import { createTransactor } from './helpers/Transactor'
 import { useContractLoader } from './hooks/ContractLoader'
 import { useGasPrice } from './hooks/GasPrice'
 import { useUserProvider } from './hooks/UserProvider'
-import Owner from './components/Owner'
 
 function App() {
   const [injectedProvider, setInjectedProvider] = useState<Web3Provider>()
@@ -58,6 +60,12 @@ function App() {
           </Route>
           <Route exact path="/mp/create">
             <CreateMp transactor={transactor} contracts={contracts} />
+          </Route>
+          <Route exact path="/mp/:number">
+            <ViewMp contracts={contracts} transactor={transactor} address={address}></ViewMp>
+          </Route>
+          <Route exact path="/gimme">
+            <Gimme contracts={contracts} transactor={transactor} address={address}></Gimme>
           </Route>
         </Switch>
       </BrowserRouter>
