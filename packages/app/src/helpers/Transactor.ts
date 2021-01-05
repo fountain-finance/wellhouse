@@ -1,7 +1,7 @@
 import { BigNumber } from '@ethersproject/bignumber'
 import { hexlify } from '@ethersproject/bytes'
 import { Deferrable } from '@ethersproject/properties'
-import { JsonRpcProvider, TransactionRequest, Web3Provider } from '@ethersproject/providers'
+import { JsonRpcProvider, JsonRpcSigner, TransactionRequest, Web3Provider } from '@ethersproject/providers'
 import { parseUnits } from '@ethersproject/units'
 import Notify, { InitOptions, TransactionEvent } from 'bnc-notify'
 
@@ -18,7 +18,10 @@ export function createTransactor({
 }): Transactor | undefined {
   if (!provider) return
 
-  return async (tx: Deferrable<TransactionRequest>, onConfirmed?: (e: TransactionEvent) => void) => {
+  return async (
+    tx: Deferrable<TransactionRequest>,
+    onConfirmed?: (e: TransactionEvent, signer: JsonRpcSigner) => void,
+  ) => {
     const signer = provider.getSigner()
 
     const network = await provider.getNetwork()
@@ -30,7 +33,7 @@ export function createTransactor({
       // darkMode: Boolean, // (default: false)
       transactionHandler: txInformation => {
         console.log('HANDLE TX', txInformation)
-        if (onConfirmed && txInformation.transaction.status === 'confirmed') onConfirmed(txInformation)
+        if (onConfirmed && txInformation.transaction.status === 'confirmed') onConfirmed(txInformation, signer)
       },
     }
     const notify = Notify(options)

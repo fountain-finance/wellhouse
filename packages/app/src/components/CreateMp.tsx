@@ -23,7 +23,7 @@ export default function CreateMp({
     const duration_ = eth.abi.encodeParameter('uint256', duration)
     transactor(
       contracts.Fountain.configureMp(target_, duration_, contracts.Token.address),
-      e => (window.location.href = '/mp'),
+      async (e, signer) => (window.location.href = `/${await signer.getAddress()}`),
     )
   }
 

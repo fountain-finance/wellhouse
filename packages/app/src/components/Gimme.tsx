@@ -35,10 +35,7 @@ export default function Gimme({
 
     const eth = new Web3(Web3.givenProvider).eth
 
-    transactor(
-      contracts.Token.gimme(eth.abi.encodeParameter('uint256', gimmeAmount)),
-      e => (window.location.href = '/mp'),
-    )
+    transactor(contracts.Token.gimme(eth.abi.encodeParameter('uint256', gimmeAmount)))
   }
 
   function approve() {
@@ -48,7 +45,6 @@ export default function Gimme({
 
     transactor(
       contracts.Token.approve(contracts.Fountain?.address, eth.abi.encodeParameter('uint256', allowanceAmount)),
-      e => (window.location.href = '/mp'),
     )
   }
 
