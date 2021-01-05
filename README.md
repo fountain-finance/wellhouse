@@ -8,11 +8,15 @@ Built with [🏗 scaffold-eth](https://github.com/austintgriffith/scaffold-eth)
 
 ## Run local
 
+Serve the app locally and use with a local blockchain.
+
+In `packages/app`, Create `.env` from `.example.env`, add required `REACT_APP_INFURA_ID`.
+
 ```bash
 yarn install
 ```
 
-> start [Hardhat](https://hardhat.org/) local blockchain:
+> start 👷[Hardhat](https://hardhat.org/) local blockchain:
 
 ```bash
 yarn chain
@@ -29,7 +33,7 @@ yarn deploy
 yarn start
 ```
 
-🔑 Create wallet links to your app with `yarn wallet` (empty) or `yarn fundedwallet` (pre-loaded with ETH)
+🔑 Create wallets links to your app with `yarn wallet` (empty) or `yarn fundedwallet` (pre-loaded with ETH)
 
 
 🔧 Configure 👷[HardHat](https://hardhat.org/config/) by editing `hardhat.config.js` in `packages/hardhat`
@@ -38,29 +42,40 @@ yarn start
 
 ---
 
-## Deploying to public chains
+## Deploying contracts
 
-### mainnet
+Contracts are located in `packages/hardhat/contracts`
 
-Copies contract artifacts to git-tracked directory: packages/app/src/contracts/mainnet
+Each time contracts are deployed, artifacts are copied to `packages/app/src/contracts` where they're used by the frontend.
+
+By default, the frontend reads from a local blockchain. To use a public blockchain:
+- deploy contracts to that chain
+- edit `packages/app/.env` variable `REACT_APP_DEV_NETWORK` (i.e. `REACT_APP_DEV_NETWORK=ropsten`)
+- `yarn start` to start frontend using artifacts from latest deployment
+
+### deploy to local chain
+
 ```bash
-yarn deploy-mainnet
+yarn deploy
 ```
 
-### ropsten
+### deploy to ropsten
 
-Copies contract artifacts to git-tracked directory: packages/app/src/contracts/ropsten
 ```bash
 yarn deploy-ropsten
 ```
 
-To point local app to a public network, edit `env.REACT_APP_DEV_NETWORK`
+### deploy to mainnet
+
+```bash
+yarn deploy-mainnet
+```
 
 ---
 
-## app .env
+## Frontend .env
 
-reference `packages/app/.example.env`
+Create new `packages/app/.env`, reference `packages/app/.example.env`
 
 ```bash
 REACT_APP_INFURA_ID=
@@ -86,4 +101,6 @@ The frontend has three different providers that provide different levels of acce
 
 ## Deploying frontend
 
-Deployment is managed via a CI workflow defined in `.github/workflows/main.yaml`, which runs for all commits to the `main` branch and depends on github secrets `GCP_PROD_SA_KEY` and `INFURA_ID`. The react app is packaged and published to the fountain.finance Google Cloud App Engine. Once new deployment versions have been published, they must be manually promoted before they become live.
+Deployment is managed via a CI workflow defined in `.github/workflows/main.yaml`, which runs for all commits to the `main` branch and depends on github secrets `GCP_PROD_SA_KEY` and `INFURA_ID`. 
+
+The react app is packaged and published to the (fountain.finance/web-production Google Cloud App Engine)[https://console.cloud.google.com/appengine?project=web-production-294102&serviceId=default]. Once new versions have been published, they must be manually promoted in App Engine before they become live.
