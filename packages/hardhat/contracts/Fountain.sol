@@ -123,7 +123,7 @@ contract Fountain is IFountain {
     }
 
     /**
-        @notice The Money pool that's next up for an owner.
+        @notice The Money pool that's next up for an owner and not currently accepting payments.
         @param _owner The owner of the Money pool being looked for.
         @return number The number of the Money pool.
         @return owner The owner of the Money pool.
@@ -147,20 +147,19 @@ contract Fountain is IFountain {
             uint256 total
         )
     {
-        MoneyPool.Data memory _mp = _upcomingMp(_owner);
-        require(_mp.number > 0, "Fountain::getUpcomingMp: NOT_FOUND");
-        if (_activeMp(_owner).number > 0) {
-            return (
-                mpCount + 1,
-                _mp.owner,
-                _mp.want,
-                _mp.target,
-                _mp._determineNextStart(),
-                _mp.duration,
-                0
-            );
-        }
-        return _mp._properties();
+        MoneyPool.Data memory _uMp = _upcomingMp(_owner);
+        if (_uMp.number != 0) return _uMp._properties();
+        MoneyPool.Data memory _aMp = _activeMp(_owner);
+        require(_aMp.number > 0, "Fountain::getUpcomingMp: NOT_FOUND");
+        return (
+            mpCount + 1,
+            _activeMp.owner,
+            _activeMp.want,
+            _activeMp.target,
+            _activeMp._determineNextStart(),
+            _activeMp.duration,
+            0
+        );
     }
 
     /**
