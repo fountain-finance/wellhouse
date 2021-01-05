@@ -8,9 +8,8 @@ import { BrowserRouter, Route, Switch } from 'react-router-dom'
 
 import CreateMp from './components/CreateMp'
 import Gimme from './components/Gimme'
+import MpView from './components/MpView'
 import Navbar from './components/Navbar'
-import Owner from './components/Owner'
-import ViewMp from './components/ViewMp'
 import { localProvider } from './constants/local-provider'
 import { web3Modal } from './constants/web3-modal'
 import { createTransactor } from './helpers/Transactor'
@@ -52,23 +51,22 @@ function App() {
     <div className="App">
       <Navbar address={address} userProvider={userProvider} onConnectWallet={loadWeb3Modal}></Navbar>
 
-      <BrowserRouter>
-        <Switch>
-          <Route exact path="/"></Route>
-          <Route exact path="/mp">
-            <Owner transactor={transactor} address={address} contracts={contracts}></Owner>
-          </Route>
-          <Route exact path="/mp/create">
-            <CreateMp transactor={transactor} contracts={contracts} />
-          </Route>
-          <Route exact path="/mp/:number">
-            <ViewMp contracts={contracts} transactor={transactor} address={address}></ViewMp>
-          </Route>
-          <Route exact path="/gimme">
-            <Gimme contracts={contracts} transactor={transactor} address={address}></Gimme>
-          </Route>
-        </Switch>
-      </BrowserRouter>
+      <div style={{ padding: 20 }}>
+        <BrowserRouter>
+          <Switch>
+            <Route exact path="/"></Route>
+            <Route exact path="/create">
+              <CreateMp transactor={transactor} contracts={contracts} />
+            </Route>
+            <Route exact path="/gimme">
+              <Gimme contracts={contracts} transactor={transactor} address={address}></Gimme>
+            </Route>
+            <Route exact path="/:owner">
+              <MpView contracts={contracts} transactor={transactor} address={address}></MpView>
+            </Route>
+          </Switch>
+        </BrowserRouter>
+      </div>
     </div>
   )
 }

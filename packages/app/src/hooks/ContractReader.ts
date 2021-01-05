@@ -16,7 +16,7 @@ export default function useContractReader<V>({
   pollTime?: number
   formatter?: (val: unknown) => V
 }) {
-  const adjustPollTime = pollTime ?? 10000
+  const adjustPollTime = pollTime ?? 3000
 
   const [value, setValue] = useState<V>()
 
@@ -27,7 +27,6 @@ export default function useContractReader<V>({
       try {
         let newValue: unknown
 
-        console.log('using args', args, contract, functionName)
         newValue = await contract[functionName](...(args ?? []))
 
         const result = formatter ? formatter(newValue) : (newValue as V)

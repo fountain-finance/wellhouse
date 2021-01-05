@@ -1,10 +1,10 @@
+import { BigNumber } from '@ethersproject/bignumber'
 import React, { useState } from 'react'
 import Web3 from 'web3'
 
+import useContractReader from '../hooks/ContractReader'
 import { Contracts } from '../models/contracts'
 import { Transactor } from '../models/transactor'
-import { BigNumber } from '@ethersproject/bignumber'
-import useContractReader from '../hooks/ContractReader'
 
 export default function Gimme({
   transactor,
@@ -61,11 +61,8 @@ export default function Gimme({
       }}
     >
       <div>
-        <h4>Allowance</h4>
-        <input
-          defaultValue={allowance?.toNumber() ?? 0}
-          onChange={e => setAllowanceAmount(parseFloat(e.target.value))}
-        />
+        <h4>Current allowance: {allowance?.toNumber() ?? 0}</h4>
+        <input placeholder="0" onChange={e => setAllowanceAmount(parseFloat(e.target.value))} />
         <button onClick={approve}>Update</button>
       </div>
       <div>

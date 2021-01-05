@@ -16,7 +16,7 @@ export default function Navbar({
   const tabs = [
     Tab({
       name: 'Create',
-      link: '/mp/create',
+      link: '/create',
     }),
   ].map((tab, key) => ({
     ...tab,

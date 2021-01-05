@@ -1,5 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber'
 import React, { useState } from 'react'
+import { useParams } from 'react-router-dom'
 import Web3 from 'web3'
 
 import useContractReader from '../hooks/ContractReader'
@@ -8,7 +9,7 @@ import { MoneyPool } from '../models/money-pool'
 import { Transactor } from '../models/transactor'
 import Mp from './Mp'
 
-export default function Owner({
+export default function MpView({
   address,
   transactor,
   contracts,
@@ -17,57 +18,83 @@ export default function Owner({
   transactor?: Transactor
   contracts?: Partial<Contracts>
 }) {
+  const [sustainAmount, setSustainAmount] = useState<number>(0)
   const [tapAmount, setTapAmount] = useState<number>(0)
 
-  const activeMp: MoneyPool | undefined = useContractReader({
+  const { owner }: { owner?: string } = useParams()
+
+  const currentMp: MoneyPool | undefined = useContractReader({
     contract: contracts?.Fountain,
-    functionName: 'getActiveMp',
-    args: [address],
+    functionName: 'getCurrentMp',
+    args: [owner],
   })
+
+  console.log('current', currentMp)
 
   const upcomingMp: MoneyPool | undefined = useContractReader({
     contract: contracts?.Fountain,
     functionName: 'getUpcomingMp',
-    args: [address],
+    args: [owner],
   })
+
+  console.log('upcoming', upcomingMp)
 
   const tappableAmount: BigNumber | undefined = useContractReader({
     contract: contracts?.Fountain,
     functionName: 'getTappableAmount',
-    args: [activeMp?.number],
+    args: [owner],
   })
 
-  function tap() {
-    if (!transactor || !contracts?.Fountain || !activeMp) return
+  const isOwner = owner === address
+
+  function sustain() {
+    if (!transactor || !contracts?.Fountain || !currentMp?.owner) return
 
     const eth = new Web3(Web3.givenProvider).eth
 
-    const number = eth.abi.encodeParameter('uint256', activeMp.number)
+    const amount = sustainAmount !== undefined ? eth.abi.encodeParameter('uint256', sustainAmount) : undefined
+
+    transactor(contracts.Fountain.sustainOwner(currentMp.owner, amount, address), () => setSustainAmount(0))
+  }
+
+  function tap() {
+    if (!transactor || !contracts?.Fountain || !currentMp) return
+
+    const eth = new Web3(Web3.givenProvider).eth
+
+    const number = eth.abi.encodeParameter('uint256', currentMp.number)
     const amount = eth.abi.encodeParameter('uint256', tapAmount)
 
     transactor(contracts.Fountain?.tap(number, amount, address))
   }
+
+  const spacing = 20
 
   return (
     <div
       style={{
         display: 'grid',
         gridAutoFlow: 'column',
-        columnGap: 20,
+        columnGap: spacing,
       }}
     >
       <div
         style={{
           display: 'grid',
           gridAutoFlow: 'row',
-          rowGap: 20,
+          rowGap: spacing,
         }}
       >
-        <h1>Your active moneypool</h1>
+        <h1>Current moneypool</h1>
 
-        {activeMp ? <Mp mp={activeMp}></Mp> : null}
+        {currentMp ? <Mp mp={currentMp}></Mp> : <div>Getting money pool...</div>}
 
-        {tappableAmount !== undefined ? (
+        <div>
+          <input placeholder="0" onChange={e => setSustainAmount(parseFloat(e.target.value))}></input>
+          <button onClick={sustain}>Sustain</button>
+        </div>
+
+        {tappableAmount !== undefined && isOwner ? (
           <div>
             <div>Tappable amount: {tappableAmount.toNumber()}</div>
             <input defaultValue={tapAmount.toString()} onChange={e => setTapAmount(parseFloat(e.target.value))}></input>
@@ -78,19 +105,16 @@ export default function Owner({
         ) : null}
       </div>
 
-      {upcomingMp ? (
-        <div
-          style={{
-            display: 'grid',
-            gridAutoFlow: 'row',
-            rowGap: 20,
-          }}
-        >
-          <h1>Your upcoming moneypool</h1>
-
-          <Mp mp={upcomingMp}></Mp>
-        </div>
-      ) : null}
+      <div
+        style={{
+          display: 'grid',
+          gridAutoFlow: 'row',
+          rowGap: spacing,
+        }}
+      >
+        <h1>Upcoming</h1>
+        {upcomingMp ? <Mp mp={upcomingMp}></Mp> : <div>Nada</div>}
+      </div>
     </div>
   )
 }

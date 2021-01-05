@@ -26,7 +26,7 @@
         "type": "uint256"
       }
     ],
-    "name": "Collect",
+    "name": "CollectRedistributions",
     "type": "event"
   },
   {
@@ -137,16 +137,16 @@
         "type": "address"
       }
     ],
-    "name": "Tap",
+    "name": "TapMp",
     "type": "event"
   },
   {
     "inputs": [],
-    "name": "collectAll",
+    "name": "collectAllRedistributions",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
@@ -161,11 +161,11 @@
         "type": "address"
       }
     ],
-    "name": "collectFromOwner",
+    "name": "collectRedistributionsFromOwner",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
@@ -180,11 +180,11 @@
         "type": "address[]"
       }
     ],
-    "name": "collectFromOwners",
+    "name": "collectRedistributionsFromOwners",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
@@ -241,7 +241,7 @@
         "type": "address"
       }
     ],
-    "name": "getActiveMp",
+    "name": "getCurrentMp",
     "outputs": [
       {
         "internalType": "uint256",
@@ -516,7 +516,7 @@
         "type": "address"
       }
     ],
-    "name": "sustain",
+    "name": "sustainOwner",
     "outputs": [
       {
         "internalType": "uint256",
@@ -545,7 +545,7 @@
         "type": "address"
       }
     ],
-    "name": "tap",
+    "name": "tapMp",
     "outputs": [
       {
         "internalType": "bool",
