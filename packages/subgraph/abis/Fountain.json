@@ -15,43 +15,6 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "uint256",
-        "name": "mpId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "target",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "duration",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "contract IERC20",
-        "name": "want",
-        "type": "address"
-      }
-    ],
-    "name": "ActivateMp",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
         "internalType": "address",
         "name": "sustainer",
         "type": "address"
@@ -63,7 +26,7 @@
         "type": "uint256"
       }
     ],
-    "name": "CollectRedistributions",
+    "name": "Collect",
     "type": "event"
   },
   {
@@ -72,38 +35,7 @@
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "mpId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "contract IERC20",
-        "name": "want",
-        "type": "address"
-      }
-    ],
-    "name": "CollectSustainments",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "mpId",
+        "name": "mpNumber",
         "type": "uint256"
       },
       {
@@ -140,26 +72,7 @@
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "mpId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      }
-    ],
-    "name": "InitializeMp",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "mpId",
+        "name": "mpNumber",
         "type": "uint256"
       },
       {
@@ -191,8 +104,45 @@
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "mpNumber",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "beneficiary",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "contract IERC20",
+        "name": "want",
+        "type": "address"
+      }
+    ],
+    "name": "Tap",
+    "type": "event"
+  },
+  {
     "inputs": [],
-    "name": "collectAllRedistributions",
+    "name": "collectAll",
     "outputs": [
       {
         "internalType": "uint256",
@@ -211,7 +161,7 @@
         "type": "address"
       }
     ],
-    "name": "collectRedistributionsFromOwner",
+    "name": "collectFromOwner",
     "outputs": [
       {
         "internalType": "uint256",
@@ -230,36 +180,12 @@
         "type": "address[]"
       }
     ],
-    "name": "collectRedistributionsFromOwners",
+    "name": "collectFromOwners",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_mpId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "collectSustainments",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
       }
     ],
     "stateMutability": "nonpayable",
@@ -319,7 +245,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "number",
         "type": "uint256"
       },
       {
@@ -355,7 +281,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_mpId",
+        "name": "_mpNumber",
         "type": "uint256"
       }
     ],
@@ -363,7 +289,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "number",
         "type": "uint256"
       },
       {
@@ -399,7 +325,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_mpId",
+        "name": "_mpNumber",
         "type": "uint256"
       },
       {
@@ -423,11 +349,11 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_mpId",
+        "name": "_mpNumber",
         "type": "uint256"
       }
     ],
-    "name": "getSustainmentBalance",
+    "name": "getTappableAmount",
     "outputs": [
       {
         "internalType": "uint256",
@@ -442,7 +368,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_mpId",
+        "name": "_mpNumber",
         "type": "uint256"
       },
       {
@@ -514,7 +440,7 @@
         "type": "address"
       }
     ],
-    "name": "latestMpIds",
+    "name": "latestMpNumber",
     "outputs": [
       {
         "internalType": "uint256",
@@ -546,7 +472,7 @@
         "type": "uint256"
       }
     ],
-    "name": "previousMpIds",
+    "name": "previousMpNumber",
     "outputs": [
       {
         "internalType": "uint256",
@@ -581,6 +507,35 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_mpNumber",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_beneficiary",
+        "type": "address"
+      }
+    ],
+    "name": "tap",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "nonpayable",

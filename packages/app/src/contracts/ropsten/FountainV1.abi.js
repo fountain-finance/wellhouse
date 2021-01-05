@@ -1,4 +1,4 @@
-[
+module.exports = [
   {
     "inputs": [
       {
@@ -586,4 +586,4 @@
     "stateMutability": "nonpayable",
     "type": "function"
   }
-]
+];

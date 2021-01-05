@@ -6,11 +6,10 @@ const { utils } = require("ethers");
 const R = require("ramda");
 
 const main = async () => {
-
   console.log("\n\n 📡 Deploying...\n");
 
-  const token = await deploy("Token")
-  await deploy("FountainV1", [token.address]) // <-- add in constructor args like line 16 vvvv
+  const token = await deploy("Token");
+  await deploy("Fountain", [token.address]); // <-- add in constructor args like line 16 vvvv
 
   // const exampleToken = await deploy("ExampleToken")
   // const examplePriceOracle = await deploy("ExamplePriceOracle")
@@ -36,7 +35,7 @@ const deploy = async (contractName, _args) => {
     " 📄",
     chalk.cyan(contractName),
     "deployed to:",
-    chalk.magenta(deployed.address),
+    chalk.magenta(deployed.address)
   );
 
   if (!encoded || encoded.length <= 2) return deployed;
