@@ -29,15 +29,11 @@ export default function MpView({
     args: [owner],
   })
 
-  console.log('current', currentMp)
-
-  const upcomingMp: MoneyPool | undefined = useContractReader({
+  const queuedMp: MoneyPool | undefined = useContractReader({
     contract: contracts?.Fountain,
-    functionName: 'getUpcomingMp',
+    functionName: 'getQueuedMp',
     args: [owner],
   })
-
-  console.log('upcoming', upcomingMp)
 
   const tappableAmount: BigNumber | undefined = useContractReader({
     contract: contracts?.Fountain,
@@ -112,8 +108,8 @@ export default function MpView({
           rowGap: spacing,
         }}
       >
-        <h1>Upcoming</h1>
-        {upcomingMp ? <Mp mp={upcomingMp}></Mp> : <div>Nada</div>}
+        <h1>Queued</h1>
+        {queuedMp ? <Mp mp={queuedMp}></Mp> : <div>Nada</div>}
       </div>
     </div>
   )
