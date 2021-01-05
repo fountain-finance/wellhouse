@@ -12,32 +12,29 @@ Built with [🏗 scaffold-eth](https://github.com/austintgriffith/scaffold-eth)
 yarn install
 ```
 
-```bash
-yarn start
-```
-
-> in a second terminal window, start [Hardhat](https://hardhat.org/) local blockchain:
+> start [Hardhat](https://hardhat.org/) local blockchain:
 
 ```bash
 yarn chain
 ```
 
-> in a third terminal window, deploy contract to local blockchain:
+> in a second terminal window, deploy contract to local blockchain:
 
 ```bash
 yarn deploy
 ```
+> in a third terminal window, start the app and open http://localhost:3000 to view it
 
-> 🔑 Create wallet links to your app with `yarn wallet` (empty) or `yarn fundedwallet` (pre-loaded with ETH)
+```bash
+yarn start
+```
 
-📱 Open http://localhost:3000 to see the app
+🔑 Create wallet links to your app with `yarn wallet` (empty) or `yarn fundedwallet` (pre-loaded with ETH)
 
 
-> 🔧 Configure 👷[HardHat](https://hardhat.org/config/) by editing `hardhat.config.js` in `packages/hardhat`
+🔧 Configure 👷[HardHat](https://hardhat.org/config/) by editing `hardhat.config.js` in `packages/hardhat`
 
----
-
-✨ The [HardHat network](https://hardhat.org/hardhat-network/) provides _stack traces_ and _console.log_ debugging for our contracts ✨
+> ✨ The [HardHat network](https://hardhat.org/hardhat-network/) provides _stack traces_ and _console.log_ debugging for our contracts ✨
 
 ---
 
@@ -56,6 +53,9 @@ Copies contract artifacts to git-tracked directory: packages/app/src/contracts/r
 ```bash
 yarn deploy-ropsten
 ```
+
+To point local app to a public network, edit `env.REACT_APP_DEV_NETWORK`
+
 ---
 
 ## app .env
@@ -68,7 +68,7 @@ REACT_APP_DEV_NETWORK=
 ```
 `REACT_APP_INFURA_ID`: Your [Infura](https://infura.io/) key.
 
-`REACT_APP_DEV_NETWORK`: (options: `local`, `ropsten`, `mainnet`) network used by frontend during development. Requires contract artifacts to be present in `packages/app/src/contracts/\<network-name>` which are generated after a deployment to that network.
+`REACT_APP_DEV_NETWORK`: (options: `local`, `ropsten`, `mainnet`) network used by frontend during development. Requires contract artifacts to be present in `packages/app/src/contracts/<network-name>` which are generated after a deployment to that network.
 
 ---
 
