@@ -126,6 +126,7 @@ contract Fountain is IFountain {
         @notice The properties of the given Money pool.
         @param _mpNumber The number of the Money pool to get the properties of.
         @return number The number of the Money pool.
+        @return owner The owner of the Money pool.
         @return want The token the Money pool wants.
         @return target The amount of the want token this Money pool is targeting.
         @return start The time when this Money pool started.
@@ -138,6 +139,7 @@ contract Fountain is IFountain {
         override
         returns (
             uint256 number,
+            address owner
             IERC20 want,
             uint256 target,
             uint256 start,
@@ -153,7 +155,8 @@ contract Fountain is IFountain {
     /**
         @notice The Money pool that's next up for an owner.
         @param _owner The owner of the Money pool being looked for.
-        @return id The number of the Money pool.
+        @return number The number of the Money pool.
+        @return owner The owner of the Money pool.
         @return want The token the Money pool wants.
         @return target The amount of the want token this Money pool is targeting.
         @return start The time when this Money pool started.
@@ -165,7 +168,8 @@ contract Fountain is IFountain {
         view
         override
         returns (
-            uint256 id,
+            uint256 number,
+            address owner
             IERC20 want,
             uint256 target,
             uint256 start,
@@ -182,6 +186,7 @@ contract Fountain is IFountain {
         @notice The currently active Money pool for an owner.
         @param _owner The owner of the money pool being looked for.
         @return number The number of the Money pool.
+        @return owner The owner of the Money pool.
         @return want The token the Money pool wants.
         @return target The amount of the want token this Money pool is targeting.
         @return start The time when this Money pool started.
@@ -194,6 +199,7 @@ contract Fountain is IFountain {
         override
         returns (
             uint256 number,
+            address owner,
             IERC20 want,
             uint256 target,
             uint256 start,
