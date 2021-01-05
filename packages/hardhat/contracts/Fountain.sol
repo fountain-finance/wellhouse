@@ -147,17 +147,17 @@ contract Fountain is IFountain {
             uint256 total
         )
     {
-        MoneyPool.Data memory _uMp = _upcomingMp(_owner);
-        if (_uMp.number > 0) return _uMp._properties();
-        MoneyPool.Data memory _aMp = _activeMp(_owner);
-        require(_aMp.number > 0, "Fountain::getUpcomingMp: NOT_FOUND");
+        MoneyPool.Data memory _mp = _upcomingMp(_owner);
+        if (_mp.number > 0) return _mp._properties();
+        _mp = _activeMp(_owner);
+        require(_mp.number > 0, "Fountain::getUpcomingMp: NOT_FOUND");
         return (
             mpCount + 1,
-            _activeMp.owner,
-            _activeMp.want,
-            _activeMp.target,
-            _activeMp._determineNextStart(),
-            _activeMp.duration,
+            _mp.owner,
+            _mp.want,
+            _mp.target,
+            _mp._determineNextStart(),
+            _mp.duration,
             0
         );
     }
@@ -462,13 +462,11 @@ contract Fountain is IFountain {
         _mp = mps[latestMpNumber[_owner]];
 
         // If there's an active Money pool, its end time should correspond to the start time of the new Money pool.
-        MoneyPool.Data memory _ownersActiveMp = _activeMp(_owner);
+        MoneyPool.Data memory _aMp = _activeMp(_owner);
         MoneyPool.Data storage _newMp =
             _initMp(
                 _owner,
-                _ownersActiveMp.number > 0
-                    ? _ownersActiveMp.start + _ownersActiveMp.duration
-                    : block.timestamp
+                _aMp.number > 0 ? _aMp.start + _aMp.duration : block.timestamp
             );
         if (_mp.number > 0) _newMp._clone(_mp);
 
