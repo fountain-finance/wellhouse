@@ -2,11 +2,11 @@ import { parseEther } from '@ethersproject/units'
 import React, { useState } from 'react'
 
 import { localProvider } from '../constants/local-provider'
-import { createNotifier } from '../helpers/Notifier'
+import { createTransactor } from '../helpers/Transactor'
 
 export default function Faucet({ address }: { address?: string }) {
   const [amount, setAmount] = useState<string>('0.01')
-  const notifier = createNotifier({ provider: localProvider })
+  const notifier = createTransactor({ provider: localProvider })
 
   return (
     <span style={{ display: 'inline-grid', gridAutoFlow: 'column', columnGap: 5 }}>

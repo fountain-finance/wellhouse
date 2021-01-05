@@ -26,7 +26,7 @@
         "type": "uint256"
       }
     ],
-    "name": "Collect",
+    "name": "CollectRedistributions",
     "type": "event"
   },
   {
@@ -137,16 +137,16 @@
         "type": "address"
       }
     ],
-    "name": "Tap",
+    "name": "TapMp",
     "type": "event"
   },
   {
     "inputs": [],
-    "name": "collectAll",
+    "name": "collectAllRedistributions",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
@@ -161,11 +161,11 @@
         "type": "address"
       }
     ],
-    "name": "collectFromOwner",
+    "name": "collectRedistributionsFromOwner",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
@@ -180,11 +180,11 @@
         "type": "address[]"
       }
     ],
-    "name": "collectFromOwners",
+    "name": "collectRedistributionsFromOwners",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
@@ -241,12 +241,17 @@
         "type": "address"
       }
     ],
-    "name": "getActiveMp",
+    "name": "getCurrentMp",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "number",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
       },
       {
         "internalType": "contract IERC20",
@@ -291,6 +296,60 @@
         "internalType": "uint256",
         "name": "number",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "want",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "target",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "start",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "duration",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "total",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+      }
+    ],
+    "name": "getQueuedMp",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "number",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
       },
       {
         "internalType": "contract IERC20",
@@ -392,50 +451,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_owner",
-        "type": "address"
-      }
-    ],
-    "name": "getUpcomingMp",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      },
-      {
-        "internalType": "contract IERC20",
-        "name": "want",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "target",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "start",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "duration",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "total",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "",
         "type": "address"
       }
@@ -501,7 +516,7 @@
         "type": "address"
       }
     ],
-    "name": "sustain",
+    "name": "sustainOwner",
     "outputs": [
       {
         "internalType": "uint256",
@@ -530,7 +545,7 @@
         "type": "address"
       }
     ],
-    "name": "tap",
+    "name": "tapMp",
     "outputs": [
       {
         "internalType": "bool",

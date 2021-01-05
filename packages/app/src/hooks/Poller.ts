@@ -1,20 +1,20 @@
 import { useEffect, useRef } from 'react'
 
-export function usePoller(fn: VoidFunction, delay = 2000) {
+export function usePoller(fn: VoidFunction, delay = 2000, extraWatch?: unknown) {
   let savedCallback = useRef<VoidFunction>()
 
   // run at start too
   useEffect(
-    function () {
+    function() {
       fn()
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [extraWatch],
   )
 
   // Remember the latest fn.
   useEffect(
-    function () {
+    function() {
       savedCallback.current = fn
     },
     [fn],
@@ -22,13 +22,13 @@ export function usePoller(fn: VoidFunction, delay = 2000) {
 
   // Set up the interval.
   useEffect(
-    function () {
+    function() {
       function tick() {
         if (savedCallback.current) savedCallback.current()
       }
 
       var id_1 = setInterval(tick, delay)
-      return function () {
+      return function() {
         return clearInterval(id_1)
       }
     },
