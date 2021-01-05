@@ -26,7 +26,7 @@ module.exports = [
         "type": "uint256"
       }
     ],
-    "name": "Collect",
+    "name": "CollectRedistributions",
     "type": "event"
   },
   {
@@ -137,16 +137,16 @@ module.exports = [
         "type": "address"
       }
     ],
-    "name": "Tap",
+    "name": "TapMp",
     "type": "event"
   },
   {
     "inputs": [],
-    "name": "collectAll",
+    "name": "collectAllRedistributions",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
@@ -161,11 +161,11 @@ module.exports = [
         "type": "address"
       }
     ],
-    "name": "collectFromOwner",
+    "name": "collectRedistributionsFromOwner",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
@@ -180,11 +180,11 @@ module.exports = [
         "type": "address[]"
       }
     ],
-    "name": "collectFromOwners",
+    "name": "collectRedistributionsFromOwners",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
@@ -241,12 +241,17 @@ module.exports = [
         "type": "address"
       }
     ],
-    "name": "getActiveMp",
+    "name": "getCurrentMp",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "number",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
       },
       {
         "internalType": "contract IERC20",
@@ -291,6 +296,11 @@ module.exports = [
         "internalType": "uint256",
         "name": "number",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
       },
       {
         "internalType": "contract IERC20",
@@ -400,8 +410,13 @@ module.exports = [
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "number",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
       },
       {
         "internalType": "contract IERC20",
@@ -501,7 +516,7 @@ module.exports = [
         "type": "address"
       }
     ],
-    "name": "sustain",
+    "name": "sustainOwner",
     "outputs": [
       {
         "internalType": "uint256",
@@ -530,7 +545,7 @@ module.exports = [
         "type": "address"
       }
     ],
-    "name": "tap",
+    "name": "tapMp",
     "outputs": [
       {
         "internalType": "bool",
