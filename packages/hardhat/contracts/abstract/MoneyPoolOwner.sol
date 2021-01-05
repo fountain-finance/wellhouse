@@ -22,7 +22,7 @@ abstract contract MoneyPoolOwner is Ownable {
         uint256 target,
         uint256 duration,
         IERC20 want
-    ) {
+    ) internal {
         setFountain(fountain);
         configureMp(target, duration, want);
     }
