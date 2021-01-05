@@ -152,7 +152,7 @@ contract Fountain is IFountain {
         _mp = _activeMp(_owner);
         require(_mp.number > 0, "Fountain::getUpcomingMp: NOT_FOUND");
         return (
-            mpCount + 1,
+            mpCount.add(1),
             _mp.owner,
             _mp.want,
             _mp.target,
@@ -197,7 +197,7 @@ contract Fountain is IFountain {
 
         _mp = mps[latestMpNumber[_owner]];
         return (
-            mpCount + 1,
+            mpCount.add(1),
             _mp.owner,
             _mp.want,
             _mp.target,
@@ -466,7 +466,9 @@ contract Fountain is IFountain {
         MoneyPool.Data storage _newMp =
             _initMp(
                 _owner,
-                _aMp.number > 0 ? _aMp.start + _aMp.duration : block.timestamp
+                _aMp.number > 0
+                    ? _aMp.start.add(_aMp.duration)
+                    : block.timestamp
             );
         if (_mp.number > 0) _newMp._clone(_mp);
 
