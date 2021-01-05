@@ -8,7 +8,7 @@ export function useUserProvider(injectedProvider?: Web3Provider, localProvider?:
       console.log('🦊 Using injected provider')
       return injectedProvider
     }
-    if (!localProvider || process.env.NODE_ENV === 'production') return undefined
+    if (!localProvider || process.env.NODE_ENV === 'production') return
 
     let burnerConfig: {
       privateKey?: string

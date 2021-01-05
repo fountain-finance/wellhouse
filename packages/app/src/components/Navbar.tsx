@@ -1,23 +1,17 @@
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { useLayoutEffect, useState } from 'react'
 
 import Account from './Account'
 import Tab from './Tab'
 
 export default function Navbar({
+  address,
   userProvider,
   onConnectWallet,
 }: {
+  address?: string
   userProvider?: JsonRpcProvider
   onConnectWallet: VoidFunction
 }) {
-  const [address, setAddress] = useState<string>()
-
-  // https://github.com/austintgriffith/eth-hooks/blob/master/src/UserAddress.ts
-  useLayoutEffect(() => {
-    userProvider?.getSigner().getAddress().then(setAddress)
-  }, [userProvider, setAddress])
-
   // Key tabs by index
   const tabs = [
     Tab({

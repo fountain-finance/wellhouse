@@ -1,22 +1,27 @@
 import { BigNumber } from '@ethersproject/bignumber'
 import { hexlify } from '@ethersproject/bytes'
 import { Deferrable } from '@ethersproject/properties'
-import { JsonRpcProvider, TransactionRequest, Web3Provider } from '@ethersproject/providers'
+import { JsonRpcProvider, JsonRpcSigner, TransactionRequest, Web3Provider } from '@ethersproject/providers'
 import { parseUnits } from '@ethersproject/units'
-import Notify, { InitOptions } from 'bnc-notify'
+import Notify, { InitOptions, TransactionEvent } from 'bnc-notify'
+
+import { Transactor } from '../models/transactor'
 
 // wrapper around BlockNative's Notify.js
 // https://docs.blocknative.com/notify
-export function createNotifier({
+export function createTransactor({
   provider,
   gasPrice,
 }: {
   provider?: Web3Provider | JsonRpcProvider
   gasPrice?: BigNumber
-}) {
+}): Transactor | undefined {
   if (!provider) return
 
-  return async (tx: Deferrable<TransactionRequest>) => {
+  return async (
+    tx: Deferrable<TransactionRequest>,
+    onConfirmed?: (e: TransactionEvent, signer: JsonRpcSigner) => void,
+  ) => {
     const signer = provider.getSigner()
 
     const network = await provider.getNetwork()
@@ -28,6 +33,7 @@ export function createNotifier({
       // darkMode: Boolean, // (default: false)
       transactionHandler: txInformation => {
         console.log('HANDLE TX', txInformation)
+        if (onConfirmed && txInformation.transaction.status === 'confirmed') onConfirmed(txInformation, signer)
       },
     }
     const notify = Notify(options)
@@ -59,7 +65,9 @@ export function createNotifier({
       // console.log("Notify", notify);
 
       // if it is a valid Notify.js network, use that, if not, just send a default notification
-      if ([1, 3, 4, 5, 42, 100].indexOf(network.chainId) >= 0) {
+      const isNotifyNetwork = [1, 3, 4, 5, 42, 100].indexOf(network.chainId) >= 0
+
+      if (isNotifyNetwork) {
         const { emitter } = notify.hash(result.hash)
         emitter.on('all', transaction => ({
           onclick: () => window.open(etherscanTxUrl + transaction.hash),
