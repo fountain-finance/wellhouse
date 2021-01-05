@@ -277,7 +277,12 @@ contract Fountain is IFountain {
 
         MoneyPool.Data storage _mp = _mpToConfigure(msg.sender);
         // Reset the start time to now if there isn't an active Money pool.
-        _mp._configure(_target, _duration, _want, _activeMp(msg.sender).number == 0 ? block.timestamp: _mp.start));
+        _mp._configure(
+            _target,
+            _duration,
+            _want,
+            _activeMp(msg.sender).number == 0 ? block.timestamp : _mp.start
+        );
 
         emit ConfigureMp(
             _mp.number,
@@ -450,12 +455,12 @@ contract Fountain is IFountain {
         _mp = mps[latestMpNumber[_owner]];
 
         // If there's an active Money pool, its end time should correspond to the start time of the new Money pool.
-        MoneyPool.Data memory activeMp = _activeMp(_owner);
+        MoneyPool.Data memory _ownersActiveMp = _activeMp(_owner);
         MoneyPool.Data storage _newMp =
             _initMp(
                 _owner,
-                _activeMp.number > 0
-                    ? _activeMp.start + _activeMp.duration
+                _ownersActiveMp.number > 0
+                    ? _ownersActiveMp.start + _ownersActiveMp.duration
                     : block.timestamp
             );
         if (_mp.number > 0) _newMp._clone(_mp);
