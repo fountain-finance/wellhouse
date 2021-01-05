@@ -38,7 +38,7 @@ export default function MpView({
   const tappableAmount: BigNumber | undefined = useContractReader({
     contract: contracts?.Fountain,
     functionName: 'getTappableAmount',
-    args: [owner],
+    args: [currentMp?.number],
   })
 
   const isOwner = owner === address
@@ -61,7 +61,7 @@ export default function MpView({
     const number = eth.abi.encodeParameter('uint256', currentMp.number)
     const amount = eth.abi.encodeParameter('uint256', tapAmount)
 
-    transactor(contracts.Fountain?.tap(number, amount, address))
+    transactor(contracts.Fountain?.tapMp(number, amount, address))
   }
 
   const spacing = 20
@@ -92,8 +92,8 @@ export default function MpView({
 
         {tappableAmount !== undefined && isOwner ? (
           <div>
-            <div>Tappable amount: {tappableAmount.toNumber()}</div>
-            <input defaultValue={tapAmount.toString()} onChange={e => setTapAmount(parseFloat(e.target.value))}></input>
+            <div>Withdrawable amount: {tappableAmount.toNumber()}</div>
+            <input placeholder="0" onChange={e => setTapAmount(parseFloat(e.target.value))}></input>
             <button disabled={tapAmount > tappableAmount.toNumber()} onClick={tap}>
               Withdraw
             </button>
