@@ -147,10 +147,10 @@ contract Fountain is IFountain {
             uint256 total
         )
     {
-        MoneyPool.Data memory _uMp = _upcomingMp(_owner);
+        MoneyPool.Data memory _sMp = _standbyMp(_owner);
         MoneyPool.Data memory _aMp = _activeMp(_owner);
-        if (_uMp.number > 0 && _aMp.number > 0) return _uMp._properties();
-        require(_aMp.number > 0, "Fountain::getUpcomingMp: NOT_FOUND");
+        if (_sMp.number > 0 && _aMp.number > 0) return _sMp._properties();
+        require(_aMp.number > 0, "Fountain::getQueuedMp: NOT_FOUND");
         return (
             mpCount.add(1),
             _aMp.owner,
@@ -187,13 +187,16 @@ contract Fountain is IFountain {
             uint256 total
         )
     {
-        MoneyPool.Data memory _mp = _activeMp(_owner);
-        if (_mp.number > 0) return _mp._properties();
-
         require(
             latestMpNumber[_owner] > 0,
             "Fountain::getCurrentMp: NOT_FOUND"
         );
+
+        MoneyPool.Data memory _mp = _activeMp(_owner);
+        if (_mp.number > 0) return _mp._properties();
+
+        _mp = _standbyMp(_owner);
+        if (_mp.number > 0) return _mp._properties();
 
         _mp = mps[latestMpNumber[_owner]];
         return (
@@ -454,8 +457,8 @@ contract Fountain is IFountain {
         private
         returns (MoneyPool.Data storage _mp)
     {
-        // Cannot update active moneyPool, check if there is a upcoming moneyPool
-        _mp = _upcomingMp(_owner);
+        // Cannot update active moneyPool, check if there is a standby moneyPool
+        _mp = _standbyMp(_owner);
         if (_mp.number > 0) return _mp;
 
         // No upcoming moneyPool found, clone the latest moneyPool
@@ -489,8 +492,8 @@ contract Fountain is IFountain {
         _mp = _activeMp(_owner);
         if (_mp.number > 0) return _mp;
 
-        // No active moneyPool found, check if there is an upcoming moneyPool
-        _mp = _upcomingMp(_owner);
+        // No active moneyPool found, check if there is a standby moneyPool
+        _mp = _standbyMp(_owner);
         if (_mp.number > 0) return _mp;
 
         // No upcoming moneyPool found, clone the latest moneyPool
@@ -597,11 +600,11 @@ contract Fountain is IFountain {
     }
 
     /** 
-        @notice The Money pool that's next up for an owner.
+        @notice An owner's edittable Money pool.
         @param _owner The owner of the money pool being looked for.
-        @return _mp The upcoming Money pool.
+        @return _mp The standby Money pool.
     */
-    function _upcomingMp(address _owner)
+    function _standbyMp(address _owner)
         private
         view
         returns (MoneyPool.Data storage _mp)
@@ -610,6 +613,6 @@ contract Fountain is IFountain {
         if (_mp.number == 0) return mps[0];
 
         // There is no upcoming Money pool if the latest Money pool is not upcoming
-        if (_mp._state() != MoneyPool.State.Upcoming) return mps[0];
+        if (_mp._state() != MoneyPool.State.Standby) return mps[0];
     }
 }

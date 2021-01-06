@@ -12,7 +12,7 @@ library MoneyPool {
 
     /// @notice Possible states that a Money pool may be in
     /// @dev Money pool's are immutable once the Money pool is active.
-    enum State {Upcoming, Active, Redistributing}
+    enum State {Standby, Active, Redistributing}
 
     /// @notice The Money pool structure represents a project stewarded by an address, and accounts for which addresses have helped sustain the project.
     struct Data {
@@ -82,6 +82,7 @@ library MoneyPool {
         self.duration = _duration;
         self.want = _want;
         self.lastConfigured = block.timestamp;
+        self.start = _start;
     }
 
     /** 
@@ -135,8 +136,8 @@ library MoneyPool {
     */
     function _state(Data memory self) internal view returns (State) {
         if (_hasExpired(self)) return State.Redistributing;
-        if (_hasStarted(self)) return State.Active;
-        return State.Upcoming;
+        if (_hasStarted(self) && self.total > 0) return State.Active;
+        return State.Standby;
     }
 
     /** 
@@ -202,7 +203,7 @@ library MoneyPool {
         @return hasStarted The boolean result.
     */
     function _hasStarted(Data memory self) private view returns (bool) {
-        return block.timestamp >= self.start && self.total > 0;
+        return block.timestamp >= self.start;
     }
 
     /** 
