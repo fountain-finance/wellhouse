@@ -14,7 +14,7 @@ export default function useContractReader<V>({
   functionName: string
   args?: unknown[]
   pollTime?: number
-  formatter?: (val: unknown) => V
+  formatter?: (val: any) => V
 }) {
   const adjustPollTime = pollTime ?? 3000
 
@@ -25,15 +25,15 @@ export default function useContractReader<V>({
       if (!contract) return
 
       try {
-        let newValue: unknown
+        const newValue: unknown = await contract[functionName](...(args ?? []))
 
-        newValue = await contract[functionName](...(args ?? []))
+        if (!newValue) return
 
         const result = formatter ? formatter(newValue) : (newValue as V)
 
         if (result !== value) setValue(result)
       } catch (e) {
-        console.log(e)
+        console.log('Poller >>>', e)
       }
     },
     adjustPollTime,

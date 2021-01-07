@@ -1,14 +1,12 @@
 import './App.scss'
-import 'antd/dist/antd.css'
 
 import { BigNumber } from '@ethersproject/bignumber'
 import { Web3Provider } from '@ethersproject/providers'
 import { useCallback, useEffect, useState } from 'react'
 import { BrowserRouter, Route, Switch } from 'react-router-dom'
 
-import CreateMp from './components/CreateMp'
 import Gimme from './components/Gimme'
-import MpView from './components/MpView'
+import MoneyPools from './components/MoneyPools'
 import Navbar from './components/Navbar'
 import { localProvider } from './constants/local-provider'
 import { web3Modal } from './constants/web3-modal'
@@ -35,12 +33,16 @@ function App() {
     userProvider
       ?.getSigner()
       .getAddress()
-      .then(setAddress)
+      .then(address => {
+        setAddress(address)
+
+        if (window.location.pathname === '/') window.location.href = address
+      })
   }, [userProvider, setAddress])
 
   const transactor = createTransactor({
     provider: userProvider,
-    gasPrice: gasPrice !== undefined ? BigNumber.from(gasPrice) : undefined,
+    gasPrice: typeof gasPrice === 'number' ? BigNumber.from(gasPrice) : undefined,
   })
 
   const contracts = useContractLoader(userProvider)
@@ -55,14 +57,11 @@ function App() {
         <BrowserRouter>
           <Switch>
             <Route exact path="/"></Route>
-            <Route exact path="/create">
-              <CreateMp transactor={transactor} contracts={contracts} />
-            </Route>
             <Route exact path="/gimme">
               <Gimme contracts={contracts} transactor={transactor} address={address}></Gimme>
             </Route>
             <Route exact path="/:owner">
-              <MpView contracts={contracts} transactor={transactor} address={address}></MpView>
+              <MoneyPools contracts={contracts} transactor={transactor} address={address} />
             </Route>
           </Switch>
         </BrowserRouter>

@@ -17,7 +17,7 @@ export default function Navbar({
         display: 'flex',
         alignItems: 'baseline',
         justifyContent: 'flex-end',
-        padding: 20,
+        padding: '10px 20px',
         borderBottom: '1px solid lightgrey',
       }}
     >
