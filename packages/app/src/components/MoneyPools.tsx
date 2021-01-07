@@ -24,6 +24,10 @@ export default function MoneyPools({
 
   const { owner }: { owner?: string } = useParams()
 
+  const spacing = 30
+
+  const isOwner = owner === address
+
   const currentMp: MoneyPool | undefined = useContractReader({
     contract: contracts?.Fountain,
     functionName: 'getCurrentMp',
@@ -42,8 +46,6 @@ export default function MoneyPools({
     args: [currentMp?.number],
     formatter: (result: BigNumber) => result?.toNumber(),
   })
-
-  const isOwner = owner === address
 
   function sustain() {
     if (!transactor || !contracts?.Fountain || !currentMp?.owner) return
@@ -66,20 +68,24 @@ export default function MoneyPools({
     transactor(contracts.Fountain?.tapMp(number, amount, address))
   }
 
-  const spacing = 30
+  const configureMoneyPool = <ConfigureMoneyPool transactor={transactor} contracts={contracts} />
 
-  let createTitle: JSX.Element
-  if (!currentMp) {
-    createTitle = <h1>Create money pool</h1>
-  } else if (currentMp?.total?.toNumber() !== 0) {
-    createTitle = <h2>Configure upcoming moneypool</h2>
-  } else {
-    createTitle = <h2>Reconfigure current moneypool</h2>
+  function header(text: string) {
+    return <h2 style={{ margin: 0 }}>{text}</h2>
+  }
+
+  const formStyle: React.CSSProperties = {
+    width: 300,
+    padding: 20,
+    borderRadius: 10,
+    border: '1px solid lightGray',
   }
 
   const pools =
     !currentMp && !queuedMp ? null : (
       <div>
+        <h3>{owner}</h3>
+        <h1 style={{ marginRight: spacing }}>Money Pool</h1>
         <div
           style={{
             display: 'grid',
@@ -95,22 +101,44 @@ export default function MoneyPools({
                 rowGap: spacing,
               }}
             >
-              <h1>Current moneypool</h1>
+              {header('Current')}
 
-              {currentMp ? <MoneyPoolDetail mp={currentMp} /> : <div>Getting money pool...</div>}
+              {currentMp ? <MoneyPoolDetail mp={currentMp} isActive={true} /> : <div>Getting money pool...</div>}
 
-              <div>
-                <input placeholder="0" onChange={e => setSustainAmount(parseFloat(e.target.value))}></input>
-                <button onClick={sustain}>Sustain</button>
-              </div>
-
-              {tappableAmount !== undefined && isOwner ? (
+              {currentMp ? (
                 <div>
-                  <div>Withdrawable amount: {tappableAmount}</div>
-                  <input placeholder="0" onChange={e => setTapAmount(parseFloat(e.target.value))}></input>
+                  <div>
+                    <label htmlFor="sustain">Sustain money pool</label>
+                  </div>
+                  <input
+                    name="sustain"
+                    placeholder="0"
+                    onChange={e => setSustainAmount(parseFloat(e.target.value))}
+                  ></input>
+                  <button onClick={sustain}>Sustain</button>
+                </div>
+              ) : null}
+
+              {currentMp && tappableAmount !== undefined && isOwner ? (
+                <div>
+                  <div>
+                    <label htmlFor="withdrawable">Withdrawable: {tappableAmount}</label>
+                  </div>
+                  <input
+                    name="withdrawable"
+                    placeholder="0"
+                    onChange={e => setTapAmount(parseFloat(e.target.value))}
+                  ></input>
                   <button disabled={tapAmount > tappableAmount} onClick={tap}>
                     Withdraw
                   </button>
+                </div>
+              ) : null}
+
+              {isOwner && currentMp?.total?.toNumber() === 0 ? (
+                <div style={formStyle}>
+                  {header('Reconfigure')}
+                  {configureMoneyPool}
                 </div>
               ) : null}
             </div>
@@ -124,24 +152,31 @@ export default function MoneyPools({
                 rowGap: spacing,
               }}
             >
-              <h1>Queued</h1>
+              {header('Queued')}
 
               {queuedMp ? <MoneyPoolDetail mp={queuedMp} /> : <div>Nada</div>}
+
+              {isOwner && currentMp?.total?.toNumber() ? (
+                <div style={formStyle}>
+                  {header('Reconfigure queued money pool')}
+                  {configureMoneyPool}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
       </div>
     )
 
-  const configure = isOwner ? <ConfigureMoneyPool transactor={transactor} contracts={contracts} /> : null
-
   return (
     <div>
       {pools}
-      <div style={{ marginTop: 60, paddingTop: 60, borderTop: '1px solid black' }}>
-        {createTitle}
-        {configure}
-      </div>
+      {!currentMp ? (
+        <div>
+          <h1>Create money pool</h1>
+          {configureMoneyPool}
+        </div>
+      ) : null}
     </div>
   )
 }
