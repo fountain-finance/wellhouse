@@ -62,8 +62,6 @@ export default function MoneyPools({
     .filter(e => e.owner === owner)
     .filter(e => e.mpNumber.toNumber() === currentMp?.number.toNumber())
 
-  console.log('events', currentSustainEvents)
-
   function sustain() {
     if (!transactor || !contracts?.Fountain || !currentMp?.owner) return
 
