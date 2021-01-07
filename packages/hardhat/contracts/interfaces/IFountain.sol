@@ -97,6 +97,11 @@ interface IFountain {
         view
         returns (uint256 _amount);
 
+    function getAllTrackedRedistribution(address _sustainer)
+        external
+        view
+        returns (uint256 _amount);
+
     function configureMp(
         uint256 _target,
         uint256 _duration,

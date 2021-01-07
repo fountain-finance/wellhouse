@@ -261,6 +261,35 @@ contract Fountain is IFountain {
         return _mp._trackedRedistribution(_sustainer);
     }
 
+    /** 
+        @notice The amount of redistribution that can be claimed by the given address in the Fountain ecosystem.
+        @dev This function runs the same routine as _redistributeAmount to determine the summed amount.
+        @param _sustainer The address of the sustainer to get an amount for.
+        @return _amount The amount.
+    */
+    function getAllTrackedRedistribution(address _sustainer)
+        external
+        view
+        override
+        returns (uint256 _amount)
+    {
+        _amount = 0;
+        address[] memory _owners = sustainedOwners[msg.sender];
+        for (uint256 i = 0; i < _owners.length; i++) {
+            uint256 _mpNumber = latestMpNumber[_owners[i]];
+            MoneyPool.Data memory _mp = mps[_mpNumber];
+            while (_mp.number > 0 && !_mp.hasRedistributed[_sustainer]) {
+                if (_mp._state() == MoneyPool.State.Redistributing) {
+                    _amount = _amount.add(
+                        _mp._trackedRedistribution(_sustainer)
+                    );
+                }
+                _mpNumber = previousMpNumber[_mpNumber];
+                _mp = mps[_mpNumber];
+            }
+        }
+    }
+
     // --- external transactions --- //
 
     constructor(IERC20 _dai) public {
@@ -546,7 +575,6 @@ contract Fountain is IFountain {
         _amount = 0;
         uint256 _mpNumber = latestMpNumber[_owner];
         MoneyPool.Data storage _mp = mps[_mpNumber];
-        require(_mp.number > 0, "Fountain::_redistributeAmount: NOT_FOUND");
 
         while (_mp.number > 0 && !_mp.hasRedistributed[_sustainer]) {
             if (_mp._state() == MoneyPool.State.Redistributing) {

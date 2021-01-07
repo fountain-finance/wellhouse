@@ -38,11 +38,13 @@ export default function MoneyPools({
     args: [owner],
   })
 
+  console.log({ currentMp });
   const queuedMp: MoneyPool | undefined = useContractReader({
     contract: contracts?.Fountain,
     functionName: 'getQueuedMp',
     args: [owner],
   })
+  console.log({ queuedMp });
 
   const tappableAmount: number | undefined = useContractReader<number>({
     contract: contracts?.Fountain,
@@ -203,8 +205,8 @@ export default function MoneyPools({
             </div>
           ))
         ) : (
-          <div>No sustainments yet</div>
-        )}
+            <div>No sustainments yet</div>
+          )}
       </div>
     </div>
   )
