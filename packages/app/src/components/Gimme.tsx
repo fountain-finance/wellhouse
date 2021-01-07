@@ -12,7 +12,7 @@ export default function Gimme({
   address,
 }: {
   transactor?: Transactor
-  contracts?: Partial<Contracts>
+  contracts?: Contracts
   address?: string
 }) {
   const [gimmeAmount, setGimmeAmount] = useState<number>(0)

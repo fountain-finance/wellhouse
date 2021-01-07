@@ -3,12 +3,16 @@ import React, { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Web3 from 'web3'
 
+import { ContractName } from '../constants/contract-name'
 import useContractReader from '../hooks/ContractReader'
+import useEventListener from '../hooks/EventListener'
 import { Contracts } from '../models/contracts'
 import { MoneyPool } from '../models/money-pool'
 import { Transactor } from '../models/transactor'
 import ConfigureMoneyPool from './ConfigureMoneyPool'
 import MoneyPoolDetail from './MoneyPoolDetail'
+import { localProvider } from '../constants/local-provider'
+import { SustainEvent } from '../models/events/sustain-event'
 
 export default function MoneyPools({
   address,
@@ -17,7 +21,7 @@ export default function MoneyPools({
 }: {
   address?: string
   transactor?: Transactor
-  contracts?: Partial<Contracts>
+  contracts?: Contracts
 }) {
   const [sustainAmount, setSustainAmount] = useState<number>(0)
   const [tapAmount, setTapAmount] = useState<number>(0)
@@ -46,6 +50,19 @@ export default function MoneyPools({
     args: [currentMp?.number],
     formatter: (result: BigNumber) => result?.toNumber(),
   })
+
+  const currentSustainEvents = (useEventListener({
+    contracts,
+    contractName: ContractName.Fountain,
+    eventName: 'SustainMp',
+    provider: localProvider,
+    startBlock: 1,
+    getInitial: true,
+  }) as SustainEvent[])
+    .filter(e => e.owner === owner)
+    .filter(e => e.mpNumber.toNumber() === currentMp?.number.toNumber())
+
+  console.log('events', currentSustainEvents)
 
   function sustain() {
     if (!transactor || !contracts?.Fountain || !currentMp?.owner) return
@@ -177,6 +194,20 @@ export default function MoneyPools({
           {configureMoneyPool}
         </div>
       ) : null}
+      <div>
+        <h3>Thanks to...</h3>
+        {currentSustainEvents.length ? (
+          currentSustainEvents.map((e, i) => (
+            <div style={{ marginBottom: 20, lineHeight: 1.2 }} key={i}>
+              <div>Amount: {e.amount?.toNumber()}</div>
+              <div>Sustainer: {e.sustainer}</div>
+              <div>Beneficiary: {e.beneficiary}</div>
+            </div>
+          ))
+        ) : (
+          <div>No sustainments yet</div>
+        )}
+      </div>
     </div>
   )
 }

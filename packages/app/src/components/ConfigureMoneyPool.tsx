@@ -11,7 +11,7 @@ export default function ConfigureMoneyPool({
   contracts,
 }: {
   transactor?: Transactor
-  contracts?: Partial<Record<ContractName, Contract>>
+  contracts?: Record<ContractName, Contract>
 }) {
   const [target, setTarget] = useState<number>(0)
   const [duration, setDuration] = useState<number>(0)

@@ -12,7 +12,7 @@ const network: NetworkName =
     : (process.env.REACT_APP_DEV_NETWORK as NetworkName) ?? NetworkName.local
 
 export function useContractLoader(signerOrProvider?: JsonRpcProvider | JsonRpcSigner) {
-  const [contracts, setContracts] = useState<Partial<Contracts>>()
+  const [contracts, setContracts] = useState<Contracts>()
 
   useEffect(() => {
     async function loadContracts() {
@@ -61,10 +61,7 @@ const loadContract = (contractName: ContractName, signerOrProvider: JsonRpcSigne
     signerOrProvider,
   )
 
-  const bytecode: string = require(`../contracts/${network}/${contractName}.bytecode.js`)
+  // const bytecode: string = require(`../contracts/${network}/${contractName}.bytecode.js`)
 
-  return {
-    ...contract,
-    ...(bytecode ? { bytecode } : {}),
-  } as Contract
+  return contract
 }
