@@ -32,10 +32,6 @@ library MoneyPool {
         uint256 duration;
         // The amount of available funds that have been tapped by the owner.
         uint256 tapped;
-        // Indicates if surplus funds have been redistributed for each sustainer address.
-        mapping(address => bool) hasRedistributed;
-        // The amount each address has contributed to sustaining this Money pool.
-        mapping(address => uint256) sustainments;
         // The timestamp when the Money pool was last configured.
         uint256 lastConfigured;
     }
@@ -90,18 +86,8 @@ library MoneyPool {
         If the amount results in surplus, redistribute the surplus proportionally to sustainers of the Money pool.
         @param self The Money pool to sustain.
         @param _amount Amount of sustainment.
-        @param _beneficiary The address to associate with this sustainment. The mes.sender is making this sustainment on the beneficiary's behalf.
     */
-    function _sustain(
-        Data storage self,
-        uint256 _amount,
-        address _beneficiary
-    ) internal {
-        // Increment the sustainments to the Money pool made by the message sender.
-        self.sustainments[_beneficiary] = self.sustainments[_beneficiary].add(
-            _amount
-        );
-
+    function _add(Data storage self, uint256 _amount) internal {
         // Increment the total amount contributed to the sustainment of the Money pool.
         self.total = self.total.add(_amount);
     }
@@ -151,30 +137,6 @@ library MoneyPool {
         returns (uint256)
     {
         return Math.min(self.target, self.total).sub(self.tapped);
-    }
-
-    /** 
-        @notice The amount of redistribution in a Money pool that can be claimed by the given address.
-        @param self The Money pool to get a redistribution amount for.
-        @param _sustainer The address of the sustainer to get an amount for.
-        @return amount The amount.
-    */
-    function _trackedRedistribution(Data storage self, address _sustainer)
-        internal
-        view
-        returns (uint256)
-    {
-        // Return 0 if there's no surplus.
-        if (self.total < self.target) return 0;
-
-        uint256 _surplus = self.total.sub(self.target);
-
-        // Calculate their share of the sustainment for the the given sustainer.
-        // allocate a proportional share of the surplus, overwriting any previous value.
-        uint256 _proportionOfTotal =
-            self.sustainments[_sustainer].div(self.total);
-
-        return _surplus.mul(_proportionOfTotal);
     }
 
     /** 

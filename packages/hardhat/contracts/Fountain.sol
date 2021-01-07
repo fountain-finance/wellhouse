@@ -73,6 +73,12 @@ contract Fountain is IFountain {
     /// @dev Map of whether or not an address has sustained another owner.
     mapping(address => mapping(address => bool)) private sustainedOwnerTracker;
 
+    // Indicates if surplus funds have been redistributed for each sustainer address.
+    mapping(uint256 => mapping(address => bool)) private hasRedistributed;
+
+    // The amount each address has contributed to sustaining this Money pool.
+    mapping(uint256 => mapping(address => uint256)) private sustainments;
+
     // --- public properties --- //
 
     /// @notice A mapping from Money pool number's the the numbers of the previous Money pool for the same owner.
@@ -223,7 +229,7 @@ contract Fountain is IFountain {
         returns (uint256)
     {
         require(_mpNumber > 0, "Fountain::getSustainment:: NOT_FOUND");
-        return mps[_mpNumber].sustainments[_sustainer];
+        return sustainments[_mpNumber][_sustainer];
     }
 
     /**
@@ -258,7 +264,7 @@ contract Fountain is IFountain {
             _mp.number > 0,
             "Fountain::getTrackedRedistribution:: NOT_FOUND"
         );
-        return _mp._trackedRedistribution(_sustainer);
+        return _trackedRedistribution(_mp, _sustainer);
     }
 
     /** 
@@ -276,23 +282,23 @@ contract Fountain is IFountain {
         _amount = 0;
         address[] memory _owners = sustainedOwners[msg.sender];
         for (uint256 i = 0; i < _owners.length; i++) {
-            uint256 _mpNumber = latestMpNumber[_owners[i]];
-            MoneyPool.Data memory _mp = mps[_mpNumber];
-            while (_mp.number > 0 && !_mp.hasRedistributed[_sustainer]) {
+            MoneyPool.Data memory _mp = mps[latestMpNumber[_owners[i]]];
+            while (
+                _mp.number > 0 && !hasRedistributed[_mp.number][_sustainer]
+            ) {
                 if (_mp._state() == MoneyPool.State.Redistributing) {
                     _amount = _amount.add(
-                        _mp._trackedRedistribution(_sustainer)
+                        _trackedRedistribution(_mp, _sustainer)
                     );
                 }
-                _mpNumber = previousMpNumber[_mpNumber];
-                _mp = mps[_mpNumber];
+                _mp = mps[previousMpNumber[_mp.number]];
             }
         }
     }
 
     // --- external transactions --- //
 
-    constructor(IERC20 _dai) public {
+    constructor(IERC20 _dai) {
         dai = _dai;
         mpCount = 0;
     }
@@ -336,12 +342,12 @@ contract Fountain is IFountain {
 
     /** 
         @notice Sustain an owner's active Money pool.
+        @dev If the amount results in surplus, redistribute the surplus proportionally to sustainers of the Money pool.
         @param _owner The owner of the Money pool to sustain.
         @param _amount Amount of sustainment.
         @param _beneficiary The address to associate with this sustainment. This is usually mes.sender, but can be something else if the sender is making this sustainment on the beneficiary's behalf.
         @return mpNumber The number of the Money pool that was successfully sustained.
     */
-
     function sustainOwner(
         address _owner,
         uint256 _amount,
@@ -352,7 +358,13 @@ contract Fountain is IFountain {
         // Find the Money pool that this sustainment should go to.
         MoneyPool.Data storage _mp = _mpToSustain(_owner);
 
-        _mp._sustain(_amount, _beneficiary);
+        _mp._add(_amount);
+
+        // Increment the sustainments to the Money pool made by the message sender.
+        sustainments[_mp.number][_beneficiary] = sustainments[_mp.number][
+            _beneficiary
+        ]
+            .add(_amount);
 
         _mp.want.safeTransferFrom(msg.sender, address(this), _amount);
 
@@ -573,16 +585,14 @@ contract Fountain is IFountain {
         returns (uint256 _amount)
     {
         _amount = 0;
-        uint256 _mpNumber = latestMpNumber[_owner];
-        MoneyPool.Data storage _mp = mps[_mpNumber];
+        MoneyPool.Data storage _mp = mps[latestMpNumber[_owner]];
 
-        while (_mp.number > 0 && !_mp.hasRedistributed[_sustainer]) {
+        while (_mp.number > 0 && !hasRedistributed[_mp.number][_sustainer]) {
             if (_mp._state() == MoneyPool.State.Redistributing) {
-                _amount = _amount.add(_mp._trackedRedistribution(_sustainer));
-                _mp.hasRedistributed[_sustainer] = true;
+                _amount = _amount.add(_trackedRedistribution(_mp, _sustainer));
+                hasRedistributed[_mp.number][_sustainer] = true;
             }
-            _mpNumber = previousMpNumber[_mpNumber];
-            _mp = mps[_mpNumber];
+            _mp = mps[previousMpNumber[_mp.number]];
         }
     }
 
@@ -642,5 +652,28 @@ contract Fountain is IFountain {
 
         // There is no upcoming Money pool if the latest Money pool is not upcoming
         if (_mp._state() != MoneyPool.State.Standby) return mps[0];
+    }
+
+    /** 
+        @notice The amount of redistribution in a Money pool that can be claimed by the given address.
+        @param _mp The Money pool to get a redistribution amount for.
+        @param _sustainer The address of the sustainer to get an amount for.
+        @return amount The amount.
+    */
+    function _trackedRedistribution(
+        MoneyPool.Data memory _mp,
+        address _sustainer
+    ) private view returns (uint256) {
+        // Return 0 if there's no surplus.
+        if (_mp.total < _mp.target) return 0;
+
+        uint256 _surplus = _mp.total.sub(_mp.target);
+
+        // Calculate their share of the sustainment for the the given sustainer.
+        // allocate a proportional share of the surplus, overwriting any previous value.
+        uint256 _proportionOfTotal =
+            sustainments[_mp.number][_sustainer].div(_mp.total);
+
+        return _surplus.mul(_proportionOfTotal);
     }
 }
