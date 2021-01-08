@@ -8,7 +8,7 @@ export default function Withdrawable({ contracts, address }: { contracts?: Contr
   const withdrawable: BigNumber | undefined = useContractReader({
     contract: contracts?.Fountain,
     functionName: 'getAllTrackedRedistribution',
-    args: [address],
+    args: [address, false],
   })
 
   const pendingWithdrawable: BigNumber | undefined = useContractReader({
