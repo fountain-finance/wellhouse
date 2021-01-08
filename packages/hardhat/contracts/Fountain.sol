@@ -271,14 +271,13 @@ contract Fountain is IFountain {
         @notice The amount of redistribution that can be claimed by the given address in the Fountain ecosystem.
         @dev This function runs the same routine as _redistributeAmount to determine the summed amount.
         @param _sustainer The address of the sustainer to get an amount for.
+        @param _includesActive If active Money pools should be included in the calculation.
         @return _amount The amount.
     */
-    function getAllTrackedRedistribution(address _sustainer)
-        external
-        view
-        override
-        returns (uint256 _amount)
-    {
+    function getAllTrackedRedistribution(
+        address _sustainer,
+        bool _includesActive
+    ) external view override returns (uint256 _amount) {
         _amount = 0;
         address[] memory _owners = sustainedOwners[msg.sender];
         for (uint256 i = 0; i < _owners.length; i++) {
@@ -286,7 +285,10 @@ contract Fountain is IFountain {
             while (
                 _mp.number > 0 && !hasRedistributed[_mp.number][_sustainer]
             ) {
-                if (_mp._state() == MoneyPool.State.Redistributing) {
+                if (
+                    _mp._state() == MoneyPool.State.Redistributing ||
+                    (_includesActive && _mp._state() == MoneyPool.State.Active)
+                ) {
                     _amount = _amount.add(
                         _trackedRedistribution(_mp, _sustainer)
                     );
