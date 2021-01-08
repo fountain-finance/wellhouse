@@ -298,7 +298,7 @@ contract Fountain is IFountain {
 
     // --- external transactions --- //
 
-    constructor(IERC20 _dai) {
+    constructor(IERC20 _dai) public {
         dai = _dai;
         mpCount = 0;
     }
@@ -585,7 +585,7 @@ contract Fountain is IFountain {
         returns (uint256 _amount)
     {
         _amount = 0;
-        MoneyPool.Data storage _mp = mps[latestMpNumber[_owner]];
+        MoneyPool.Data memory _mp = mps[latestMpNumber[_owner]];
 
         while (_mp.number > 0 && !hasRedistributed[_mp.number][_sustainer]) {
             if (_mp._state() == MoneyPool.State.Redistributing) {
