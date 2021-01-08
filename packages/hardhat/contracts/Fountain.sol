@@ -99,6 +99,8 @@ contract Fountain is IFountain {
         @notice The properties of the given Money pool.
         @param _mpNumber The number of the Money pool to get the properties of.
         @return number The number of the Money pool.
+        @return title The title of the Money pool.
+        @return link A link that's associated with this Money pool.
         @return owner The owner of the Money pool.
         @return want The token the Money pool wants.
         @return target The amount of the want token this Money pool is targeting.
@@ -113,6 +115,8 @@ contract Fountain is IFountain {
         override
         returns (
             uint256 number,
+            bytes32 title,
+            bytes32 link,
             address owner,
             IERC20 want,
             uint256 target,
@@ -131,6 +135,8 @@ contract Fountain is IFountain {
         @notice The Money pool that's next up for an owner and not currently accepting payments.
         @param _owner The owner of the Money pool being looked for.
         @return number The number of the Money pool.
+        @return title The title of the Money pool.
+        @return link A link that's associated with this Money pool.
         @return owner The owner of the Money pool.
         @return want The token the Money pool wants.
         @return target The amount of the want token this Money pool is targeting.
@@ -145,6 +151,8 @@ contract Fountain is IFountain {
         override
         returns (
             uint256 number,
+            bytes32 title,
+            bytes32 link,
             address owner,
             IERC20 want,
             uint256 target,
@@ -160,6 +168,8 @@ contract Fountain is IFountain {
         require(_aMp.number > 0, "Fountain::getQueuedMp: NOT_FOUND");
         return (
             mpCount.add(1),
+            _aMp.title,
+            _aMp.link,
             _aMp.owner,
             _aMp.want,
             _aMp.target,
@@ -174,6 +184,8 @@ contract Fountain is IFountain {
         @notice The properties of the Money pool that would be currently accepting sustainments.
         @param _owner The owner of the money pool being looked for.
         @return number The number of the Money pool.
+        @return title The title of the Money pool.
+        @return link A link that's associated with this Money pool.
         @return owner The owner of the Money pool.
         @return want The token the Money pool wants.
         @return target The amount of the want token this Money pool is targeting.
@@ -188,6 +200,8 @@ contract Fountain is IFountain {
         override
         returns (
             uint256 number,
+            bytes32 title,
+            bytes32 link,
             address owner,
             IERC20 want,
             uint256 target,
@@ -211,6 +225,8 @@ contract Fountain is IFountain {
         _mp = mps[latestMpNumber[_owner]];
         return (
             mpCount.add(1),
+            _mp.title,
+            _mp.link,
             _mp.owner,
             _mp.want,
             _mp.target,
@@ -275,6 +291,7 @@ contract Fountain is IFountain {
     /** 
         @notice The amount of redistribution that can be claimed by the given address in the Fountain ecosystem.
         @dev This function runs the same routine as _redistributeAmount to determine the summed amount.
+        Look there for more documentation.
         @param _sustainer The address of the sustainer to get an amount for.
         @param _includesActive If active Money pools should be included in the calculation.
         @return _amount The amount.
@@ -316,20 +333,28 @@ contract Fountain is IFountain {
         @param _target The sustainability target to set.
         @param _duration The duration to set, measured in seconds.
         @param _want The token that the Money pool wants.
+        @param _title The title of the Money pool.
+        @param _link A link to information about the Money pool.
         @return mpNumber The number of the Money pool that was successfully configured.
     */
     function configureMp(
         uint256 _target,
         uint256 _duration,
-        IERC20 _want
+        IERC20 _want,
+        bytes32 _title,
+        bytes32 _link
     ) external override returns (uint256) {
         require(_duration >= 1, "Fountain::configureMp: TOO_SHORT");
         require(_want == dai, "Fountain::configureMp: UNSUPPORTED_WANT");
         require(_target > 0, "Fountain::configureMp: BAD_TARGET");
+        require(_title != "", "Fountain::configureMp: BAD_TITLE");
+        require(_link != "", "Fountain::configureMp: BAD_LINK");
 
         MoneyPool.Data storage _mp = _mpToConfigure(msg.sender);
         // Reset the start time to now if there isn't an active Money pool.
         _mp._configure(
+            _title,
+            _link,
             _target,
             _duration,
             _want,
@@ -341,7 +366,9 @@ contract Fountain is IFountain {
             _mp.owner,
             _mp.target,
             _mp.duration,
-            _mp.want
+            _mp.want,
+            _mp.title,
+            _mp.link
         );
 
         return _mp.number;

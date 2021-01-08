@@ -16,6 +16,10 @@ library MoneyPool {
 
     /// @notice The Money pool structure represents a project stewarded by an address, and accounts for which addresses have helped sustain the project.
     struct Data {
+        // The title of the Money pool.
+        bytes32 title;
+        // A link that points to a justification for these parameters.
+        bytes32 link;
         // A unique number that's incremented for each new Money pool, starting with 1.
         uint256 number;
         // The number of the owner's Money pool that came before this one.
@@ -67,6 +71,8 @@ library MoneyPool {
         @dev Configures the sustainability target and duration of the sender's current Money pool if it hasn't yet received sustainments, or
         sets the properties of the Money pool that will take effect once the current Money pool expires.
         @param self The Money pool to configure.
+        @param _title The title of the Money pool.
+        @param _link A link to associate with the Money pool.
         @param _target The sustainability target to set.
         @param _duration The duration to set, measured in seconds.
         @param _want The token that the Money pool wants.
@@ -74,11 +80,15 @@ library MoneyPool {
     */
     function _configure(
         Data storage self,
+        bytes32 _title,
+        bytes32 _link,
         uint256 _target,
         uint256 _duration,
         IERC20 _want,
         uint256 _start
     ) internal {
+        self.title = _title;
+        self.link = _link;
         self.target = _target;
         self.duration = _duration;
         self.want = _want;
@@ -186,6 +196,8 @@ library MoneyPool {
         @notice The properties of the given Money pool.
         @param self The Money pool to get the properties of.
         @return number The number of the Money pool.
+        @return title The title of the Money pool.
+        @return link A link that's associated with this Money pool.
         @return owner The owner of the Money pool.
         @return want The token the Money pool wants.
         @return target The amount of the want token this Money pool is targeting.
@@ -199,6 +211,8 @@ library MoneyPool {
         pure
         returns (
             uint256,
+            bytes32,
+            bytes32,
             address,
             IERC20,
             uint256,
@@ -210,6 +224,8 @@ library MoneyPool {
     {
         return (
             self.number,
+            self.title,
+            self.link,
             self.owner,
             self.want,
             self.target,
