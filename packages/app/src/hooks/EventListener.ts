@@ -63,7 +63,7 @@ export default function useEventListener({
         console.log(e)
       }
     }
-  }, [provider, startBlock, contracts, contractName, eventName])
+  }, [provider, startBlock, contract, eventName])
 
   return events
 }

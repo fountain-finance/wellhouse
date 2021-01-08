@@ -239,6 +239,11 @@
         "internalType": "address",
         "name": "_sustainer",
         "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_includesActive",
+        "type": "bool"
       }
     ],
     "name": "getAllTrackedRedistribution",

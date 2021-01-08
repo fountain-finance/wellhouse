@@ -51,7 +51,12 @@ function App() {
 
   return (
     <div className="App">
-      <Navbar address={address} userProvider={userProvider} onConnectWallet={loadWeb3Modal}></Navbar>
+      <Navbar
+        contracts={contracts}
+        address={address}
+        userProvider={userProvider}
+        onConnectWallet={loadWeb3Modal}
+      ></Navbar>
 
       <div style={{ padding: 20 }}>
         <BrowserRouter>

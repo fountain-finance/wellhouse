@@ -17,6 +17,8 @@ export default function MoneyPoolDetail({ mp, isActive }: { mp?: MoneyPool; isAc
   )
 
   function expandedTimeString(millis: number) {
+    if (!millis || millis <= 0) return 0
+
     const days = millis && millis / 1000 / SECONDS_IN_DAY
     const hours = days && (days % 1) * 24
     const minutes = hours && (hours % 1) * 60
@@ -49,7 +51,7 @@ export default function MoneyPoolDetail({ mp, isActive }: { mp?: MoneyPool; isAc
       </div>
       {isActive ? (
         <div>
-          {label('Time left')} {secondsLeft && expandedTimeString(secondsLeft * 1000)}
+          {label('Time left')} {(secondsLeft && expandedTimeString(secondsLeft * 1000)) || 'Ended'}
         </div>
       ) : null}
     </div>
