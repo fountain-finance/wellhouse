@@ -347,8 +347,14 @@ contract Fountain is IFountain {
         require(_duration >= 1, "Fountain::configureMp: TOO_SHORT");
         require(_want == dai, "Fountain::configureMp: UNSUPPORTED_WANT");
         require(_target > 0, "Fountain::configureMp: BAD_TARGET");
-        require(_title != "", "Fountain::configureMp: BAD_TITLE");
-        require(_link != "", "Fountain::configureMp: BAD_LINK");
+        require(
+            _title.length > 0 && _title.length <= 32,
+            "Fountain::configureMp: BAD_TITLE"
+        );
+        require(
+            _link.length > 0 && _link.length <= 32,
+            "Fountain::configureMp: BAD_LINK"
+        );
 
         MoneyPool.Data storage _mp = _mpToConfigure(msg.sender);
         // Reset the start time to now if there isn't an active Money pool.
