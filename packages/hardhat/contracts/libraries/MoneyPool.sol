@@ -18,6 +18,8 @@ library MoneyPool {
     struct Data {
         // A unique number that's incremented for each new Money pool, starting with 1.
         uint256 number;
+        // The number of the owner's Money pool that came before this one.
+        uint256 previous;
         // The address who defined this Money pool and who has access to its sustainments.
         address owner;
         // The token that this Money pool can be funded with.
@@ -44,16 +46,19 @@ library MoneyPool {
         @param _owner The owner of the Money pool.
         @param _start The start time of the Money pool.
         @param _number The number of the Money pool.
+        @param _previous The number of the owner's previous Money pool.
     */
     function _init(
         Data storage self,
         address _owner,
         uint256 _start,
-        uint256 _number
+        uint256 _number,
+        uint256 _previous
     ) internal {
         self.number = _number;
         self.owner = _owner;
         self.start = _start;
+        self.previous = _previous;
         self.total = 0;
         self.tapped = 0;
     }
@@ -187,6 +192,7 @@ library MoneyPool {
         @return start The time when this Money pool started.
         @return duration The duration of this Money pool, measured in seconds.
         @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
+        @return previous The number of the previous money pool.
     */
     function _properties(Data memory self)
         internal
@@ -195,6 +201,7 @@ library MoneyPool {
             uint256,
             address,
             IERC20,
+            uint256,
             uint256,
             uint256,
             uint256,
@@ -208,7 +215,8 @@ library MoneyPool {
             self.target,
             self.start,
             self.duration,
-            self.total
+            self.total,
+            self.previous
         );
     }
 }

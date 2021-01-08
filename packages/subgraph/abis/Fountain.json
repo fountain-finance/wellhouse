@@ -239,6 +239,11 @@
         "internalType": "address",
         "name": "_sustainer",
         "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_includesActive",
+        "type": "bool"
       }
     ],
     "name": "getAllTrackedRedistribution",
@@ -296,6 +301,11 @@
         "internalType": "uint256",
         "name": "total",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "previous",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -345,6 +355,11 @@
         "internalType": "uint256",
         "name": "total",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "previous",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -393,6 +408,11 @@
       {
         "internalType": "uint256",
         "name": "total",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "previous",
         "type": "uint256"
       }
     ],
@@ -488,25 +508,6 @@
   {
     "inputs": [],
     "name": "mpCount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "previousMpNumber",
     "outputs": [
       {
         "internalType": "uint256",

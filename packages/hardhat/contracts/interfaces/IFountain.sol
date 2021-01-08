@@ -4,11 +4,6 @@ pragma solidity >=0.6.0 <0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IFountain {
-    function previousMpNumber(uint256 _mpNumber)
-        external
-        view
-        returns (uint256);
-
     function latestMpNumber(address _owner) external view returns (uint256);
 
     function mpCount() external view returns (uint256);
@@ -53,6 +48,7 @@ interface IFountain {
             uint256,
             uint256,
             uint256,
+            uint256,
             uint256
         );
 
@@ -66,6 +62,7 @@ interface IFountain {
             uint256,
             uint256,
             uint256,
+            uint256,
             uint256
         );
 
@@ -76,6 +73,7 @@ interface IFountain {
             uint256,
             address,
             IERC20,
+            uint256,
             uint256,
             uint256,
             uint256,

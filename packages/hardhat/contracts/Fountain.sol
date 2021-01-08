@@ -81,9 +81,6 @@ contract Fountain is IFountain {
 
     // --- public properties --- //
 
-    /// @notice A mapping from Money pool number's the the numbers of the previous Money pool for the same owner.
-    mapping(uint256 => uint256) public override previousMpNumber;
-
     /// @notice The latest Money pool for each owner address
     mapping(address => uint256) public override latestMpNumber;
 
@@ -108,6 +105,7 @@ contract Fountain is IFountain {
         @return start The time when this Money pool started.
         @return duration The duration of this Money pool measured in seconds.
         @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
+        @return previous The number of the previous money pool.
     */
     function getMp(uint256 _mpNumber)
         external
@@ -120,7 +118,8 @@ contract Fountain is IFountain {
             uint256 target,
             uint256 start,
             uint256 duration,
-            uint256 total
+            uint256 total,
+            uint256 previous
         )
     {
         MoneyPool.Data memory _mp = mps[_mpNumber];
@@ -138,6 +137,7 @@ contract Fountain is IFountain {
         @return start The time when this Money pool started.
         @return duration The duration of this Money pool measured in seconds.
         @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
+        @return previous The number of the previous money pool.
     */
     function getQueuedMp(address _owner)
         external
@@ -150,7 +150,8 @@ contract Fountain is IFountain {
             uint256 target,
             uint256 start,
             uint256 duration,
-            uint256 total
+            uint256 total,
+            uint256 previous
         )
     {
         MoneyPool.Data memory _sMp = _standbyMp(_owner);
@@ -164,7 +165,8 @@ contract Fountain is IFountain {
             _aMp.target,
             _aMp._determineNextStart(),
             _aMp.duration,
-            0
+            0,
+            latestMpNumber[_aMp.owner]
         );
     }
 
@@ -178,6 +180,7 @@ contract Fountain is IFountain {
         @return start The time when this Money pool started.
         @return duration The duration of this Money pool measured in seconds.
         @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
+        @return previous The number of the previous money pool.
     */
     function getCurrentMp(address _owner)
         external
@@ -190,7 +193,8 @@ contract Fountain is IFountain {
             uint256 target,
             uint256 start,
             uint256 duration,
-            uint256 total
+            uint256 total,
+            uint256 previous
         )
     {
         require(
@@ -212,7 +216,8 @@ contract Fountain is IFountain {
             _mp.target,
             _mp._determineNextStart(),
             _mp.duration,
-            0
+            0,
+            latestMpNumber[_mp.owner]
         );
     }
 
@@ -293,7 +298,7 @@ contract Fountain is IFountain {
                         _trackedRedistribution(_mp, _sustainer)
                     );
                 }
-                _mp = mps[previousMpNumber[_mp.number]];
+                _mp = mps[_mp.previous];
             }
         }
     }
@@ -594,7 +599,7 @@ contract Fountain is IFountain {
                 _amount = _amount.add(_trackedRedistribution(_mp, _sustainer));
                 hasRedistributed[_mp.number][_sustainer] = true;
             }
-            _mp = mps[previousMpNumber[_mp.number]];
+            _mp = mps[_mp.previous];
         }
     }
 
@@ -610,8 +615,7 @@ contract Fountain is IFountain {
     {
         mpCount++;
         _newMp = mps[mpCount];
-        _newMp._init(_owner, _start, mpCount);
-        previousMpNumber[mpCount] = latestMpNumber[_owner];
+        _newMp._init(_owner, _start, mpCount, latestMpNumber[_owner]);
         latestMpNumber[_owner] = mpCount;
     }
 
@@ -634,7 +638,7 @@ contract Fountain is IFountain {
         // moneyPool immediately before it.
         if (_mp._state() == MoneyPool.State.Active) return _mp;
 
-        _mp = mps[previousMpNumber[_mp.number]];
+        _mp = mps[_mp.previous];
         if (_mp.number == 0 || _mp._state() != MoneyPool.State.Active)
             return mps[0];
     }
