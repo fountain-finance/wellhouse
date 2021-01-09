@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../libraries/MoneyPool.sol";
 
 interface IFountain {
     function latestMpNumber(address _owner) external view returns (uint256);
@@ -44,48 +46,51 @@ interface IFountain {
         external
         view
         returns (
-            uint256,
-            bytes32,
-            bytes32,
-            address,
-            IERC20,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256
+            MoneyPool.Data memory _mp
+            // uint256,
+            // bytes32,
+            // bytes32,
+            // address,
+            // IERC20,
+            // uint256,
+            // uint256,
+            // uint256,
+            // uint256,
+            // uint256
         );
 
     function getQueuedMp(address _owner)
         external
         view
         returns (
-            uint256,
-            bytes32,
-            bytes32,
-            address,
-            IERC20,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256
+            MoneyPool.Data memory _mp
+            // uint256,
+            // bytes32,
+            // bytes32,
+            // address,
+            // IERC20,
+            // uint256,
+            // uint256,
+            // uint256,
+            // uint256,
+            // uint256
         );
 
     function getCurrentMp(address _owner)
         external
         view
         returns (
-            uint256,
-            bytes32,
-            bytes32,
-            address,
-            IERC20,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256
+            MoneyPool.Data memory _mp
+            // uint256,
+            // bytes32,
+            // bytes32,
+            // address,
+            // IERC20,
+            // uint256,
+            // uint256,
+            // uint256,
+            // uint256,
+            // uint256
         );
 
     function getSustainment(uint256 _mpNumber, address _sustainer)

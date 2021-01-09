@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -95,146 +96,156 @@ contract Fountain is IFountain {
 
     // --- external views --- //
 
+    // @return number The number of the Money pool.
+    // @return title The title of the Money pool.
+    // @return link A link that's associated with this Money pool.
+    // @return owner The owner of the Money pool.
+    // @return want The token the Money pool wants.
+    // @return target The amount of the want token this Money pool is targeting.
+    // @return start The time when this Money pool started.
+    // @return duration The duration of this Money pool measured in seconds.
+    // @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
+    // @return previous The number of the previous money pool.
     /**  
         @notice The properties of the given Money pool.
         @param _mpNumber The number of the Money pool to get the properties of.
-        @return number The number of the Money pool.
-        @return title The title of the Money pool.
-        @return link A link that's associated with this Money pool.
-        @return owner The owner of the Money pool.
-        @return want The token the Money pool wants.
-        @return target The amount of the want token this Money pool is targeting.
-        @return start The time when this Money pool started.
-        @return duration The duration of this Money pool measured in seconds.
-        @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
-        @return previous The number of the previous money pool.
+        @return _mp The Money pool.
     */
     function getMp(uint256 _mpNumber)
         external
         view
         override
-        returns (
-            uint256 number,
-            bytes32 title,
-            bytes32 link,
-            address owner,
-            IERC20 want,
-            uint256 target,
-            uint256 start,
-            uint256 duration,
-            uint256 total,
-            uint256 previous
-        )
+        returns (MoneyPool.Data memory _mp)
+    // uint256 number,
+    // bytes32 title,
+    // bytes32 link,
+    // address owner,
+    // IERC20 want,
+    // uint256 target,
+    // uint256 start,
+    // uint256 duration,
+    // uint256 total,
+    // uint256 previous
     {
-        MoneyPool.Data memory _mp = mps[_mpNumber];
+        _mp = mps[_mpNumber];
         require(_mp.number > 0, "Fountain::getMp: NOT_FOUND");
-        return _mp._properties();
+        // return _mp; //._properties();
     }
 
+    // @return number The number of the Money pool.
+    // @return title The title of the Money pool.
+    // @return link A link that's associated with this Money pool.
+    // @return owner The owner of the Money pool.
+    // @return want The token the Money pool wants.
+    // @return target The amount of the want token this Money pool is targeting.
+    // @return start The time when this Money pool started.
+    // @return duration The duration of this Money pool measured in seconds.
+    // @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
+    // @return previous The number of the previous money pool.
     /**
         @notice The Money pool that's next up for an owner and not currently accepting payments.
         @param _owner The owner of the Money pool being looked for.
-        @return number The number of the Money pool.
-        @return title The title of the Money pool.
-        @return link A link that's associated with this Money pool.
-        @return owner The owner of the Money pool.
-        @return want The token the Money pool wants.
-        @return target The amount of the want token this Money pool is targeting.
-        @return start The time when this Money pool started.
-        @return duration The duration of this Money pool measured in seconds.
-        @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
-        @return previous The number of the previous money pool.
+        @return _mp The Money pool.
     */
     function getQueuedMp(address _owner)
         external
         view
         override
-        returns (
-            uint256 number,
-            bytes32 title,
-            bytes32 link,
-            address owner,
-            IERC20 want,
-            uint256 target,
-            uint256 start,
-            uint256 duration,
-            uint256 total,
-            uint256 previous
-        )
+        returns (MoneyPool.Data memory)
+    // returns (
+    //     uint256 number,
+    //     bytes32 title,
+    //     bytes32 link,
+    //     address owner,
+    //     IERC20 want,
+    //     uint256 target,
+    //     uint256 start,
+    //     uint256 duration,
+    //     uint256 total,
+    //     uint256 previous
+    // )
     {
         MoneyPool.Data memory _sMp = _standbyMp(_owner);
         MoneyPool.Data memory _aMp = _activeMp(_owner);
-        if (_sMp.number > 0 && _aMp.number > 0) return _sMp._properties();
+        if (_sMp.number > 0 && _aMp.number > 0) return _sMp; //._properties();
         require(_aMp.number > 0, "Fountain::getQueuedMp: NOT_FOUND");
-        return (
-            mpCount.add(1),
-            _aMp.title,
-            _aMp.link,
-            _aMp.owner,
-            _aMp.want,
-            _aMp.target,
-            _aMp._determineNextStart(),
-            _aMp.duration,
-            0,
-            latestMpNumber[_aMp.owner]
-        );
+        return
+            MoneyPool.Data(
+                mpCount.add(1),
+                latestMpNumber[_aMp.owner],
+                _aMp.title,
+                _aMp.link,
+                _aMp.owner,
+                _aMp.want,
+                _aMp.target,
+                0,
+                _aMp._determineNextStart(),
+                _aMp.duration,
+                0,
+                _aMp.lastConfigured
+            );
     }
 
+    // @return number The number of the Money pool.
+    // @return title The title of the Money pool.
+    // @return link A link that's associated with this Money pool.
+    // @return owner The owner of the Money pool.
+    // @return want The token the Money pool wants.
+    // @return target The amount of the want token this Money pool is targeting.
+    // @return start The time when this Money pool started.
+    // @return duration The duration of this Money pool measured in seconds.
+    // @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
+    // @return previous The number of the previous money pool.
     /**
         @notice The properties of the Money pool that would be currently accepting sustainments.
         @param _owner The owner of the money pool being looked for.
-        @return number The number of the Money pool.
-        @return title The title of the Money pool.
-        @return link A link that's associated with this Money pool.
-        @return owner The owner of the Money pool.
-        @return want The token the Money pool wants.
-        @return target The amount of the want token this Money pool is targeting.
-        @return start The time when this Money pool started.
-        @return duration The duration of this Money pool measured in seconds.
-        @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
-        @return previous The number of the previous money pool.
+        @return _mp The Money pool.
     */
     function getCurrentMp(address _owner)
         external
         view
         override
-        returns (
-            uint256 number,
-            bytes32 title,
-            bytes32 link,
-            address owner,
-            IERC20 want,
-            uint256 target,
-            uint256 start,
-            uint256 duration,
-            uint256 total,
-            uint256 previous
-        )
+        returns (MoneyPool.Data memory _mp)
+    // returns (
+    //     uint256 number,
+    //     bytes32 title,
+    //     bytes32 link,
+    //     address owner,
+    //     IERC20 want,
+    //     uint256 target,
+    //     uint256 start,
+    //     uint256 duration,
+    //     uint256 total,
+    //     uint256 previous
+    // )
     {
         require(
             latestMpNumber[_owner] > 0,
             "Fountain::getCurrentMp: NOT_FOUND"
         );
 
-        MoneyPool.Data memory _mp = _activeMp(_owner);
-        if (_mp.number > 0) return _mp._properties();
+        _mp = _activeMp(_owner);
+        if (_mp.number > 0) return _mp; //._properties();
 
         _mp = _standbyMp(_owner);
-        if (_mp.number > 0) return _mp._properties();
+        if (_mp.number > 0) return _mp; //._properties();
 
         _mp = mps[latestMpNumber[_owner]];
-        return (
-            mpCount.add(1),
-            _mp.title,
-            _mp.link,
-            _mp.owner,
-            _mp.want,
-            _mp.target,
-            _mp._determineNextStart(),
-            _mp.duration,
-            0,
-            latestMpNumber[_mp.owner]
-        );
+        return
+            MoneyPool.Data(
+                mpCount.add(1),
+                latestMpNumber[_mp.owner],
+                _mp.title,
+                _mp.link,
+                _mp.owner,
+                _mp.want,
+                _mp.target,
+                0,
+                _mp._determineNextStart(),
+                _mp.duration,
+                0,
+                _mp.lastConfigured
+            );
     }
 
     /**
