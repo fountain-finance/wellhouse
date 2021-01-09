@@ -61,6 +61,18 @@
         "internalType": "contract IERC20",
         "name": "want",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "title",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "link",
+        "type": "bytes32"
       }
     ],
     "name": "ConfigureMp",
@@ -207,6 +219,16 @@
         "internalType": "contract IERC20",
         "name": "_want",
         "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_title",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_link",
+        "type": "bytes32"
       }
     ],
     "name": "configureMp",
@@ -268,39 +290,71 @@
     "name": "getCurrentMp",
     "outputs": [
       {
-        "internalType": "uint256",
-        "name": "number",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IERC20",
-        "name": "want",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "target",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "start",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "duration",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "total",
-        "type": "uint256"
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "number",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "previous",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "title",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "link",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IERC20",
+            "name": "want",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "target",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "total",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "start",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "duration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tapped",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lastConfigured",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct MoneyPool.Data",
+        "name": "_mp",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -317,39 +371,71 @@
     "name": "getMp",
     "outputs": [
       {
-        "internalType": "uint256",
-        "name": "number",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IERC20",
-        "name": "want",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "target",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "start",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "duration",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "total",
-        "type": "uint256"
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "number",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "previous",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "title",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "link",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IERC20",
+            "name": "want",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "target",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "total",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "start",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "duration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tapped",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lastConfigured",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct MoneyPool.Data",
+        "name": "_mp",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -366,39 +452,71 @@
     "name": "getQueuedMp",
     "outputs": [
       {
-        "internalType": "uint256",
-        "name": "number",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IERC20",
-        "name": "want",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "target",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "start",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "duration",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "total",
-        "type": "uint256"
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "number",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "previous",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "title",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "link",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IERC20",
+            "name": "want",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "target",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "total",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "start",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "duration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tapped",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lastConfigured",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct MoneyPool.Data",
+        "name": "",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -506,25 +624,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "previousMpNumber",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
         "name": "_owner",
         "type": "address"
@@ -533,6 +632,11 @@
         "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "_want",
+        "type": "address"
       },
       {
         "internalType": "address",

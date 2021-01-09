@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../libraries/MoneyPool.sol";
 
 interface IFountain {
-    function previousMpNumber(uint256 _mpNumber)
-        external
-        view
-        returns (uint256);
-
     function latestMpNumber(address _owner) external view returns (uint256);
 
     function mpCount() external view returns (uint256);
@@ -19,7 +16,9 @@ interface IFountain {
         address indexed owner,
         uint256 indexed target,
         uint256 duration,
-        IERC20 want
+        IERC20 want,
+        bytes32 title,
+        bytes32 link
     );
 
     /// @notice This event should trigger when a Money pool is sustained.
@@ -47,39 +46,51 @@ interface IFountain {
         external
         view
         returns (
-            uint256,
-            address,
-            IERC20,
-            uint256,
-            uint256,
-            uint256,
-            uint256
+            MoneyPool.Data memory _mp
+            // uint256,
+            // bytes32,
+            // bytes32,
+            // address,
+            // IERC20,
+            // uint256,
+            // uint256,
+            // uint256,
+            // uint256,
+            // uint256
         );
 
     function getQueuedMp(address _owner)
         external
         view
         returns (
-            uint256,
-            address,
-            IERC20,
-            uint256,
-            uint256,
-            uint256,
-            uint256
+            MoneyPool.Data memory _mp
+            // uint256,
+            // bytes32,
+            // bytes32,
+            // address,
+            // IERC20,
+            // uint256,
+            // uint256,
+            // uint256,
+            // uint256,
+            // uint256
         );
 
     function getCurrentMp(address _owner)
         external
         view
         returns (
-            uint256,
-            address,
-            IERC20,
-            uint256,
-            uint256,
-            uint256,
-            uint256
+            MoneyPool.Data memory _mp
+            // uint256,
+            // bytes32,
+            // bytes32,
+            // address,
+            // IERC20,
+            // uint256,
+            // uint256,
+            // uint256,
+            // uint256,
+            // uint256
         );
 
     function getSustainment(uint256 _mpNumber, address _sustainer)
@@ -105,12 +116,15 @@ interface IFountain {
     function configureMp(
         uint256 _target,
         uint256 _duration,
-        IERC20 _want
+        IERC20 _want,
+        bytes32 _title,
+        bytes32 _link
     ) external returns (uint256 _mpNumber);
 
     function sustainOwner(
         address _owner,
         uint256 _amount,
+        IERC20 _want,
         address _beneficiary
     ) external returns (uint256 _mpNumber);
 

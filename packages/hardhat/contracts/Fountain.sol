@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -81,9 +82,6 @@ contract Fountain is IFountain {
 
     // --- public properties --- //
 
-    /// @notice A mapping from Money pool number's the the numbers of the previous Money pool for the same owner.
-    mapping(uint256 => uint256) public override previousMpNumber;
-
     /// @notice The latest Money pool for each owner address
     mapping(address => uint256) public override latestMpNumber;
 
@@ -98,122 +96,156 @@ contract Fountain is IFountain {
 
     // --- external views --- //
 
+    // @return number The number of the Money pool.
+    // @return title The title of the Money pool.
+    // @return link A link that's associated with this Money pool.
+    // @return owner The owner of the Money pool.
+    // @return want The token the Money pool wants.
+    // @return target The amount of the want token this Money pool is targeting.
+    // @return start The time when this Money pool started.
+    // @return duration The duration of this Money pool measured in seconds.
+    // @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
+    // @return previous The number of the previous money pool.
     /**  
         @notice The properties of the given Money pool.
         @param _mpNumber The number of the Money pool to get the properties of.
-        @return number The number of the Money pool.
-        @return owner The owner of the Money pool.
-        @return want The token the Money pool wants.
-        @return target The amount of the want token this Money pool is targeting.
-        @return start The time when this Money pool started.
-        @return duration The duration of this Money pool measured in seconds.
-        @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
+        @return _mp The Money pool.
     */
     function getMp(uint256 _mpNumber)
         external
         view
         override
-        returns (
-            uint256 number,
-            address owner,
-            IERC20 want,
-            uint256 target,
-            uint256 start,
-            uint256 duration,
-            uint256 total
-        )
+        returns (MoneyPool.Data memory _mp)
+    // uint256 number,
+    // bytes32 title,
+    // bytes32 link,
+    // address owner,
+    // IERC20 want,
+    // uint256 target,
+    // uint256 start,
+    // uint256 duration,
+    // uint256 total,
+    // uint256 previous
     {
-        MoneyPool.Data memory _mp = mps[_mpNumber];
+        _mp = mps[_mpNumber];
         require(_mp.number > 0, "Fountain::getMp: NOT_FOUND");
-        return _mp._properties();
+        // return _mp; //._properties();
     }
 
+    // @return number The number of the Money pool.
+    // @return title The title of the Money pool.
+    // @return link A link that's associated with this Money pool.
+    // @return owner The owner of the Money pool.
+    // @return want The token the Money pool wants.
+    // @return target The amount of the want token this Money pool is targeting.
+    // @return start The time when this Money pool started.
+    // @return duration The duration of this Money pool measured in seconds.
+    // @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
+    // @return previous The number of the previous money pool.
     /**
         @notice The Money pool that's next up for an owner and not currently accepting payments.
         @param _owner The owner of the Money pool being looked for.
-        @return number The number of the Money pool.
-        @return owner The owner of the Money pool.
-        @return want The token the Money pool wants.
-        @return target The amount of the want token this Money pool is targeting.
-        @return start The time when this Money pool started.
-        @return duration The duration of this Money pool measured in seconds.
-        @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
+        @return _mp The Money pool.
     */
     function getQueuedMp(address _owner)
         external
         view
         override
-        returns (
-            uint256 number,
-            address owner,
-            IERC20 want,
-            uint256 target,
-            uint256 start,
-            uint256 duration,
-            uint256 total
-        )
+        returns (MoneyPool.Data memory)
+    // returns (
+    //     uint256 number,
+    //     bytes32 title,
+    //     bytes32 link,
+    //     address owner,
+    //     IERC20 want,
+    //     uint256 target,
+    //     uint256 start,
+    //     uint256 duration,
+    //     uint256 total,
+    //     uint256 previous
+    // )
     {
         MoneyPool.Data memory _sMp = _standbyMp(_owner);
         MoneyPool.Data memory _aMp = _activeMp(_owner);
-        if (_sMp.number > 0 && _aMp.number > 0) return _sMp._properties();
+        if (_sMp.number > 0 && _aMp.number > 0) return _sMp; //._properties();
         require(_aMp.number > 0, "Fountain::getQueuedMp: NOT_FOUND");
-        return (
-            mpCount.add(1),
-            _aMp.owner,
-            _aMp.want,
-            _aMp.target,
-            _aMp._determineNextStart(),
-            _aMp.duration,
-            0
-        );
+        return
+            MoneyPool.Data(
+                mpCount.add(1),
+                latestMpNumber[_aMp.owner],
+                _aMp.title,
+                _aMp.link,
+                _aMp.owner,
+                _aMp.want,
+                _aMp.target,
+                0,
+                _aMp._determineNextStart(),
+                _aMp.duration,
+                0,
+                _aMp.lastConfigured
+            );
     }
 
+    // @return number The number of the Money pool.
+    // @return title The title of the Money pool.
+    // @return link A link that's associated with this Money pool.
+    // @return owner The owner of the Money pool.
+    // @return want The token the Money pool wants.
+    // @return target The amount of the want token this Money pool is targeting.
+    // @return start The time when this Money pool started.
+    // @return duration The duration of this Money pool measured in seconds.
+    // @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
+    // @return previous The number of the previous money pool.
     /**
         @notice The properties of the Money pool that would be currently accepting sustainments.
         @param _owner The owner of the money pool being looked for.
-        @return number The number of the Money pool.
-        @return owner The owner of the Money pool.
-        @return want The token the Money pool wants.
-        @return target The amount of the want token this Money pool is targeting.
-        @return start The time when this Money pool started.
-        @return duration The duration of this Money pool measured in seconds.
-        @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
+        @return _mp The Money pool.
     */
     function getCurrentMp(address _owner)
         external
         view
         override
-        returns (
-            uint256 number,
-            address owner,
-            IERC20 want,
-            uint256 target,
-            uint256 start,
-            uint256 duration,
-            uint256 total
-        )
+        returns (MoneyPool.Data memory _mp)
+    // returns (
+    //     uint256 number,
+    //     bytes32 title,
+    //     bytes32 link,
+    //     address owner,
+    //     IERC20 want,
+    //     uint256 target,
+    //     uint256 start,
+    //     uint256 duration,
+    //     uint256 total,
+    //     uint256 previous
+    // )
     {
         require(
             latestMpNumber[_owner] > 0,
             "Fountain::getCurrentMp: NOT_FOUND"
         );
 
-        MoneyPool.Data memory _mp = _activeMp(_owner);
-        if (_mp.number > 0) return _mp._properties();
+        _mp = _activeMp(_owner);
+        if (_mp.number > 0) return _mp; //._properties();
 
         _mp = _standbyMp(_owner);
-        if (_mp.number > 0) return _mp._properties();
+        if (_mp.number > 0) return _mp; //._properties();
 
         _mp = mps[latestMpNumber[_owner]];
-        return (
-            mpCount.add(1),
-            _mp.owner,
-            _mp.want,
-            _mp.target,
-            _mp._determineNextStart(),
-            _mp.duration,
-            0
-        );
+        return
+            MoneyPool.Data(
+                mpCount.add(1),
+                latestMpNumber[_mp.owner],
+                _mp.title,
+                _mp.link,
+                _mp.owner,
+                _mp.want,
+                _mp.target,
+                0,
+                _mp._determineNextStart(),
+                _mp.duration,
+                0,
+                _mp.lastConfigured
+            );
     }
 
     /**
@@ -270,6 +302,7 @@ contract Fountain is IFountain {
     /** 
         @notice The amount of redistribution that can be claimed by the given address in the Fountain ecosystem.
         @dev This function runs the same routine as _redistributeAmount to determine the summed amount.
+        Look there for more documentation.
         @param _sustainer The address of the sustainer to get an amount for.
         @param _includesActive If active Money pools should be included in the calculation.
         @return _amount The amount.
@@ -293,7 +326,7 @@ contract Fountain is IFountain {
                         _trackedRedistribution(_mp, _sustainer)
                     );
                 }
-                _mp = mps[previousMpNumber[_mp.number]];
+                _mp = mps[_mp.previous];
             }
         }
     }
@@ -311,20 +344,34 @@ contract Fountain is IFountain {
         @param _target The sustainability target to set.
         @param _duration The duration to set, measured in seconds.
         @param _want The token that the Money pool wants.
-        @return mpNumber The number of the Money pool that was successfully configured.
+        @param _title The title of the Money pool.
+        @param _link A link to information about the Money pool.
+        @return _mpNumber The number of the Money pool that was successfully configured.
     */
     function configureMp(
         uint256 _target,
         uint256 _duration,
-        IERC20 _want
+        IERC20 _want,
+        bytes32 _title,
+        bytes32 _link
     ) external override returns (uint256) {
         require(_duration >= 1, "Fountain::configureMp: TOO_SHORT");
         require(_want == dai, "Fountain::configureMp: UNSUPPORTED_WANT");
         require(_target > 0, "Fountain::configureMp: BAD_TARGET");
+        require(
+            _title.length > 0 && _title.length <= 32,
+            "Fountain::configureMp: BAD_TITLE"
+        );
+        require(
+            _link.length > 0 && _link.length <= 32,
+            "Fountain::configureMp: BAD_LINK"
+        );
 
         MoneyPool.Data storage _mp = _mpToConfigure(msg.sender);
         // Reset the start time to now if there isn't an active Money pool.
         _mp._configure(
+            _title,
+            _link,
             _target,
             _duration,
             _want,
@@ -336,7 +383,9 @@ contract Fountain is IFountain {
             _mp.owner,
             _mp.target,
             _mp.duration,
-            _mp.want
+            _mp.want,
+            _mp.title,
+            _mp.link
         );
 
         return _mp.number;
@@ -347,18 +396,22 @@ contract Fountain is IFountain {
         @dev If the amount results in surplus, redistribute the surplus proportionally to sustainers of the Money pool.
         @param _owner The owner of the Money pool to sustain.
         @param _amount Amount of sustainment.
+        @param _want Must match the `want` token for the Money pool being sustained.
         @param _beneficiary The address to associate with this sustainment. This is usually mes.sender, but can be something else if the sender is making this sustainment on the beneficiary's behalf.
-        @return mpNumber The number of the Money pool that was successfully sustained.
+        @return _mpNumber The number of the Money pool that was successfully sustained.
     */
     function sustainOwner(
         address _owner,
         uint256 _amount,
+        IERC20 _want,
         address _beneficiary
     ) external override lockSustain returns (uint256) {
-        require(_amount > 0, "Fountain::sustain: BAD_AMOUNT");
+        require(_amount > 0, "Fountain::sustainOwner: BAD_AMOUNT");
 
         // Find the Money pool that this sustainment should go to.
         MoneyPool.Data storage _mp = _mpToSustain(_owner);
+
+        require(_want == _mp.want, "Fountain::sustainOwner: UNEXPECTED_WANT");
 
         _mp._add(_amount);
 
@@ -594,7 +647,7 @@ contract Fountain is IFountain {
                 _amount = _amount.add(_trackedRedistribution(_mp, _sustainer));
                 hasRedistributed[_mp.number][_sustainer] = true;
             }
-            _mp = mps[previousMpNumber[_mp.number]];
+            _mp = mps[_mp.previous];
         }
     }
 
@@ -610,8 +663,7 @@ contract Fountain is IFountain {
     {
         mpCount++;
         _newMp = mps[mpCount];
-        _newMp._init(_owner, _start, mpCount);
-        previousMpNumber[mpCount] = latestMpNumber[_owner];
+        _newMp._init(_owner, _start, mpCount, latestMpNumber[_owner]);
         latestMpNumber[_owner] = mpCount;
     }
 
@@ -634,7 +686,7 @@ contract Fountain is IFountain {
         // moneyPool immediately before it.
         if (_mp._state() == MoneyPool.State.Active) return _mp;
 
-        _mp = mps[previousMpNumber[_mp.number]];
+        _mp = mps[_mp.previous];
         if (_mp.number == 0 || _mp._state() != MoneyPool.State.Active)
             return mps[0];
     }
