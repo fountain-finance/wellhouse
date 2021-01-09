@@ -119,6 +119,7 @@ interface IFountain {
     function sustainOwner(
         address _owner,
         uint256 _amount,
+        IERC20 _want,
         address _beneficiary
     ) external returns (uint256 _mpNumber);
 

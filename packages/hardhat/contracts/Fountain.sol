@@ -335,7 +335,7 @@ contract Fountain is IFountain {
         @param _want The token that the Money pool wants.
         @param _title The title of the Money pool.
         @param _link A link to information about the Money pool.
-        @return mpNumber The number of the Money pool that was successfully configured.
+        @return _mpNumber The number of the Money pool that was successfully configured.
     */
     function configureMp(
         uint256 _target,
@@ -385,18 +385,22 @@ contract Fountain is IFountain {
         @dev If the amount results in surplus, redistribute the surplus proportionally to sustainers of the Money pool.
         @param _owner The owner of the Money pool to sustain.
         @param _amount Amount of sustainment.
+        @param _want Must match the `want` token for the Money pool being sustained.
         @param _beneficiary The address to associate with this sustainment. This is usually mes.sender, but can be something else if the sender is making this sustainment on the beneficiary's behalf.
-        @return mpNumber The number of the Money pool that was successfully sustained.
+        @return _mpNumber The number of the Money pool that was successfully sustained.
     */
     function sustainOwner(
         address _owner,
         uint256 _amount,
+        IERC20 _want,
         address _beneficiary
     ) external override lockSustain returns (uint256) {
-        require(_amount > 0, "Fountain::sustain: BAD_AMOUNT");
+        require(_amount > 0, "Fountain::sustainOwner: BAD_AMOUNT");
 
         // Find the Money pool that this sustainment should go to.
         MoneyPool.Data storage _mp = _mpToSustain(_owner);
+
+        require(_want == _mp.want, "Fountain::sustainOwner: UNEXPECTED_WANT");
 
         _mp._add(_amount);
 
