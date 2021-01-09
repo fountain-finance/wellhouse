@@ -89,7 +89,8 @@ interface IFountain {
         address _owner,
         uint256 _amount,
         IERC20 _want,
-        address _beneficiary
+        address _beneficiary,
+        uint256 _convertedFlowAmount
     ) external returns (uint256 _mpNumber);
 
     function collectAllRedistributions() external returns (uint256 _amount);

@@ -33,6 +33,8 @@ library MoneyPool {
         uint256 target;
         // The running amount that's been contributed to sustaining this Money pool.
         uint256 total;
+        // The amount of flow tokens that this Money pool can redistribute.
+        uint256 overflow;
         // The time when this Money pool will become active.
         uint256 start;
         // The number of seconds until this Money pool's surplus is redistributed.
@@ -99,13 +101,26 @@ library MoneyPool {
 
     /** 
         @notice Contribute a specified amount to the sustainability of the specified address's active Money pool.
-        If the amount results in surplus, redistribute the surplus proportionally to sustainers of the Money pool.
         @param self The Money pool to sustain.
-        @param _amount Amount of sustainment.
+        @param _amount Incrmented amount of sustainment.
+        @return _surplus The amount of surplus in the Money pool after adding.
     */
-    function _add(Data storage self, uint256 _amount) internal {
+    function _add(Data storage self, uint256 _amount)
+        internal
+        returns (uint256)
+    {
         // Increment the total amount contributed to the sustainment of the Money pool.
         self.total = self.total.add(_amount);
+        return self.total > self.target ? self.total.sub(self.target) : 0;
+    }
+
+    /** 
+        @notice Overflow the Money pool.
+        @param self The Money pool to overflow.
+        @param _amount Incrmented amount of sustainment.
+    */
+    function _addOverflow(Data storage self, uint256 _amount) internal {
+        self.overflow = self.overflow.add(_amount);
     }
 
     /** 

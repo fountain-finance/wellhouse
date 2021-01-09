@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./libraries/MoneyPool.sol";
 import "./interfaces/IFountain.sol";
+import "./Treasury.sol";
 
 /**
 
@@ -91,6 +92,9 @@ contract Fountain is IFountain {
 
     /// @notice The contract currently only supports sustainments in dai.
     IERC20 public dai;
+
+    /// @notice The treasury.
+    OverflowTreasury public treasury;
 
     // --- events --- //
 
@@ -268,8 +272,9 @@ contract Fountain is IFountain {
 
     // --- external transactions --- //
 
-    constructor(IERC20 _dai) public {
+    constructor(IERC20 _dai, OverflowTreasury _treasury) public {
         dai = _dai;
+        treasury = _treasury;
         mpCount = 0;
     }
 
@@ -333,13 +338,15 @@ contract Fountain is IFountain {
         @param _amount Amount of sustainment.
         @param _want Must match the `want` token for the Money pool being sustained.
         @param _beneficiary The address to associate with this sustainment. This is usually mes.sender, but can be something else if the sender is making this sustainment on the beneficiary's behalf.
+        @param _convertedFlowAmount The expected number of Flow to convert surplus into.
         @return _mpNumber The number of the Money pool that was successfully sustained.
     */
     function sustainOwner(
         address _owner,
         uint256 _amount,
         IERC20 _want,
-        address _beneficiary
+        address _beneficiary,
+        uint256 _convertedFlowAmount
     ) external override lockSustain returns (uint256) {
         require(_amount > 0, "Fountain::sustainOwner: BAD_AMOUNT");
 
@@ -348,15 +355,26 @@ contract Fountain is IFountain {
 
         require(_want == _mp.want, "Fountain::sustainOwner: UNEXPECTED_WANT");
 
-        _mp._add(_amount);
-
-        // Increment the sustainments to the Money pool made by the message sender.
+        // Increment the sustainments to the Money pool attributed to the beneficiary.
         sustainments[_mp.number][_beneficiary] = sustainments[_mp.number][
             _beneficiary
         ]
             .add(_amount);
 
-        _mp.want.safeTransferFrom(msg.sender, address(this), _amount);
+        // Process the sustainment, and determine how much Flow was made available as a result.
+        _mp.want.safeTransferFrom(msg.sender, address(treasury), _amount);
+
+        uint256 _surplus = _mp._add(_amount);
+
+        if (_surplus > 0) {
+            uint256 _overflowAmount =
+                treasury.transform(
+                    _surplus,
+                    _mp.want,
+                    _surplus.mul(_convertedFlowAmount.div(_amount))
+                );
+            _mp._addOverflow(_overflowAmount);
+        }
 
         // Add this address to the sustainer's list of sustained owners
         if (sustainedOwnerTracker[_beneficiary][_owner] == false) {
@@ -644,7 +662,7 @@ contract Fountain is IFountain {
     }
 
     /** 
-        @notice The amount of redistribution in a Money pool that can be claimed by the given address.
+        @notice The amount of overflow redistribution in a Money pool that can be claimed by the given address.
         @param _mp The Money pool to get a redistribution amount for.
         @param _sustainer The address of the sustainer to get an amount for.
         @return amount The amount.
@@ -653,14 +671,14 @@ contract Fountain is IFountain {
         MoneyPool.Data memory _mp,
         address _sustainer
     ) private view returns (uint256) {
-        // Return 0 if there's no surplus.
-        if (_mp.total < _mp.target) return 0;
+        // Return 0 if there's no overflow.
+        if (_mp.overflow == 0) return 0;
 
-        return
-            _mp
-                .total
-                .sub(_mp.target)
-                .mul(sustainments[_mp.number][_sustainer])
-                .div(_mp.total);
+        // Calculate their share of the sustainment for the the given sustainer.
+        // allocate a proportional share of the surplus, overwriting any previous value.
+        uint256 _proportionOfTotal =
+            sustainments[_mp.number][_sustainer].div(_mp.total);
+
+        return _mp.overflow.mul(_proportionOfTotal);
     }
 }
