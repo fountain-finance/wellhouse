@@ -352,18 +352,18 @@ contract Fountain is IFountain {
         uint256 _target,
         uint256 _duration,
         IERC20 _want,
-        bytes32 _title,
-        bytes32 _link
+        string calldata _title,
+        string calldata _link
     ) external override returns (uint256) {
         require(_duration >= 1, "Fountain::configureMp: TOO_SHORT");
         require(_want == dai, "Fountain::configureMp: UNSUPPORTED_WANT");
         require(_target > 0, "Fountain::configureMp: BAD_TARGET");
         require(
-            _title.length > 0 && _title.length <= 32,
+            bytes(_title).length > 0 && bytes(_title).length <= 32,
             "Fountain::configureMp: BAD_TITLE"
         );
         require(
-            _link.length > 0 && _link.length <= 32,
+            bytes(_link).length > 0 && bytes(_link).length <= 32,
             "Fountain::configureMp: BAD_LINK"
         );
 
