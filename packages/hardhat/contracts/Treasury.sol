@@ -157,8 +157,14 @@ contract OverflowTreasury {
         _token.safeTransfer(_receiver, _amount);
     }
 
-    function overthrow(OverflowTreasury _newTreasury) public onlyController {
+    function overthrow(OverflowTreasury _newTreasury, IERC20[] _tokens)
+        public
+        onlyController
+    {
         flow.replaceTreasury(_newTreasury);
+        flow.safeTransferTo(_newTreasury);
+        for (uint256 i = 0; i < _tokens.length; i++)
+            _tokens[i].safeTransferTo(_newTreasury);
     }
 
     function _getPhase() private returns (Phase) {
