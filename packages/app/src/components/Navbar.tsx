@@ -19,13 +19,18 @@ export default function Navbar({
     <div
       style={{
         display: 'flex',
-        alignItems: 'baseline',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '10px 20px',
+        padding: '6px 20px',
         borderBottom: '1px solid lightgrey',
       }}
     >
-      <Withdrawable contracts={contracts} address={address} />
+      <span style={{ display: 'grid', gridAutoFlow: 'column', columnGap: 20, alignItems: 'center' }}>
+        <a style={{ fontSize: 24 }} href="/">
+          ⛲️
+        </a>
+        <Withdrawable contracts={contracts} address={address} />
+      </span>
       <Account userProvider={userProvider} loadWeb3Modal={onConnectWallet} address={address} />
     </div>
   )

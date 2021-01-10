@@ -18,9 +18,9 @@ export default function Withdrawable({ contracts, address }: { contracts?: Contr
   })
 
   return (
-    <div style={{ display: 'grid', gridAutoFlow: 'column', columnGap: 30 }}>
-      <div>Withdrawable: {withdrawable?.toNumber() ?? 0}</div>
-      <div>Withdrawable soon: {(pendingWithdrawable?.toNumber() ?? 0) - (withdrawable?.toNumber() ?? 0)}</div>
+    <div style={{ display: 'grid', gridAutoFlow: 'column', columnGap: 20 }}>
+      <div>Your surplus: {withdrawable?.toNumber() ?? 0}</div>
+      <div>({(pendingWithdrawable?.toNumber() ?? 0) - (withdrawable?.toNumber() ?? 0)} pending)</div>
     </div>
   )
 }
