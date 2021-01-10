@@ -1,5 +1,6 @@
 import { JsonRpcProvider, Listener } from '@ethersproject/providers'
 import { useEffect, useState } from 'react'
+import Web3 from 'web3'
 
 import { ContractName } from '../constants/contract-name'
 import { Contracts } from '../models/contracts'
@@ -34,10 +35,15 @@ export default function useEventListener({
   }
 
   if (needsInitialGet) {
-    contract?.queryFilter({ ...contract }).then(initialEvents => {
-      setEvents(initialEvents.map(e => formatEvent(e)))
-      setNeedsInitialGet(false)
-    })
+    contract
+      ?.queryFilter({
+        ...contract,
+        topics: [...(eventName ? [Web3.utils.stringToHex(Web3.utils.padLeft(eventName, 32, '0'))] : [])],
+      })
+      .then(initialEvents => {
+        setEvents(initialEvents.map(e => formatEvent(e)))
+        setNeedsInitialGet(false)
+      })
   }
 
   useEffect(() => {

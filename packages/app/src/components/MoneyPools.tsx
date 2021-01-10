@@ -69,7 +69,7 @@ export default function MoneyPools({
 
     const amount = sustainAmount !== undefined ? eth.abi.encodeParameter('uint256', sustainAmount) : undefined
 
-    transactor(contracts.Fountain.sustainOwner(currentMp.owner, amount, address), () => setSustainAmount(0))
+    transactor(contracts.Fountain.sustainOwner(currentMp.owner, amount, contracts.Token.address, address), () => setSustainAmount(0))
   }
 
   function tap() {
