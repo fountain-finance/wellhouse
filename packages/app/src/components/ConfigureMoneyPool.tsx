@@ -44,6 +44,30 @@ export default function ConfigureMoneyPool({
       }}
     >
       <p>
+        <label htmlFor="title">Title</label>
+        <br />
+        <input
+          onChange={e => setTitle(e.target.value)}
+          style={{ marginRight: 10 }}
+          type="text"
+          name="title"
+          id="duration"
+          placeholder="Money pool title"
+        />
+      </p>
+      <p>
+        <label htmlFor="link">Link</label>
+        <br />
+        <input
+          onChange={e => setLink(e.target.value)}
+          style={{ marginRight: 10 }}
+          type="text"
+          name="link"
+          id="duration"
+          placeholder="http://your-money-pool.io"
+        />
+      </p>
+      <p>
         <label htmlFor="target">Sustainability target</label>
         <br />
         <input
@@ -68,30 +92,6 @@ export default function ConfigureMoneyPool({
           placeholder="30"
         />
         {useDays ? 'days' : 'seconds'}
-      </p>
-      <p>
-        <label htmlFor="title">Title</label>
-        <br />
-        <input
-          onChange={e => setTitle(e.target.value)}
-          style={{ marginRight: 10 }}
-          type="text"
-          name="title"
-          id="duration"
-          placeholder="Money pool title"
-        />
-      </p>
-      <p>
-        <label htmlFor="link">Link</label>
-        <br />
-        <input
-          onChange={e => setLink(e.target.value)}
-          style={{ marginRight: 10 }}
-          type="text"
-          name="link"
-          id="duration"
-          placeholder="http://your-money-pool.io"
-        />
       </p>
       <button type="submit">Create</button>
     </form>
