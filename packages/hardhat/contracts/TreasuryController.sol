@@ -51,7 +51,7 @@ contract OverflowTreasury {
     event Transform(IERC20 token, uint256 value, uint256 amount);
 
     constructor() public {
-        flow = new Flow(PHASE_1_CAP);
+        flow = new Flow();
     }
 
     function initializePhase1(IPhase _phase1) external {
@@ -98,6 +98,8 @@ contract OverflowTreasury {
         uint256 _expectedConvertedAmount
     ) public returns (uint256 _flowAmount) {
         Phase _phase = _getPhase();
+        require(_phase != Phase.None, "OverflowTreasury::transform: BAD_STATE");
+
         if (_phase == Phase.ONE) {
             require(
                 address(phase1) != address(0),
