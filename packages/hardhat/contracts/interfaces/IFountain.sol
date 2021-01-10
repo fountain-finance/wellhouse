@@ -45,53 +45,17 @@ interface IFountain {
     function getMp(uint256 _mpNumber)
         external
         view
-        returns (
-            MoneyPool.Data memory _mp
-            // uint256,
-            // bytes32,
-            // bytes32,
-            // address,
-            // IERC20,
-            // uint256,
-            // uint256,
-            // uint256,
-            // uint256,
-            // uint256
-        );
+        returns (MoneyPool.Data memory _mp);
 
     function getQueuedMp(address _owner)
         external
         view
-        returns (
-            MoneyPool.Data memory _mp
-            // uint256,
-            // bytes32,
-            // bytes32,
-            // address,
-            // IERC20,
-            // uint256,
-            // uint256,
-            // uint256,
-            // uint256,
-            // uint256
-        );
+        returns (MoneyPool.Data memory _mp);
 
     function getCurrentMp(address _owner)
         external
         view
-        returns (
-            MoneyPool.Data memory _mp
-            // uint256,
-            // bytes32,
-            // bytes32,
-            // address,
-            // IERC20,
-            // uint256,
-            // uint256,
-            // uint256,
-            // uint256,
-            // uint256
-        );
+        returns (MoneyPool.Data memory _mp);
 
     function getSustainment(uint256 _mpNumber, address _sustainer)
         external
