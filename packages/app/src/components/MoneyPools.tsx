@@ -131,7 +131,11 @@ export default function MoneyPools({
             >
               {header('Current')}
 
-              {currentMp ? <MoneyPoolDetail mp={currentMp} isActive={true} /> : <div>Getting money pool...</div>}
+              {currentMp ? (
+                <MoneyPoolDetail mp={currentMp} showSustained={true} showTimeLeft={true} />
+              ) : (
+                <div>Getting money pool...</div>
+              )}
 
               {currentMp ? (
                 <div>
