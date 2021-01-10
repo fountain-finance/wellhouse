@@ -38,13 +38,11 @@ export default function MoneyPools({
     args: [owner],
   })
 
-  console.log({ currentMp });
   const queuedMp: MoneyPool | undefined = useContractReader({
     contract: contracts?.Fountain,
     functionName: 'getQueuedMp',
     args: [owner],
   })
-  console.log({ queuedMp });
 
   const tappableAmount: number | undefined = useContractReader<number>({
     contract: contracts?.Fountain,
@@ -71,7 +69,7 @@ export default function MoneyPools({
 
     const amount = sustainAmount !== undefined ? eth.abi.encodeParameter('uint256', sustainAmount) : undefined
 
-    transactor(contracts.Fountain.sustainOwner(currentMp.owner, amount, address), () => setSustainAmount(0))
+    transactor(contracts.Fountain.sustainOwner(currentMp.owner, amount, contracts.Token.address, address), () => setSustainAmount(0))
   }
 
   function tap() {
@@ -88,7 +86,17 @@ export default function MoneyPools({
   const configureMoneyPool = <ConfigureMoneyPool transactor={transactor} contracts={contracts} />
 
   function header(text: string) {
-    return <h2 style={{ margin: 0 }}>{text}</h2>
+    return (
+      <h4
+        style={{
+          margin: 0,
+          textTransform: 'uppercase',
+          color: '#777',
+        }}
+      >
+        {text}
+      </h4>
+    )
   }
 
   const formStyle: React.CSSProperties = {
@@ -205,8 +213,8 @@ export default function MoneyPools({
             </div>
           ))
         ) : (
-            <div>No sustainments yet</div>
-          )}
+          <div>No sustainments yet</div>
+        )}
       </div>
     </div>
   )

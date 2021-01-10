@@ -15,6 +15,8 @@ export default function ConfigureMoneyPool({
 }) {
   const [target, setTarget] = useState<number>(0)
   const [duration, setDuration] = useState<number>(0)
+  const [title, setTitle] = useState<string>()
+  const [link, setLink] = useState<string>()
 
   const eth = new Web3(Web3.givenProvider).eth
 
@@ -23,11 +25,13 @@ export default function ConfigureMoneyPool({
   function onSubmit() {
     if (!transactor || !contracts?.Fountain || !contracts?.Token) return
 
-    const target_ = eth.abi.encodeParameter('uint256', target)
+    const _target = eth.abi.encodeParameter('uint256', target)
     // Contracts created during development use seconds for duration
-    const duration_ = eth.abi.encodeParameter('uint256', duration * (useDays ? SECONDS_IN_DAY : 1))
+    const _duration = eth.abi.encodeParameter('uint256', duration * (useDays ? SECONDS_IN_DAY : 1))
+    const _title = title && Web3.utils.utf8ToHex(title)
+    const _link = link && Web3.utils.utf8ToHex(link)
 
-    transactor(contracts.Fountain.configureMp(target_, duration_, contracts.Token.address, "title", "link"))
+    transactor(contracts.Fountain.configureMp(_target, _duration, contracts.Token.address, _title, _link))
   }
 
   if (!transactor || !contracts) return null
@@ -39,6 +43,30 @@ export default function ConfigureMoneyPool({
         e.preventDefault()
       }}
     >
+      <p>
+        <label htmlFor="title">Title</label>
+        <br />
+        <input
+          onChange={e => setTitle(e.target.value)}
+          style={{ marginRight: 10 }}
+          type="text"
+          name="title"
+          id="duration"
+          placeholder="Money pool title"
+        />
+      </p>
+      <p>
+        <label htmlFor="link">Link</label>
+        <br />
+        <input
+          onChange={e => setLink(e.target.value)}
+          style={{ marginRight: 10 }}
+          type="text"
+          name="link"
+          id="duration"
+          placeholder="http://your-money-pool.io"
+        />
+      </p>
       <p>
         <label htmlFor="target">Sustainability target</label>
         <br />

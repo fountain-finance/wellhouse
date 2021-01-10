@@ -6,6 +6,8 @@ export interface MoneyPool {
   start: BigNumber
   target: BigNumber
   total: BigNumber
+  title: string
+  link: string
   want: string
   owner: string
 }
