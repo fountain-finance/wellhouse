@@ -4,14 +4,14 @@ import React from 'react'
 import useContractReader from '../hooks/ContractReader'
 import { Contracts } from '../models/contracts'
 
-export default function Withdrawable({ contracts, address }: { contracts?: Contracts; address?: string }) {
-  const withdrawable: BigNumber | undefined = useContractReader({
+export default function Surplus({ contracts, address }: { contracts?: Contracts; address?: string }) {
+  const surplus: BigNumber | undefined = useContractReader({
     contract: contracts?.Fountain,
     functionName: 'getAllTrackedRedistribution',
     args: [address, false],
   })
 
-  const pendingWithdrawable: BigNumber | undefined = useContractReader({
+  const pendingSurplus: BigNumber | undefined = useContractReader({
     contract: contracts?.Fountain,
     functionName: 'getAllTrackedRedistribution',
     args: [address, true],
@@ -19,8 +19,8 @@ export default function Withdrawable({ contracts, address }: { contracts?: Contr
 
   return (
     <div style={{ display: 'grid', gridAutoFlow: 'column', columnGap: 20 }}>
-      <div>Your surplus: {withdrawable?.toNumber() ?? 0}</div>
-      <div>({(pendingWithdrawable?.toNumber() ?? 0) - (withdrawable?.toNumber() ?? 0)} pending)</div>
+      <div>Your surplus: {surplus?.toNumber() ?? 0}</div>
+      <div>({(pendingSurplus?.toNumber() ?? 0) - (surplus?.toNumber() ?? 0)} pending)</div>
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { JsonRpcProvider } from '@ethersproject/providers'
 
 import { Contracts } from '../models/contracts'
 import Account from './Account'
-import Withdrawable from './Withdrawable'
+import Surplus from './Surplus'
 
 export default function Navbar({
   address,
@@ -29,7 +29,7 @@ export default function Navbar({
         <a style={{ fontSize: 24 }} href="/">
           ⛲️
         </a>
-        <Withdrawable contracts={contracts} address={address} />
+        <Surplus contracts={contracts} address={address} />
       </span>
       <Account userProvider={userProvider} loadWeb3Modal={onConnectWallet} address={address} />
     </div>
