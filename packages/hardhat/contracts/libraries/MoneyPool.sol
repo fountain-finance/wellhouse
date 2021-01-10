@@ -124,6 +124,8 @@ library MoneyPool {
         @param _baseMp The Money pool to clone from.
     */
     function _clone(Data storage self, Data memory _baseMp) internal {
+        self.title = _baseMp.title;
+        self.link = _baseMp.link;
         self.target = _baseMp.target;
         self.duration = _baseMp.duration;
         self.want = _baseMp.want;
