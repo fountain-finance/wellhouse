@@ -63,9 +63,9 @@ contract OverflowTreasury {
      */
     event Transform(IERC20 token, uint256 value, uint256 amount);
 
-    constructor() public {
-        flow = new Flow();
+    constructor(IERC20 _flow) public {
         fountain = msg.sender;
+        flow = _flow;
     }
 
     function initializePhase1(ITreasuryPhase _phase1) external {
@@ -155,6 +155,10 @@ contract OverflowTreasury {
         uint256 _amount
     ) external onlyController {
         _token.safeTransfer(_receiver, _amount);
+    }
+
+    function overthrow(OverflowTreasury _newTreasury) public onlyController {
+        flow.replaceTreasury(_newTreasury);
     }
 
     function _getPhase() private returns (Phase) {
