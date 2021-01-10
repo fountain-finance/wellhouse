@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/ownership/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./libraries/MoneyPool.sol";
@@ -36,7 +37,7 @@ The basin of the Fountain should always be the sustainers of projects.
 */
 
 /// @notice The contract managing the state of all Money pools.
-contract Fountain is IFountain {
+contract Fountain is IFountain, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using MoneyPool for MoneyPool.Data;
@@ -482,6 +483,10 @@ contract Fountain is IFountain {
         emit TapMp(_mpNumber, msg.sender, _beneficiary, _amount, _mp.want);
 
         return true;
+    }
+
+    function overthrowTreasury(OverflowTreasury _newTreasury) public onlyOwner {
+        treasury.overthrow(_newTreasury);
     }
 
     // --- private transactions --- //
