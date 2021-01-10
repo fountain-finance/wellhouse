@@ -14,12 +14,25 @@ contract Flow is ERC20 {
         _;
     }
 
-    constructor(uint256 _initialSupply) public ERC20("Overflow", "FLOW") {
+    event UpdateTreasury {
+      address treasury
+    }
+
+    constructor() public ERC20("Overflow", "FLOW") {
         treasury = msg.sender;
-        _mint(msg.sender, _initialSupply);
     }
 
     function mint(uint256 _amount) external onlyTreasury {
         _mint(treasury, _amount);
+    }
+
+    function burn(uint256 _amount) external onlyTreasury {
+        _burn(treasury, _burn);
+    }
+
+    function updateTreasury(address _newTreasury) external onlyTreasury {
+        require(_newTreasury != address(0), "Flow::updateTreasury: ZERO_ADDRESS");
+        treasury = _newTreasury;
+        emit UpdateTreasury(_newTreasury);
     }
 }
