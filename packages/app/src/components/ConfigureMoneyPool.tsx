@@ -27,7 +27,7 @@ export default function ConfigureMoneyPool({
     // Contracts created during development use seconds for duration
     const duration_ = eth.abi.encodeParameter('uint256', duration * (useDays ? SECONDS_IN_DAY : 1))
 
-    transactor(contracts.Fountain.configureMp(target_, duration_, contracts.Token.address))
+    transactor(contracts.Fountain.configureMp(target_, duration_, contracts.Token.address, "title", "link"))
   }
 
   if (!transactor || !contracts) return null

@@ -21,10 +21,12 @@ abstract contract MoneyPoolOwner is Ownable {
         IFountain fountain,
         uint256 target,
         uint256 duration,
-        IERC20 want
+        IERC20 want,
+        string memory title,
+        string memory link
     ) internal {
         setFountain(fountain);
-        configureMp(target, duration, want);
+        configureMp(target, duration, want, title, link);
     }
 
     /** 
@@ -68,32 +70,39 @@ abstract contract MoneyPoolOwner is Ownable {
         @param _target The new Money pool target amount.
         @param _duration The new duration of your Money pool.
         @param _want The new token that your MoneyPool wants.
+        @param _title The title of the Money pool.
+        @param _link A link to information about the Money pool.
         @return mpNumber The number of the Money pool that was reconfigured.
     */
     function configureMp(
         uint256 _target,
         uint256 _duration,
-        IERC20 _want
+        IERC20 _want,
+        string memory _title,
+        string memory _link
     ) public virtual onlyOwner returns (uint256) {
         // Increse the allowance so that Fountain can transfer want tokens from this contract's wallet into a MoneyPool.
         _want.safeIncreaseAllowance(address(_fountain), 10000000000000000000);
         // If there's an active Money pool, you'll want to decrease the allowance for the old want once it expires.
 
-        return _fountain.configureMp(_target, _duration, _want);
+        return _fountain.configureMp(_target, _duration, _want, _title, _link);
     }
 
     /** 
         @notice This allows your contract to accept sustainments. 
         @dev You can charge your customers however you like, and they'll keep the surplus if there is any.
         @param _amount The amount you are taking. Your contract must give Fountain allowance.
+        @param _want The token that is being transfered.
         @param _sustainer Your contracts end user who is sustaining you.
         Any surplus from your Money pool will be redistributed to this address.
         @return mpNumber The number of the Money pool that was sustained.
     */
-    function _sustainMp(uint256 _amount, address _sustainer)
-        internal
-        returns (uint256)
-    {
-        return _fountain.sustainOwner(address(this), _amount, _sustainer);
+    function _sustainMp(
+        uint256 _amount,
+        IERC20 _want,
+        address _sustainer
+    ) internal returns (uint256) {
+        return
+            _fountain.sustainOwner(address(this), _amount, _want, _sustainer);
     }
 }

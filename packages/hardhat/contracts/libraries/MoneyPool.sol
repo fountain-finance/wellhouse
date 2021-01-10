@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
+pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -16,14 +17,14 @@ library MoneyPool {
 
     /// @notice The Money pool structure represents a project stewarded by an address, and accounts for which addresses have helped sustain the project.
     struct Data {
-        // The title of the Money pool.
-        bytes32 title;
-        // A link that points to a justification for these parameters.
-        bytes32 link;
         // A unique number that's incremented for each new Money pool, starting with 1.
         uint256 number;
         // The number of the owner's Money pool that came before this one.
         uint256 previous;
+        // The title of the Money pool.
+        string title;
+        // A link that points to a justification for these parameters.
+        string link;
         // The address who defined this Money pool and who has access to its sustainments.
         address owner;
         // The token that this Money pool can be funded with.
@@ -82,8 +83,8 @@ library MoneyPool {
     */
     function _configure(
         Data storage self,
-        bytes32 _title,
-        bytes32 _link,
+        string memory _title,
+        string memory _link,
         uint256 _target,
         uint256 _duration,
         IERC20 _want,
@@ -205,49 +206,5 @@ library MoneyPool {
     */
     function _hasExpired(Data memory self) private view returns (bool) {
         return block.timestamp > self.start.add(self.duration);
-    }
-
-    /** 
-        @notice The properties of the given Money pool.
-        @param self The Money pool to get the properties of.
-        @return number The number of the Money pool.
-        @return title The title of the Money pool.
-        @return link A link that's associated with this Money pool.
-        @return owner The owner of the Money pool.
-        @return want The token the Money pool wants.
-        @return target The amount of the want token this Money pool is targeting.
-        @return start The time when this Money pool started.
-        @return duration The duration of this Money pool, measured in seconds.
-        @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
-        @return previous The number of the previous money pool.
-    */
-    function _properties(Data memory self)
-        internal
-        pure
-        returns (
-            uint256,
-            bytes32,
-            bytes32,
-            address,
-            IERC20,
-            uint256,
-            uint256,
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        return (
-            self.number,
-            self.title,
-            self.link,
-            self.owner,
-            self.want,
-            self.target,
-            self.start,
-            self.duration,
-            self.total,
-            self.previous
-        );
     }
 }
