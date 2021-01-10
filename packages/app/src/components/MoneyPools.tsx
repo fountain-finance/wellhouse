@@ -86,7 +86,17 @@ export default function MoneyPools({
   const configureMoneyPool = <ConfigureMoneyPool transactor={transactor} contracts={contracts} />
 
   function header(text: string) {
-    return <h2 style={{ margin: 0 }}>{text}</h2>
+    return (
+      <h4
+        style={{
+          margin: 0,
+          textTransform: 'uppercase',
+          color: '#777',
+        }}
+      >
+        {text}
+      </h4>
+    )
   }
 
   const formStyle: React.CSSProperties = {

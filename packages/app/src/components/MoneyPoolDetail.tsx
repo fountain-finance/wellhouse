@@ -1,5 +1,6 @@
 import { MoneyPool } from '../models/money-pool'
 import { SECONDS_IN_DAY } from '../constants/seconds-in-day'
+import Web3 from 'web3'
 
 export default function MoneyPoolDetail({ mp, isActive }: { mp?: MoneyPool; isActive?: boolean }) {
   const secondsLeft = mp && mp.start.toNumber() + mp.duration.toNumber() - new Date().valueOf() / 1000
@@ -33,8 +34,17 @@ export default function MoneyPoolDetail({ mp, isActive }: { mp?: MoneyPool; isAc
     )
   }
 
+  const title = mp?.title && Web3.utils.hexToString(mp.title)
+
+  const link = mp?.link && Web3.utils.hexToString(mp.link)
+
   return mp ? (
     <div>
+      <div>
+        <h2 style={{ margin: 0 }}>{title}</h2>
+        <a href={link} target="_blank" rel="noopener noreferrer">{link}</a>
+      </div>
+      <br/>
       <div>
         {label('Target')} {mp.target.toNumber()}
       </div>
