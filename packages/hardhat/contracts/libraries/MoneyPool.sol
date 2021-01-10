@@ -192,48 +192,4 @@ library MoneyPool {
     function _hasExpired(Data memory self) private view returns (bool) {
         return block.timestamp > self.start.add(self.duration);
     }
-
-    // /**
-    //     @notice The properties of the given Money pool.
-    //     @param self The Money pool to get the properties of.
-    //     @return number The number of the Money pool.
-    //     @return title The title of the Money pool.
-    //     @return link A link that's associated with this Money pool.
-    //     @return owner The owner of the Money pool.
-    //     @return want The token the Money pool wants.
-    //     @return target The amount of the want token this Money pool is targeting.
-    //     @return start The time when this Money pool started.
-    //     @return duration The duration of this Money pool, measured in seconds.
-    //     @return total The total amount passed through the Money pool. Returns 0 if the Money pool isn't owned by the message sender.
-    //     @return previous The number of the previous money pool.
-    // */
-    // function _properties(Data memory self)
-    //     internal
-    //     pure
-    //     returns (
-    //         uint256,
-    //         bytes32,
-    //         bytes32,
-    //         address,
-    //         IERC20,
-    //         uint256,
-    //         uint256,
-    //         uint256,
-    //         uint256,
-    //         uint256
-    //     )
-    // {
-    //     return (
-    //         self.number,
-    //         self.title,
-    //         self.link,
-    //         self.owner,
-    //         self.want,
-    //         self.target,
-    //         self.start,
-    //         self.duration,
-    //         self.total,
-    //         self.previous
-    //     );
-    // }
 }
