@@ -4,15 +4,15 @@ import { useParams } from 'react-router-dom'
 import Web3 from 'web3'
 
 import { ContractName } from '../constants/contract-name'
+import { localProvider } from '../constants/local-provider'
 import useContractReader from '../hooks/ContractReader'
 import useEventListener from '../hooks/EventListener'
 import { Contracts } from '../models/contracts'
+import { SustainEvent } from '../models/events/sustain-event'
 import { MoneyPool } from '../models/money-pool'
 import { Transactor } from '../models/transactor'
 import ConfigureMoneyPool from './ConfigureMoneyPool'
 import MoneyPoolDetail from './MoneyPoolDetail'
-import { localProvider } from '../constants/local-provider'
-import { SustainEvent } from '../models/events/sustain-event'
 
 export default function MoneyPools({
   address,
@@ -69,7 +69,9 @@ export default function MoneyPools({
 
     const amount = sustainAmount !== undefined ? eth.abi.encodeParameter('uint256', sustainAmount) : undefined
 
-    transactor(contracts.Fountain.sustainOwner(currentMp.owner, amount, contracts.Token.address, address), () => setSustainAmount(0))
+    transactor(contracts.Fountain.sustainOwner(currentMp.owner, amount, contracts.Token.address, address), () =>
+      setSustainAmount(0),
+    )
   }
 
   function tap() {

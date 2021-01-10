@@ -50,6 +50,11 @@
     "graph-ship-local": "yarn graph-prepare && yarn graph-codegen && yarn graph-deploy-local",
     "deploy-and-graph": "yarn deploy && yarn graph-ship-local"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn run compile"
+    }
+  },
   "workspaces": {
     "packages": [
       "packages/*"
@@ -58,5 +63,8 @@
       "**/@graphprotocol/graph-ts",
       "**/@graphprotocol/graph-ts/**"
     ]
+  },
+  "devDependencies": {
+    "husky": "^4.3.7"
   }
 }
