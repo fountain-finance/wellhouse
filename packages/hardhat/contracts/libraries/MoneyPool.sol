@@ -10,6 +10,7 @@ import "./Math.sol";
 /// @notice Logic to manipulate MoneyPool data.
 library MoneyPool {
     using SafeMath for uint256;
+    using SafeMath for uint8;
 
     /// @notice Possible states that a Money pool may be in
     /// @dev Money pool's are immutable once the Money pool is active.
@@ -41,8 +42,12 @@ library MoneyPool {
         uint256 duration;
         // The amount of available funds that have been tapped by the owner.
         uint256 tapped;
-        // The timestamp when the Money pool was last configured.
-        uint256 lastConfigured;
+        // The percentage of overflow to allocate to the owner.
+        uint8 o;
+        // The percentage of overflow to allocate to a specified beneficiary.
+        uint8 b;
+        // The specified beneficiary.
+        address bAddress;
     }
 
     // --- internal transactions --- //
@@ -88,15 +93,20 @@ library MoneyPool {
         uint256 _target,
         uint256 _duration,
         IERC20 _want,
-        uint256 _start
+        uint256 _start,
+        uint8 _o,
+        uint8 _b,
+        address _bAddress
     ) internal {
         self.title = _title;
         self.link = _link;
         self.target = _target;
         self.duration = _duration;
         self.want = _want;
-        self.lastConfigured = block.timestamp;
         self.start = _start;
+        self.o = _o;
+        self.b = _b;
+        self.bAddress = _bAddress;
     }
 
     /** 
@@ -144,6 +154,9 @@ library MoneyPool {
         self.target = _baseMp.target;
         self.duration = _baseMp.duration;
         self.want = _baseMp.want;
+        self.o = _baseMp.o;
+        self.b = _baseMp.b;
+        self.bAddress = _baseMp.bAddress;
     }
 
     // --- internal views --- //
@@ -188,6 +201,14 @@ library MoneyPool {
         uint256 _distanceToStart =
             (block.timestamp.sub(_end)).mod(self.duration);
         return block.timestamp.sub(_distanceToStart);
+    }
+
+    /** 
+        @notice Returns the percentage of overflow to allocate to sustainers.
+        @return _percentage The percentage.
+    */
+    function _s(Data memory self) internal pure returns (uint256) {
+        return uint8(100).sub(self.o).sub(self.b);
     }
 
     // --- private views --- //

@@ -10,6 +10,8 @@ interface IFountain {
 
     function mpCount() external view returns (uint256);
 
+    function paused() external view returns (bool);
+
     /// @notice This event should trigger when a Money pool is configured.
     event ConfigureMp(
         uint256 indexed mpNumber,
@@ -18,7 +20,10 @@ interface IFountain {
         uint256 duration,
         IERC20 want,
         string title,
-        string link
+        string link,
+        uint8 c,
+        uint8 b,
+        address bAddress
     );
 
     /// @notice This event should trigger when a Money pool is sustained.
@@ -93,15 +98,7 @@ interface IFountain {
         uint256 _convertedFlowAmount
     ) external returns (uint256 _mpNumber);
 
-    function collectAllRedistributions() external returns (uint256 _amount);
-
-    function collectRedistributionsFromOwner(address _owner)
-        external
-        returns (uint256 _amount);
-
-    function collectRedistributionsFromOwners(address[] calldata _owner)
-        external
-        returns (uint256 _amount);
+    function collectRedistributions() external returns (uint256 _amount);
 
     function tapMp(
         uint256 _mpNumber,
