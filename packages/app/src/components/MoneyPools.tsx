@@ -58,6 +58,7 @@ export default function MoneyPools({
     provider: localProvider,
     startBlock: 1,
     getInitial: true,
+    topics: currentMp?.number ? [BigNumber.from(currentMp?.number)] : [],
   }) as SustainEvent[])
     .filter(e => e.owner === owner)
     .filter(e => e.mpNumber.toNumber() === currentMp?.number.toNumber())
@@ -204,20 +205,22 @@ export default function MoneyPools({
           {configureMoneyPool}
         </div>
       ) : null}
-      <div>
-        <h3>Thanks to...</h3>
-        {currentSustainEvents.length ? (
-          currentSustainEvents.map((e, i) => (
-            <div style={{ marginBottom: 20, lineHeight: 1.2 }} key={i}>
-              <div>Amount: {e.amount?.toNumber()}</div>
-              <div>Sustainer: {e.sustainer}</div>
-              <div>Beneficiary: {e.beneficiary}</div>
-            </div>
-          ))
-        ) : (
-          <div>No sustainments yet</div>
-        )}
-      </div>
+      {currentMp && (
+        <div>
+          <h3>Thanks to...</h3>
+          {currentSustainEvents.length ? (
+            currentSustainEvents.map((e, i) => (
+              <div style={{ marginBottom: 20, lineHeight: 1.2 }} key={i}>
+                <div>Amount: {e.amount?.toNumber()}</div>
+                <div>Sustainer: {e.sustainer}</div>
+                <div>Beneficiary: {e.beneficiary}</div>
+              </div>
+            ))
+          ) : (
+            <div>No sustainments yet</div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
