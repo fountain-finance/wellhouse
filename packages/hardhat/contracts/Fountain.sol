@@ -93,7 +93,7 @@ contract Fountain is IFountain {
     /// @notice The contract currently only supports sustainments in dai.
     IERC20 public dai;
 
-    /// @notice The treasury.
+    /// @notice The treasury that manages funds.
     OverflowTreasury public treasury;
 
     // --- events --- //
@@ -140,6 +140,7 @@ contract Fountain is IFountain {
                 _aMp.want,
                 _aMp.target,
                 0,
+                0,
                 _aMp._determineNextStart(),
                 _aMp.duration,
                 0,
@@ -179,6 +180,7 @@ contract Fountain is IFountain {
                 _mp.owner,
                 _mp.want,
                 _mp.target,
+                0,
                 0,
                 _mp._determineNextStart(),
                 _mp.duration,
@@ -272,9 +274,9 @@ contract Fountain is IFountain {
 
     // --- external transactions --- //
 
-    constructor(IERC20 _dai, OverflowTreasury _treasury) public {
+    constructor(IERC20 _dai) public {
         dai = _dai;
-        treasury = _treasury;
+        treasury = new OverflowTreasury();
         mpCount = 0;
     }
 
@@ -361,9 +363,9 @@ contract Fountain is IFountain {
         ]
             .add(_amount);
 
-        // Process the sustainment, and determine how much Flow was made available as a result.
         _mp.want.safeTransferFrom(msg.sender, address(treasury), _amount);
 
+        // Add the amount to the Money pool, which determines how much Flow was made available as a result.
         uint256 _surplus = _mp._add(_amount);
 
         if (_surplus > 0) {
@@ -475,7 +477,7 @@ contract Fountain is IFountain {
         );
 
         _mp._tap(_amount);
-        _mp.want.safeTransfer(_beneficiary, _amount);
+        treasury.payout(_beneficiary, _mp.want, _amount);
 
         emit TapMp(_mpNumber, msg.sender, _beneficiary, _amount, _mp.want);
 
@@ -492,7 +494,7 @@ contract Fountain is IFountain {
     function _performCollectRedistributions(address _sustainer, uint256 _amount)
         private
     {
-        dai.safeTransfer(_sustainer, _amount);
+        treasury.payout(_sustainer, dai, _amount);
         emit CollectRedistributions(_sustainer, _amount);
     }
 

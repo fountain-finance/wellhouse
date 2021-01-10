@@ -6,50 +6,165 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "./Flow.sol";
-import "./Crowdsale.sol";
+import "./TreasuryPhase1.sol";
+import "./interfaces/ITreasuryPhase.sol";
+import "./libraries/Math.sol";
+import "./Fountain.sol";
 
 contract OverflowTreasury {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    /// @notice The amount of FLOW tokens to sell.
-    uint256 public constant CROWDSALE_CAP = 700000E18;
-
-    /// @notice The rate at which to sell FLOW for DAI.
-    uint8 public constant CROWDSALE_RATE = 2;
-
-    /// @notice The address of the FLOW ERC20 token.
-    IERC20 public flow;
-
-    /// @notice The address of the DAI ERC20 token, which funds will be collected in.
-    IERC20 public dai;
-
-    /// @notice The address where funds are managed
-    OverflowCrowdsale public crowdsale;
-
-    /// @notice Whether or not the crowdsale has been initialized
-    bool public crowdsaleInitialized = false;
-
-    event InitializeCrowdsale();
-
-    constructor(IERC20 _dai) public {
-        dai = _dai;
-        flow = new Flow(CROWDSALE_CAP);
+    modifier onlyController {
+        require(
+            msg.sender == fountain,
+            "Only the controller can call this function."
+        );
+        _;
     }
 
-    function initializeCrowdsale() external {
-        require(!crowdsaleInitialized, "OverflowTreasury::initializeCrowdsale");
-        crowdsale = new OverflowCrowdsale(
-            address(this),
-            CROWDSALE_CAP,
-            flow,
-            dai,
-            CROWDSALE_RATE
+    /// @notice The treasury behaves in different ways depending on the phase.
+    /// @dev The phase is determined by the amount of surplus in the system.
+    enum Phase {None, One, Two, Three}
+
+    /// @notice The amount of FLOW tokens issued in Phase 1 to transition to Phase 2.
+    uint256 public constant PHASE_1_CAP = 700000E18;
+
+    /// @notice The amount of FLOW tokens issued in Phase 2 to transition to Phase 3.
+    uint256 public constant PHASE_2_CAP = 93000000E18;
+
+    /// @notice The rate at which to issue FLOW for DAI in phase 1.
+    uint8 public constant PHASE_1_RATE = 2;
+
+    /// @notice The rate at which to issue FLOW for DAI in phase 2.
+    uint8 public constant PHASE_2_RATE = 1;
+
+    /// @notice The address of the FLOW ERC20 token.
+    Flow public flow;
+
+    /// @notice The contract managing Phase 1 token transformations.
+    ITreasuryPhase public phase1;
+
+    /// @notice The contract managing Phase 2 token transformations.
+    ITreasuryPhase public phase2;
+
+    /// @notice The contract managing Phase 3 token transformations.
+    ITreasuryPhase public phase3;
+
+    /// @notice The Fountain that this Treasury belongs to.
+    address public fountain;
+
+    /// @notice The
+    /**
+     * Event for token transforming
+     * @param token The token to transform.
+     * @param value The amount tokens to transform.
+     * @param amount The amount of FLOW tokens resulting from the transformation.
+     */
+    event Transform(IERC20 token, uint256 value, uint256 amount);
+
+    constructor() public {
+        flow = new Flow();
+        fountain = msg.sender;
+    }
+
+    function initializePhase1(ITreasuryPhase _phase1) external {
+        require(
+            _getPhase() == Phase.None || address(phase1) == address(0),
+            "OverflowTreasury::initializePhase1: ALREADY_INITIALIZED"
+        );
+        require(
+            address(_phase1) != address(0),
+            "OverflowTreasury::initializePhase1: ZERO_ADDRESS"
+        );
+        phase1 = _phase1;
+        flow.mint(PHASE_1_CAP);
+    }
+
+    function initializePhase2(ITreasuryPhase _phase2) external {
+        require(
+            _getPhase() == Phase.One || address(phase2) == address(0),
+            "OverflowTreasury::initializePhase2: ALREADY_INITIALIZED"
+        );
+        require(
+            address(_phase2) != address(0),
+            "OverflowTreasury::initializePhase2: ZERO_ADDRESS"
+        );
+        phase2 = _phase2;
+        flow.mint(PHASE_2_CAP);
+    }
+
+    function initializePhase3(ITreasuryPhase _phase3) external {
+        require(
+            _getPhase() == Phase.Two,
+            "OverflowTreasury::initializePhase3: ALREADY_INITIALIZED"
+        );
+        require(
+            address(_phase3) != address(0),
+            "OverflowTreasury::initializePhase3: ZERO_ADDRESS"
+        );
+        phase3 = _phase3;
+    }
+
+    function transform(
+        uint256 _amount,
+        IERC20 _token,
+        uint256 _expectedConvertedAmount
+    ) public onlyController returns (uint256 _flowAmount) {
+        Phase _phase = _getPhase();
+        require(_phase != Phase.None, "OverflowTreasury::transform: BAD_STATE");
+
+        if (_phase == Phase.One) {
+            require(
+                address(phase1) != address(0),
+                "OverflowTreasury::transform: CONTRACT_MISSING"
+            );
+            _flowAmount = phase1.transform(
+                _amount,
+                _token,
+                _amount.mul(PHASE_1_RATE)
+            );
+        }
+        if (_phase == Phase.Two) {
+            require(
+                address(phase2) != address(0),
+                "OverflowTreasury::transform: CONTRACT_MISSING"
+            );
+            _flowAmount = phase2.transform(
+                _amount,
+                _token,
+                _amount.mul(PHASE_2_RATE)
+            );
+        }
+        require(
+            address(phase3) != address(0),
+            "OverflowTreasury::transform: CONTRACT_MISSING"
+        );
+        _flowAmount = phase3.transform(
+            _amount,
+            _token,
+            _expectedConvertedAmount
         );
 
-        // Transfer the FLOW to the crowdsale contract for it to issue.
-        flow.safeTransfer(address(crowdsale), CROWDSALE_CAP);
+        emit Transform(_token, _amount, _flowAmount);
+    }
 
-        crowdsaleInitialized = true;
+    function payout(
+        address _receiver,
+        IERC20 _token,
+        uint256 _amount
+    ) external onlyController {
+        _token.safeTransfer(_receiver, _amount);
+    }
+
+    function _getPhase() private returns (Phase) {
+        if (address(phase1) == address(0)) return Phase.None;
+        if (
+            phase1.tokensIssued() < PHASE_1_CAP || address(phase2) == address(0)
+        ) return Phase.One;
+        else if (
+            phase1.tokensIssued() < PHASE_2_CAP || address(phase3) == address(0)
+        ) return Phase.Two;
+        return Phase.Three;
     }
 }
