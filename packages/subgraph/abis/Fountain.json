@@ -64,15 +64,15 @@
       },
       {
         "indexed": false,
-        "internalType": "bytes32",
+        "internalType": "string",
         "name": "title",
-        "type": "bytes32"
+        "type": "string"
       },
       {
         "indexed": false,
-        "internalType": "bytes32",
+        "internalType": "string",
         "name": "link",
-        "type": "bytes32"
+        "type": "string"
       }
     ],
     "name": "ConfigureMp",
@@ -221,14 +221,14 @@
         "type": "address"
       },
       {
-        "internalType": "bytes32",
+        "internalType": "string",
         "name": "_title",
-        "type": "bytes32"
+        "type": "string"
       },
       {
-        "internalType": "bytes32",
+        "internalType": "string",
         "name": "_link",
-        "type": "bytes32"
+        "type": "string"
       }
     ],
     "name": "configureMp",
@@ -302,14 +302,14 @@
             "type": "uint256"
           },
           {
-            "internalType": "bytes32",
+            "internalType": "string",
             "name": "title",
-            "type": "bytes32"
+            "type": "string"
           },
           {
-            "internalType": "bytes32",
+            "internalType": "string",
             "name": "link",
-            "type": "bytes32"
+            "type": "string"
           },
           {
             "internalType": "address",
@@ -383,14 +383,14 @@
             "type": "uint256"
           },
           {
-            "internalType": "bytes32",
+            "internalType": "string",
             "name": "title",
-            "type": "bytes32"
+            "type": "string"
           },
           {
-            "internalType": "bytes32",
+            "internalType": "string",
             "name": "link",
-            "type": "bytes32"
+            "type": "string"
           },
           {
             "internalType": "address",
@@ -464,14 +464,14 @@
             "type": "uint256"
           },
           {
-            "internalType": "bytes32",
+            "internalType": "string",
             "name": "title",
-            "type": "bytes32"
+            "type": "string"
           },
           {
-            "internalType": "bytes32",
+            "internalType": "string",
             "name": "link",
-            "type": "bytes32"
+            "type": "string"
           },
           {
             "internalType": "address",

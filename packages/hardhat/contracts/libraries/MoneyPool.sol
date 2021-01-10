@@ -22,9 +22,9 @@ library MoneyPool {
         // The number of the owner's Money pool that came before this one.
         uint256 previous;
         // The title of the Money pool.
-        bytes32 title;
+        string title;
         // A link that points to a justification for these parameters.
-        bytes32 link;
+        string link;
         // The address who defined this Money pool and who has access to its sustainments.
         address owner;
         // The token that this Money pool can be funded with.
@@ -81,8 +81,8 @@ library MoneyPool {
     */
     function _configure(
         Data storage self,
-        bytes32 _title,
-        bytes32 _link,
+        string memory _title,
+        string memory _link,
         uint256 _target,
         uint256 _duration,
         IERC20 _want,

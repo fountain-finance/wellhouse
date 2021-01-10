@@ -17,8 +17,8 @@ interface IFountain {
         uint256 indexed target,
         uint256 duration,
         IERC20 want,
-        bytes32 title,
-        bytes32 link
+        string title,
+        string link
     );
 
     /// @notice This event should trigger when a Money pool is sustained.
@@ -117,8 +117,8 @@ interface IFountain {
         uint256 _target,
         uint256 _duration,
         IERC20 _want,
-        bytes32 _title,
-        bytes32 _link
+        string calldata _title,
+        string calldata _link
     ) external returns (uint256 _mpNumber);
 
     function sustainOwner(

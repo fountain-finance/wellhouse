@@ -22,8 +22,8 @@ abstract contract MoneyPoolOwner is Ownable {
         uint256 target,
         uint256 duration,
         IERC20 want,
-        bytes32 title,
-        bytes32 link
+        string memory title,
+        string memory link
     ) internal {
         setFountain(fountain);
         configureMp(target, duration, want, title, link);
@@ -78,8 +78,8 @@ abstract contract MoneyPoolOwner is Ownable {
         uint256 _target,
         uint256 _duration,
         IERC20 _want,
-        bytes32 _title,
-        bytes32 _link
+        string memory _title,
+        string memory _link
     ) public virtual onlyOwner returns (uint256) {
         // Increse the allowance so that Fountain can transfer want tokens from this contract's wallet into a MoneyPool.
         _want.safeIncreaseAllowance(address(_fountain), 10000000000000000000);
