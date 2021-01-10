@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./libraries/MoneyPool.sol";
@@ -485,8 +485,9 @@ contract Fountain is IFountain, Ownable {
         return true;
     }
 
+    //TODO write documentation.
     function overthrowTreasury(OverflowTreasury _newTreasury) public onlyOwner {
-        treasury.overthrow(_newTreasury);
+        treasury.overthrow(_newTreasury, [dai]);
     }
 
     // --- private transactions --- //
