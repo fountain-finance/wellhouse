@@ -486,7 +486,10 @@ contract Fountain is IFountain, Ownable {
     }
 
     //TODO write documentation.
-    function overthrowTreasury(OverflowTreasury _newTreasury) public onlyOwner {
+    function overthrowTreasury(OverflowTreasury _newTreasury)
+        external
+        onlyOwner
+    {
         treasury.overthrow(_newTreasury, [dai]);
     }
 

@@ -27,12 +27,6 @@ contract OverflowTreasury {
     /// @dev The phase is determined by the amount of surplus in the system.
     enum Phase {None, One, Two, Three}
 
-    /// @notice The amount of FLOW tokens issued in Phase 1 to transition to Phase 2.
-    uint256 public constant PHASE_1_CAP = 700000E18;
-
-    /// @notice The amount of FLOW tokens issued in Phase 2 to transition to Phase 3.
-    uint256 public constant PHASE_2_CAP = 93000000E18;
-
     /// @notice The rate at which to issue FLOW for DAI in phase 1.
     uint8 public constant PHASE_1_RATE = 2;
 
@@ -77,8 +71,13 @@ contract OverflowTreasury {
             address(_phase1) != address(0),
             "OverflowTreasury::initializePhase1: ZERO_ADDRESS"
         );
+        require(
+            _phase1.treasury() == address(this),
+            "OverflowTreasury::initializePhase2: WRONG_TREASURY"
+        );
         phase1 = _phase1;
-        flow.mint(PHASE_1_CAP);
+        phase1.assignTreasury(this);
+        flow.mint(_phase1.cap());
     }
 
     function initializePhase2(ITreasuryPhase _phase2) external {
@@ -90,8 +89,17 @@ contract OverflowTreasury {
             address(_phase2) != address(0),
             "OverflowTreasury::initializePhase2: ZERO_ADDRESS"
         );
+        require(
+            msg.sender == phase1.owner,
+            "OverflowTreasury::initializePhase2: UNAUTHORIZED"
+        );
+        require(
+            _phase2.treasury() == address(this),
+            "OverflowTreasury::initializePhase2: WRONG_TREASURY"
+        );
         phase2 = _phase2;
-        flow.mint(PHASE_2_CAP);
+        phase2.assignTreasury(this);
+        flow.mint(_phase2.cap());
     }
 
     function initializePhase3(ITreasuryPhase _phase3) external {
@@ -103,7 +111,12 @@ contract OverflowTreasury {
             address(_phase3) != address(0),
             "OverflowTreasury::initializePhase3: ZERO_ADDRESS"
         );
+        require(
+            msg.sender == phase2.owner,
+            "OverflowTreasury::initializePhase2: UNAUTHORIZED"
+        );
         phase3 = _phase3;
+        phase3.assignTreasury(this);
     }
 
     function transform(
@@ -170,10 +183,12 @@ contract OverflowTreasury {
     function _getPhase() private returns (Phase) {
         if (address(phase1) == address(0)) return Phase.None;
         if (
-            phase1.tokensIssued() < PHASE_1_CAP || address(phase2) == address(0)
+            phase1.tokensIssued() < phase1.cap() ||
+            address(phase2) == address(0)
         ) return Phase.One;
         else if (
-            phase1.tokensIssued() < PHASE_2_CAP || address(phase3) == address(0)
+            phase1.tokensIssued() < phase2.cap() ||
+            address(phase3) == address(0)
         ) return Phase.Two;
         return Phase.Three;
     }
