@@ -91,16 +91,11 @@ contract Fountain is IFountain, Ownable {
     /// @dev Money pools should have a number > 0.
     uint256 public override mpCount = 0;
 
-    /// @notice If paused, new Money pools won't be created automatically upon sustainment.
-    bool public override paused = false;
-
     /// @notice The contract currently only supports sustainments in dai.
     IERC20 public dai;
 
     /// @notice The treasury that manages funds.
     OverflowTreasury public treasury;
-
-    // --- events --- //
 
     // --- external views --- //
 
@@ -239,7 +234,7 @@ contract Fountain is IFountain, Ownable {
             _mp.number > 0,
             "Fountain::getTrackedRedistribution:: NOT_FOUND"
         );
-        return _trackedRedistribution(_mp, _sustainer);
+        return _trackedSustainerRedistribution(_mp, _sustainer);
     }
 
     /** 
@@ -266,7 +261,7 @@ contract Fountain is IFountain, Ownable {
                     (_includesActive && _mp._state() == MoneyPool.State.Active)
                 ) {
                     _amount = _amount.add(
-                        _trackedRedistribution(_mp, _beneficiary)
+                        _trackedSustainerRedistribution(_mp, _beneficiary)
                     );
                   if (_mp.owner == _beneficiary && _mp.o > 0) _amount.add(_mp.overflow.mul(_mp.o).div(100));
                   if (_mp.bAddress == _beneficiary && _mp.b > 0) _amount.add(_mp.overflow.mul(_mp.b).div(100));
@@ -598,7 +593,7 @@ contract Fountain is IFountain, Ownable {
         while (_mpNumber > 0 && !hasRedistributed[_mpNumber][_beneficiary]) {
             MoneyPool.Data memory _mp = mps[latestMpNumber[_owner]];
             if (_mp._state() == MoneyPool.State.Redistributing) {
-                _amount = _amount.add(_trackedRedistribution(_mp, _beneficiary));
+                _amount = _amount.add(_trackedSustainerRedistribution(_mp, _beneficiary));
                 if (_beneficiary == _mp.owner && _mp.o > 0) _amount.add(_mp.overflow.mul(_mp.o).div(100));
                 if (_beneficiary == _mp.bAddress && _mp.b > 0) _amount.add(_mp.overflow.mul(_mp.b).div(100));
                 hasRedistributed[_mp.number][_beneficiary] = true;
@@ -670,7 +665,7 @@ contract Fountain is IFountain, Ownable {
         @param _sustainer The address of the sustainer to get an amount for.
         @return amount The amount.
     */
-    function _trackedRedistribution(
+    function _trackedSustainerRedistribution(
         MoneyPool.Data memory _mp,
         address _sustainer
     ) private view returns (uint256) {
