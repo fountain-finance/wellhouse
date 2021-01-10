@@ -1,6 +1,5 @@
 import { JsonRpcProvider, Listener } from '@ethersproject/providers'
 import { useEffect, useState } from 'react'
-import Web3 from 'web3'
 
 import { ContractName } from '../constants/contract-name'
 import { Contracts } from '../models/contracts'
@@ -11,7 +10,7 @@ export default function useEventListener({
   eventName,
   provider,
   startBlock,
-  args,
+  topics,
   getInitial,
 }: {
   contracts?: Contracts
@@ -19,7 +18,7 @@ export default function useEventListener({
   eventName?: string
   provider?: JsonRpcProvider
   startBlock?: number
-  args?: any[]
+  topics?: (any | any[])[]
   getInitial?: boolean
 }) {
   const [events, setEvents] = useState<any[]>([])
@@ -34,16 +33,21 @@ export default function useEventListener({
     }
   }
 
-  if (needsInitialGet) {
-    contract
-      ?.queryFilter({
-        ...contract,
-        topics: [...(eventName ? [Web3.utils.stringToHex(Web3.utils.padLeft(eventName, 32, '0'))] : [])],
-      })
-      .then(initialEvents => {
-        setEvents(initialEvents.map(e => formatEvent(e)))
-        setNeedsInitialGet(false)
-      })
+  const eventTopic =
+    contracts && contractName && eventName && contracts[contractName].interface.getEventTopic(eventName)
+
+  const filter = contract &&
+    eventName && {
+      address: contract.address,
+      topics: [...(eventTopic ? [eventTopic] : []), ...(topics ?? [])],
+    }
+
+  if (needsInitialGet && filter) {
+    contract?.queryFilter(filter).then(initialEvents => {
+      // Slice last (most recent) event, will be retrieved by listener
+      setEvents(initialEvents.slice(0, initialEvents.length - 1).map(e => formatEvent(e)))
+      setNeedsInitialGet(false)
+    })
   }
 
   useEffect(() => {
@@ -52,7 +56,7 @@ export default function useEventListener({
       provider.resetEventsBlock(startBlock)
     }
 
-    if (contract && eventName) {
+    if (contract && eventTopic) {
       try {
         const listener: Listener = (..._events: any[]) => {
           const event = _events[_events.length - 1]
@@ -60,10 +64,10 @@ export default function useEventListener({
           setEvents((events: any[]) => [formatEvent(event), ...events])
         }
 
-        contract.on(eventName, listener)
+        contract.on(eventTopic, listener)
 
         return () => {
-          contract.off(eventName, listener)
+          contract.off(eventTopic, listener)
         }
       } catch (e) {
         console.log(e)

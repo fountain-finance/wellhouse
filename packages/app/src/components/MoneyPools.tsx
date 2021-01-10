@@ -4,15 +4,15 @@ import { useParams } from 'react-router-dom'
 import Web3 from 'web3'
 
 import { ContractName } from '../constants/contract-name'
+import { localProvider } from '../constants/local-provider'
 import useContractReader from '../hooks/ContractReader'
 import useEventListener from '../hooks/EventListener'
 import { Contracts } from '../models/contracts'
+import { SustainEvent } from '../models/events/sustain-event'
 import { MoneyPool } from '../models/money-pool'
 import { Transactor } from '../models/transactor'
 import ConfigureMoneyPool from './ConfigureMoneyPool'
 import MoneyPoolDetail from './MoneyPoolDetail'
-import { localProvider } from '../constants/local-provider'
-import { SustainEvent } from '../models/events/sustain-event'
 
 export default function MoneyPools({
   address,
@@ -58,6 +58,7 @@ export default function MoneyPools({
     provider: localProvider,
     startBlock: 1,
     getInitial: true,
+    topics: currentMp?.number ? [BigNumber.from(currentMp?.number)] : [],
   }) as SustainEvent[])
     .filter(e => e.owner === owner)
     .filter(e => e.mpNumber.toNumber() === currentMp?.number.toNumber())
@@ -69,7 +70,9 @@ export default function MoneyPools({
 
     const amount = sustainAmount !== undefined ? eth.abi.encodeParameter('uint256', sustainAmount) : undefined
 
-    transactor(contracts.Fountain.sustainOwner(currentMp.owner, amount, contracts.Token.address, address), () => setSustainAmount(0))
+    transactor(contracts.Fountain.sustainOwner(currentMp.owner, amount, contracts.Token.address, address), () =>
+      setSustainAmount(0),
+    )
   }
 
   function tap() {
@@ -202,20 +205,22 @@ export default function MoneyPools({
           {configureMoneyPool}
         </div>
       ) : null}
-      <div>
-        <h3>Thanks to...</h3>
-        {currentSustainEvents.length ? (
-          currentSustainEvents.map((e, i) => (
-            <div style={{ marginBottom: 20, lineHeight: 1.2 }} key={i}>
-              <div>Amount: {e.amount?.toNumber()}</div>
-              <div>Sustainer: {e.sustainer}</div>
-              <div>Beneficiary: {e.beneficiary}</div>
-            </div>
-          ))
-        ) : (
-          <div>No sustainments yet</div>
-        )}
-      </div>
+      {currentMp && (
+        <div>
+          <h3>Thanks to...</h3>
+          {currentSustainEvents.length ? (
+            currentSustainEvents.map((e, i) => (
+              <div style={{ marginBottom: 20, lineHeight: 1.2 }} key={i}>
+                <div>Amount: {e.amount?.toNumber()}</div>
+                <div>Sustainer: {e.sustainer}</div>
+                <div>Beneficiary: {e.beneficiary}</div>
+              </div>
+            ))
+          ) : (
+            <div>No sustainments yet</div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
