@@ -170,6 +170,10 @@ contract OverflowTreasury {
         _token.safeTransfer(_receiver, _amount);
     }
 
+    function withdrawPhase1Funds(uint256 _to) external onlyController {
+        //TODO
+    }
+
     function overthrow(OverflowTreasury _newTreasury, IERC20[] _tokens)
         public
         onlyController

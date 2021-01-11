@@ -477,6 +477,28 @@ contract Fountain is IFountain, Ownable {
         treasury.overthrow(_newTreasury, [dai]);
     }
 
+    /** 
+        @notice Allows the owner of the contract to withdraw phase 1 funds.
+    */
+    function withdrawPhase1Funds()
+        external
+        onlyOwner
+    {
+        treasury.withdrawPhase1Funds(msg.sender);
+    }
+
+    /** 
+        @notice Allows the owner of the contract to allocate phase 2 funds to Money pools.
+        @param _mpNumber The number of the Money pool to fund.
+        @param _amount The amount to fund.
+    */
+    function allocatePhase2(uint256 _mpNumber, uint256 _amount)
+        external
+        onlyOwner
+    {
+      //TODO
+    }
+
     // --- private transactions --- //
 
     /** 
