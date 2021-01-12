@@ -1,8 +1,17 @@
-import { MoneyPool } from '../models/money-pool'
-import { SECONDS_IN_DAY } from '../constants/seconds-in-day'
 import Web3 from 'web3'
 
-export default function MoneyPoolDetail({ mp, isActive }: { mp?: MoneyPool; isActive?: boolean }) {
+import { SECONDS_IN_DAY } from '../constants/seconds-in-day'
+import { MoneyPool } from '../models/money-pool'
+
+export default function MoneyPoolDetail({
+  mp,
+  showSustained,
+  showTimeLeft,
+}: {
+  mp?: MoneyPool
+  showSustained?: boolean
+  showTimeLeft?: boolean
+}) {
   const secondsLeft = mp && mp.start.toNumber() + mp.duration.toNumber() - new Date().valueOf() / 1000
 
   const label = (text: string) => (
@@ -42,13 +51,18 @@ export default function MoneyPoolDetail({ mp, isActive }: { mp?: MoneyPool; isAc
     <div>
       <div>
         <h2 style={{ margin: 0 }}>{title}</h2>
-        <a href={link} target="_blank" rel="noopener noreferrer">{link}</a>
+        <a href={link} target="_blank" rel="noopener noreferrer">
+          {link}
+        </a>
       </div>
-      <br/>
+      <br />
+      <div>
+        {label('Number')} {mp.number.toNumber()}
+      </div>
       <div>
         {label('Target')} {mp.target.toNumber()}
       </div>
-      {isActive ? (
+      {showSustained ? (
         <div>
           {label('Sustained')} {mp.total.toNumber()}
         </div>
@@ -59,7 +73,7 @@ export default function MoneyPoolDetail({ mp, isActive }: { mp?: MoneyPool; isAc
       <div>
         {label('Duration')} {expandedTimeString(mp && mp.duration.toNumber() * 1000)}
       </div>
-      {isActive ? (
+      {showTimeLeft ? (
         <div>
           {label('Time left')} {(secondsLeft && expandedTimeString(secondsLeft * 1000)) || 'Ended'}
         </div>
