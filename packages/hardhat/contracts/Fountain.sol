@@ -656,13 +656,11 @@ contract Fountain is IFountain {
         // Return 0 if there's no surplus.
         if (_mp.total < _mp.target) return 0;
 
-        uint256 _surplus = _mp.total.sub(_mp.target);
-
-        // Calculate their share of the sustainment for the the given sustainer.
-        // allocate a proportional share of the surplus, overwriting any previous value.
-        uint256 _proportionOfTotal =
-            sustainments[_mp.number][_sustainer].div(_mp.total);
-
-        return _surplus.mul(_proportionOfTotal);
+        return
+            _mp
+                .total
+                .sub(_mp.target)
+                .mul(sustainments[_mp.number][_sustainer])
+                .div(_mp.total);
     }
 }
