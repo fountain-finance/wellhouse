@@ -14,13 +14,8 @@ contract Flow is ERC20 {
         _;
     }
 
-    // event AssignTreasury {
-    //   address treasury
-    // }
-
-    // event ReplaceTreasury {
-    //   address treasury
-    // }
+    event AssignTreasury(address treasury);
+    event ReplaceTreasury(address treasury);
 
     constructor() public ERC20("Overflow", "FLOW") {}
 
@@ -38,7 +33,7 @@ contract Flow is ERC20 {
             "Flow::assignTreasury: ALREADY_ASSIGNED"
         );
         treasury = _treasury;
-        // emit AssignTreasury(_treasury);
+        emit AssignTreasury(_treasury);
     }
 
     function replaceTreasury(address _newTreasury) external onlyTreasury {
@@ -47,6 +42,6 @@ contract Flow is ERC20 {
             "Flow::replaceTreasury: ZERO_ADDRESS"
         );
         treasury = _newTreasury;
-        // emit ReplaceTreasury(_newTreasury);
+        emit ReplaceTreasury(_newTreasury);
     }
 }

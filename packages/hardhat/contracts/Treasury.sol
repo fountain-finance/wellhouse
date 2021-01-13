@@ -5,65 +5,42 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
+import "./interfaces/ITreasury.sol";
+
 import "./Flow.sol";
-import "./TreasuryPhase1.sol";
-import "./interfaces/ITreasuryPhase.sol";
-import "./libraries/Math.sol";
 import "./Fountain.sol";
 
-contract Treasury {
+contract Treasury is ITreasury {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-
     modifier onlyFountain {
         require(msg.sender == fountain, "Treasury: UNAUTHORIZED");
         _;
     }
-
     /// @notice The treasury behaves in different ways depending on the phase.
     /// @dev The phase is determined by the amount of surplus in the system.
     enum Phase {None, One, Two, Three}
-
     /// @notice The rate at which to issue FLOW for DAI in phase 1.
     uint8 public constant PHASE_1_RATE = 2;
-
     /// @notice The rate at which to issue FLOW for DAI in phase 2.
     uint8 public constant PHASE_2_RATE = 1;
-
     /// @notice The address of the FLOW ERC20 token.
     Flow public flow;
-
     /// @notice The contract managing Phase 1 token transformations.
-    ITreasuryPhase public phase1;
-
+    ITreasuryPhase public override phase1;
     /// @notice The contract managing Phase 2 token transformations.
-    ITreasuryPhase public phase2;
-
+    ITreasuryPhase public override phase2;
     /// @notice The contract managing Phase 3 token transformations.
-    ITreasuryPhase public phase3;
-
-    /// @notice Amount of tokens from Phase 1 that have been withdrawn.
-    uint256 public phase1FundsAvailable;
-
-    /// @notice Amount of tokens from Phase 2 that have been allocated.
-    uint256 public phase2FundsAvailable;
-
+    ITreasuryPhase public override phase3;
+    /// @notice Amount of tokens from Phase 1 and Phase 2 that have yet to be withdrawn.
+    uint256 public override withdrawableFunds;
     /// @notice The Fountain that this Treasury belongs to.
-    address public fountain;
-
-    /**
-     * Event for token transforming
-     * @param token The token to transform.
-     * @param value The amount tokens to transform.
-     * @param amount The amount of FLOW tokens resulting from the transformation.
-     */
-    event Transform(IERC20 token, uint256 value, uint256 amount);
+    address public override fountain;
 
     constructor(Flow _flow, address _fountain) public {
         fountain = _fountain;
         flow = _flow;
-        phase1FundsAvailable = 0;
-        phase2FundsAvailable = 0;
+        withdrawableFunds = 0;
     }
 
     function initializePhase1(ITreasuryPhase _phase1) external {
@@ -127,10 +104,9 @@ contract Treasury {
         uint256 _amount,
         IERC20 _token,
         uint256 _expectedConvertedAmount
-    ) external onlyFountain returns (uint256 _flowAmount) {
+    ) external override onlyFountain returns (uint256 _flowAmount) {
         Phase _phase = _getPhase();
         require(_phase != Phase.None, "Treasury::transform: BAD_STATE");
-
         if (_phase == Phase.One) {
             require(
                 address(phase1) != address(0),
@@ -141,7 +117,7 @@ contract Treasury {
                 _token,
                 _amount.mul(PHASE_1_RATE)
             );
-            phase1FundsAvailable = phase1FundsAvailable.add(_amount);
+            withdrawableFunds = withdrawableFunds.add(_amount);
         }
         if (_phase == Phase.Two) {
             require(
@@ -153,7 +129,7 @@ contract Treasury {
                 _token,
                 _amount.mul(PHASE_2_RATE)
             );
-            phase2FundsAvailable = phase2FundsAvailable.add(_amount);
+            withdrawableFunds = withdrawableFunds.add(_amount);
         }
         require(
             address(phase3) != address(0),
@@ -164,7 +140,6 @@ contract Treasury {
             _token,
             _expectedConvertedAmount
         );
-
         emit Transform(_token, _amount, _flowAmount);
     }
 
@@ -172,42 +147,40 @@ contract Treasury {
         address _receiver,
         IERC20 _token,
         uint256 _amount
-    ) external onlyFountain {
+    ) external override onlyFountain {
         _token.safeTransfer(_receiver, _amount);
     }
 
-    function withdrawPhase1Funds(
+    function withdraw(
         address _to,
         IERC20 _token,
         uint256 _amount
-    ) external onlyFountain {
+    ) external override onlyFountain {
         require(
-            phase1FundsAvailable >= _amount,
-            "Treasury::withdrawPhase1Funds: INSUFFICIENT_FUNDS"
+            withdrawableFunds >= _amount,
+            "Treasury::withdrawFunds: INSUFFICIENT_FUNDS"
         );
         _token.safeTransfer(_to, _amount);
-        phase1FundsAvailable = phase1FundsAvailable.sub(_amount);
+        withdrawableFunds = withdrawableFunds.sub(_amount);
     }
 
-    function allocatePhase2Funds(uint256 _amount) external onlyFountain {
-        require(
-            phase2FundsAvailable >= _amount,
-            "Treasury::allocatePhase2Funds: INSUFFICIENT_FUNDS"
-        );
-        phase2FundsAvailable = phase2FundsAvailable.sub(_amount);
-    }
-
-    function overthrow(address _newTreasury, IERC20[] calldata _tokens)
+    function transition(ITreasury _newTreasury, IERC20[] calldata _tokens)
         external
+        override
         onlyFountain
     {
-        flow.replaceTreasury(_newTreasury);
-        IERC20(flow).safeTransfer(_newTreasury, flow.balanceOf(address(this)));
-        for (uint256 i = 0; i < _tokens.length; i++)
+        flow.replaceTreasury(address(_newTreasury));
+        IERC20(flow).safeTransfer(
+            address(_newTreasury),
+            flow.balanceOf(address(this))
+        );
+        for (uint256 i = 0; i < _tokens.length; i++) {
             _tokens[i].safeTransfer(
-                _newTreasury,
+                address(_newTreasury),
                 _tokens[i].balanceOf(address(this))
             );
+        }
+                event Transition(_newTreasury);
     }
 
     function _getPhase() private returns (Phase) {

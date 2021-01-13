@@ -40,12 +40,14 @@ library MoneyPool {
         uint256 duration;
         // The amount of available funds that have been tapped by the owner.
         uint256 tapped;
-        // The percentage of overflow to allocate to the owner.
+        // The percentage of overflow to reserve for the owner once the Money pool has expired.
         uint8 o;
-        // The percentage of overflow to allocate to a specified beneficiary.
+        // The percentage of overflow to reserve for a specified beneficiary once the Money pool has expired.
         uint8 b;
         // The specified beneficiary.
         address bAddress;
+        // If the reserved tickets have been minted.
+        bool hasMintedReserves;
         // A number determining the amount of redistribution shares this Money pool will issue to each sustainer.
         uint256 weight;
         // A number indicating how much more weight to give a Money pool compared to its predecessor.
@@ -78,6 +80,7 @@ library MoneyPool {
         self.weight = _weight;
         self.total = 0;
         self.tapped = 0;
+        self.hasMintedReserves = false;
     }
 
     /** 
@@ -121,7 +124,7 @@ library MoneyPool {
     }
 
     /** 
-        @notice Contribute a specified amount to the sustainability of the specified address's active Money pool.
+        @notice Contribute a specified amount to the sustainability this Money pool.
         @param self The Money pool to sustain.
         @param _amount Incrmented amount of sustainment.
         @return _surplus The amount of surplus in the Money pool after adding.
@@ -162,6 +165,20 @@ library MoneyPool {
         self.o = _baseMp.o;
         self.b = _baseMp.b;
         self.bAddress = _baseMp.bAddress;
+    }
+
+    /** 
+        @notice The weight that a certain amount carries in this Money pool.
+        @param self The Money pool to get the weight from.
+        @param _amount The amount to get the weight of.
+        @return state The weighted amount.
+    */
+    function _weighted(Data memory self, uint256 _amount)
+        internal
+        pure
+        returns (uint256)
+    {
+        return self.weight.mul(_amount).div(self.target).mul(_s(self)).div(100);
     }
 
     // --- internal views --- //
@@ -245,6 +262,7 @@ library MoneyPool {
                 self.o,
                 self.b,
                 self.bAddress,
+                false,
                 self.weight,
                 self.bias
             );
