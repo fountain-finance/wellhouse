@@ -4,13 +4,13 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../libraries/MoneyPool.sol";
-import "../Treasury.sol";
 import "../aux/Ticket.sol";
+import "./ITreasury.sol";
 
 interface IFountain {
     function tickets(address _owner) external view returns (Ticket);
 
-    function redistributable(address _owner) external view returns (uint256);
+    function redeemable(address _owner) external view returns (uint256);
 
     function latestMpId(address _owner) external view returns (uint256);
 
@@ -45,7 +45,7 @@ interface IFountain {
     );
 
     /// @notice This event should trigger when redistributions are collected.
-    event CollectRedistributions(address indexed sustainer, uint256 amount);
+    event Redeem(address indexed sustainer, uint256 amount);
 
     /// @notice This event should trigger when sustainments are collected.
     event TapMp(
@@ -76,7 +76,7 @@ interface IFountain {
         view
         returns (uint256 _amount);
 
-    function getRedistributableAmount(address _beneficiary, address _owner)
+    function getRedeemableAmount(address _beneficiary, address _owner)
         external
         view
         returns (uint256 _amount);
@@ -104,7 +104,7 @@ interface IFountain {
         uint256 _convertedFlowAmount
     ) external returns (uint256 _mpId);
 
-    function collectRedistributions(address _owner, uint256 _amount) external;
+    function redeem(address _owner, uint256 _amount) external;
 
     function tapMp(
         uint256 _mpId,
@@ -112,15 +112,9 @@ interface IFountain {
         address _beneficiary
     ) external;
 
-    function reassignTreasury(address _newTreasury) external;
+    function appointTreasury(ITreasury _newTreasury) external;
 
-    function withdrawPhase1Funds(uint256 _amount) external;
+    function mintReservedTickets(address _owner) external;
 
-    function allocatePhase2Funds(
-        address _owner,
-        uint256 _amount,
-        IERC20 _want,
-        address _beneficiary,
-        uint256 _convertedFlowAmount
-    ) external;
+    function withdrawFunds(uint256 _amount) external;
 }
