@@ -5,11 +5,19 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../libraries/MoneyPool.sol";
 import "../Treasury.sol";
+import "../aux/Ticket.sol";
 
 interface IFountain {
+    function tickets(address _owner) external view returns (Ticket);
+
+    function redistributable(address _owner) external view returns (uint256);
+
     function latestMpId(address _owner) external view returns (uint256);
 
     function mpCount() external view returns (uint256);
+
+    /// @notice This event should trigger when an owner initialized their tickets.
+    event InitializeTicket(string name, string symbol);
 
     /// @notice This event should trigger when a Money pool is configured.
     event ConfigureMp(
@@ -33,7 +41,7 @@ interface IFountain {
         address indexed beneficiary,
         address sustainer,
         uint256 amount,
-        address want
+        IERC20 want
     );
 
     /// @notice This event should trigger when redistributions are collected.
@@ -73,18 +81,19 @@ interface IFountain {
         view
         returns (uint256 _amount);
 
+    function initializeTicket(string calldata _name, string calldata _symbol)
+        external;
+
     function configureMp(
         uint256 _target,
         uint256 _duration,
         IERC20 _want,
-        string memory _title,
-        string memory _link,
+        string calldata _title,
+        string calldata _link,
         uint8 bias,
         uint8 _o,
         uint8 _b,
-        address _bAddress,
-        string memory _tokenName,
-        string memory _tokenSymbol
+        address _bAddress
     ) external returns (uint256 _mpId);
 
     function sustainOwner(
@@ -103,14 +112,14 @@ interface IFountain {
         address _beneficiary
     ) external;
 
-    function overthrowTreasury(OverflowTreasury _newTreasury) external;
+    function reassignTreasury(address _newTreasury) external;
 
     function withdrawPhase1Funds(uint256 _amount) external;
 
     function allocatePhase2Funds(
         address _owner,
         uint256 _amount,
-        uint256 _want,
+        IERC20 _want,
         address _beneficiary,
         uint256 _convertedFlowAmount
     ) external;

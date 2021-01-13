@@ -7,19 +7,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "./interfaces/ITreasuryPhase.sol";
-import "./Treasury.sol";
 
-contract Phase1 is ITreasuryPhase, Ownable {
+contract TreasuryPhase1 is ITreasuryPhase {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    modifier onlyTreasury {
-        require(
-            msg.sender == treasuryController,
-            "Only the treasury can call this function."
-        );
-        _;
-    }
+    /// @notice The address that deployed this contract.
+    address public override deployer;
 
     /// @notice Amount of tokens issued.
     uint256 public override tokensIssued;
@@ -33,6 +27,7 @@ contract Phase1 is ITreasuryPhase, Ownable {
     constructor(uint256 _cap) public {
         cap = _cap;
         tokensIssued = 0;
+        deployer = msg.sender;
     }
 
     /** 
@@ -46,10 +41,14 @@ contract Phase1 is ITreasuryPhase, Ownable {
         uint256 _amount,
         IERC20 _token,
         uint256 _expectedConvertedAmount
-    ) external override onlyTreasury returns (uint256) {
+    ) external override returns (uint256) {
+        require(
+            msg.sender == treasury,
+            "TreasuryPhase1::transform: UNAUTHORIZED"
+        );
         require(
             _validIssuance(_expectedConvertedAmount),
-            "Phase1::convert: INVALID"
+            "TreasuryPhase1::transform: INVALID"
         );
 
         tokensIssued = tokensIssued.add(_expectedConvertedAmount);
@@ -57,7 +56,7 @@ contract Phase1 is ITreasuryPhase, Ownable {
         return _expectedConvertedAmount;
     }
 
-    function assignTreasury(OverflowTreasury _treasury) external view override {
+    function assignTreasury(address _treasury) external override {
         require(
             treasury == address(0),
             "TreasuryPhase1::_assignTreasury: ALREADY_ASSIGNED"

@@ -11,7 +11,7 @@ import "./interfaces/ITreasuryPhase.sol";
 import "./libraries/Math.sol";
 import "./Fountain.sol";
 
-contract OverflowTreasury {
+contract Treasury {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -43,10 +43,10 @@ contract OverflowTreasury {
     ITreasuryPhase public phase3;
 
     /// @notice Amount of tokens from Phase 1 that have been withdrawn.
-    uint256 public override phase1FundsAvailable;
+    uint256 public phase1FundsAvailable;
 
     /// @notice Amount of tokens from Phase 2 that have been allocated.
-    uint256 public override phase2FundsAvailable;
+    uint256 public phase2FundsAvailable;
 
     /// @notice The Fountain that this Treasury belongs to.
     address public fountain;
@@ -59,8 +59,8 @@ contract OverflowTreasury {
      */
     event Transform(IERC20 token, uint256 value, uint256 amount);
 
-    constructor(IERC20 _flow) public {
-        fountain = msg.sender;
+    constructor(Flow _flow, address _fountain) public {
+        fountain = _fountain;
         flow = _flow;
         phase1FundsAvailable = 0;
         phase2FundsAvailable = 0;
@@ -69,72 +69,72 @@ contract OverflowTreasury {
     function initializePhase1(ITreasuryPhase _phase1) external {
         require(
             _getPhase() == Phase.None || address(phase1) == address(0),
-            "OverflowTreasury::initializePhase1: ALREADY_INITIALIZED"
+            "Treasury::initializePhase1: ALREADY_INITIALIZED"
         );
         require(
             address(_phase1) != address(0),
-            "OverflowTreasury::initializePhase1: ZERO_ADDRESS"
+            "Treasury::initializePhase1: ZERO_ADDRESS"
         );
         require(
             _phase1.treasury() == address(this),
-            "OverflowTreasury::initializePhase2: WRONG_TREASURY"
+            "Treasury::initializePhase2: WRONG_TREASURY"
         );
         phase1 = _phase1;
-        phase1.assignTreasury(this);
+        phase1.assignTreasury(address(this));
         flow.mint(_phase1.cap());
     }
 
     function initializePhase2(ITreasuryPhase _phase2) external {
         require(
             _getPhase() == Phase.One || address(phase2) == address(0),
-            "OverflowTreasury::initializePhase2: ALREADY_INITIALIZED"
+            "Treasury::initializePhase2: ALREADY_INITIALIZED"
         );
         require(
             address(_phase2) != address(0),
-            "OverflowTreasury::initializePhase2: ZERO_ADDRESS"
+            "Treasury::initializePhase2: ZERO_ADDRESS"
         );
         require(
-            msg.sender == phase1.owner,
-            "OverflowTreasury::initializePhase2: UNAUTHORIZED"
+            msg.sender == phase1.deployer(),
+            "Treasury::initializePhase2: UNAUTHORIZED"
         );
         require(
             _phase2.treasury() == address(this),
-            "OverflowTreasury::initializePhase2: WRONG_TREASURY"
+            "Treasury::initializePhase2: WRONG_TREASURY"
         );
         phase2 = _phase2;
-        phase2.assignTreasury(this);
+        phase2.assignTreasury(address(this));
         flow.mint(_phase2.cap());
     }
 
     function initializePhase3(ITreasuryPhase _phase3) external {
         require(
             _getPhase() == Phase.Two,
-            "OverflowTreasury::initializePhase3: ALREADY_INITIALIZED"
+            "Treasury::initializePhase3: ALREADY_INITIALIZED"
         );
         require(
             address(_phase3) != address(0),
-            "OverflowTreasury::initializePhase3: ZERO_ADDRESS"
+            "Treasury::initializePhase3: ZERO_ADDRESS"
         );
         require(
-            msg.sender == phase2.owner,
-            "OverflowTreasury::initializePhase2: UNAUTHORIZED"
+            msg.sender == phase2.deployer(),
+            "Treasury::initializePhase2: UNAUTHORIZED"
         );
         phase3 = _phase3;
-        phase3.assignTreasury(this);
+        phase3.assignTreasury(address(this));
     }
 
     function transform(
         uint256 _amount,
         IERC20 _token,
         uint256 _expectedConvertedAmount
-    ) external onlyController returns (uint256 _flowAmount) {
+    ) external onlyFountain returns (uint256 _flowAmount) {
         Phase _phase = _getPhase();
-        require(_phase != Phase.None, "OverflowTreasury::transform: BAD_STATE");
+        require(_phase != Phase.None, "Treasury::transform: BAD_STATE");
 
         if (_phase == Phase.One) {
             require(
                 address(phase1) != address(0),
-                "OverflowTreasury::transform: CONTRACT_MISSING"
+                "Treasury::transform: CONTRACT_MISSING"
             );
             _flowAmount = phase1.transform(
                 _amount,
@@ -146,7 +146,7 @@ contract OverflowTreasury {
         if (_phase == Phase.Two) {
             require(
                 address(phase2) != address(0),
-                "OverflowTreasury::transform: CONTRACT_MISSING"
+                "Treasury::transform: CONTRACT_MISSING"
             );
             _flowAmount = phase2.transform(
                 _amount,
@@ -157,7 +157,7 @@ contract OverflowTreasury {
         }
         require(
             address(phase3) != address(0),
-            "OverflowTreasury::transform: CONTRACT_MISSING"
+            "Treasury::transform: CONTRACT_MISSING"
         );
         _flowAmount = phase3.transform(
             _amount,
@@ -172,15 +172,15 @@ contract OverflowTreasury {
         address _receiver,
         IERC20 _token,
         uint256 _amount
-    ) external onlyController {
+    ) external onlyFountain {
         _token.safeTransfer(_receiver, _amount);
     }
 
     function withdrawPhase1Funds(
-        uint256 _to,
+        address _to,
         IERC20 _token,
         uint256 _amount
-    ) external onlyController {
+    ) external onlyFountain {
         require(
             phase1FundsAvailable >= _amount,
             "Treasury::withdrawPhase1Funds: INSUFFICIENT_FUNDS"
@@ -189,7 +189,7 @@ contract OverflowTreasury {
         phase1FundsAvailable = phase1FundsAvailable.sub(_amount);
     }
 
-    function allocatePhase2Funds(uint256 _amount) exernal onlyController {
+    function allocatePhase2Funds(uint256 _amount) external onlyFountain {
         require(
             phase2FundsAvailable >= _amount,
             "Treasury::allocatePhase2Funds: INSUFFICIENT_FUNDS"
@@ -197,12 +197,12 @@ contract OverflowTreasury {
         phase2FundsAvailable = phase2FundsAvailable.sub(_amount);
     }
 
-    function overthrow(OverflowTreasury _newTreasury, IERC20[] _tokens)
+    function overthrow(address _newTreasury, IERC20[] calldata _tokens)
         external
-        onlyController
+        onlyFountain
     {
         flow.replaceTreasury(_newTreasury);
-        flow.safeTransfer(_newTreasury, flow.balanceOf(address(this)));
+        IERC20(flow).safeTransfer(_newTreasury, flow.balanceOf(address(this)));
         for (uint256 i = 0; i < _tokens.length; i++)
             _tokens[i].safeTransfer(
                 _newTreasury,

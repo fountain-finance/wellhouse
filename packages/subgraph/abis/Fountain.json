@@ -5,6 +5,11 @@
         "internalType": "contract IERC20",
         "name": "_dai",
         "type": "address"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "_flow",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -35,7 +40,7 @@
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "mpNumber",
+        "name": "mpId",
         "type": "uint256"
       },
       {
@@ -73,6 +78,30 @@
         "internalType": "string",
         "name": "link",
         "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "bias",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "o",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "b",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "bAddress",
+        "type": "address"
       }
     ],
     "name": "ConfigureMp",
@@ -82,9 +111,47 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "symbol",
+        "type": "string"
+      }
+    ],
+    "name": "InitializeTicket",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "uint256",
-        "name": "mpNumber",
+        "name": "mpId",
         "type": "uint256"
       },
       {
@@ -110,6 +177,12 @@
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "contract IERC20",
+        "name": "want",
+        "type": "address"
       }
     ],
     "name": "SustainMp",
@@ -121,7 +194,7 @@
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "mpNumber",
+        "name": "mpId",
         "type": "uint256"
       },
       {
@@ -153,15 +226,35 @@
     "type": "event"
   },
   {
-    "inputs": [],
-    "name": "collectAllRedistributions",
-    "outputs": [
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+      },
       {
         "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "_want",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_beneficiary",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_convertedFlowAmount",
+        "type": "uint256"
       }
     ],
+    "name": "allocatePhase2Funds",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -171,35 +264,15 @@
         "internalType": "address",
         "name": "_owner",
         "type": "address"
-      }
-    ],
-    "name": "collectRedistributionsFromOwner",
-    "outputs": [
+      },
       {
         "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address[]",
-        "name": "_owners",
-        "type": "address[]"
-      }
-    ],
-    "name": "collectRedistributionsFromOwners",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      }
-    ],
+    "name": "collectRedistributions",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -229,6 +302,26 @@
         "internalType": "string",
         "name": "_link",
         "type": "string"
+      },
+      {
+        "internalType": "uint8",
+        "name": "_bias",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint8",
+        "name": "_o",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint8",
+        "name": "_b",
+        "type": "uint8"
+      },
+      {
+        "internalType": "address",
+        "name": "_bAddress",
+        "type": "address"
       }
     ],
     "name": "configureMp",
@@ -256,24 +349,13 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_sustainer",
-        "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "_includesActive",
-        "type": "bool"
-      }
-    ],
-    "name": "getAllTrackedRedistribution",
+    "inputs": [],
+    "name": "flow",
     "outputs": [
       {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -293,8 +375,13 @@
         "components": [
           {
             "internalType": "uint256",
-            "name": "number",
+            "name": "id",
             "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
           },
           {
             "internalType": "uint256",
@@ -310,11 +397,6 @@
             "internalType": "string",
             "name": "link",
             "type": "string"
-          },
-          {
-            "internalType": "address",
-            "name": "owner",
-            "type": "address"
           },
           {
             "internalType": "contract IERC20",
@@ -347,9 +429,29 @@
             "type": "uint256"
           },
           {
+            "internalType": "uint8",
+            "name": "o",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint8",
+            "name": "b",
+            "type": "uint8"
+          },
+          {
+            "internalType": "address",
+            "name": "bAddress",
+            "type": "address"
+          },
+          {
             "internalType": "uint256",
-            "name": "lastConfigured",
+            "name": "weight",
             "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "bias",
+            "type": "uint8"
           }
         ],
         "internalType": "struct MoneyPool.Data",
@@ -364,7 +466,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_mpNumber",
+        "name": "_mpId",
         "type": "uint256"
       }
     ],
@@ -374,8 +476,13 @@
         "components": [
           {
             "internalType": "uint256",
-            "name": "number",
+            "name": "id",
             "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
           },
           {
             "internalType": "uint256",
@@ -391,11 +498,6 @@
             "internalType": "string",
             "name": "link",
             "type": "string"
-          },
-          {
-            "internalType": "address",
-            "name": "owner",
-            "type": "address"
           },
           {
             "internalType": "contract IERC20",
@@ -428,9 +530,29 @@
             "type": "uint256"
           },
           {
+            "internalType": "uint8",
+            "name": "o",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint8",
+            "name": "b",
+            "type": "uint8"
+          },
+          {
+            "internalType": "address",
+            "name": "bAddress",
+            "type": "address"
+          },
+          {
             "internalType": "uint256",
-            "name": "lastConfigured",
+            "name": "weight",
             "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "bias",
+            "type": "uint8"
           }
         ],
         "internalType": "struct MoneyPool.Data",
@@ -455,8 +577,13 @@
         "components": [
           {
             "internalType": "uint256",
-            "name": "number",
+            "name": "id",
             "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
           },
           {
             "internalType": "uint256",
@@ -472,11 +599,6 @@
             "internalType": "string",
             "name": "link",
             "type": "string"
-          },
-          {
-            "internalType": "address",
-            "name": "owner",
-            "type": "address"
           },
           {
             "internalType": "contract IERC20",
@@ -509,9 +631,29 @@
             "type": "uint256"
           },
           {
+            "internalType": "uint8",
+            "name": "o",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint8",
+            "name": "b",
+            "type": "uint8"
+          },
+          {
+            "internalType": "address",
+            "name": "bAddress",
+            "type": "address"
+          },
+          {
             "internalType": "uint256",
-            "name": "lastConfigured",
+            "name": "weight",
             "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "bias",
+            "type": "uint8"
           }
         ],
         "internalType": "struct MoneyPool.Data",
@@ -525,17 +667,17 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_mpNumber",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "_beneficiary",
+        "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_sustainer",
+        "name": "_owner",
         "type": "address"
       }
     ],
-    "name": "getSustainment",
+    "name": "getRedistributableAmount",
     "outputs": [
       {
         "internalType": "uint256",
@@ -550,7 +692,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_mpNumber",
+        "name": "_mpId",
         "type": "uint256"
       }
     ],
@@ -568,25 +710,19 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_mpNumber",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "_name",
+        "type": "string"
       },
       {
-        "internalType": "address",
-        "name": "_sustainer",
-        "type": "address"
+        "internalType": "string",
+        "name": "_symbol",
+        "type": "string"
       }
     ],
-    "name": "getTrackedRedistribution",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "initializeTicket",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -597,7 +733,7 @@
         "type": "address"
       }
     ],
-    "name": "latestMpNumber",
+    "name": "latestMpId",
     "outputs": [
       {
         "internalType": "uint256",
@@ -622,6 +758,58 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newTreasury",
+        "type": "address"
+      }
+    ],
+    "name": "reassignTreasury",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "redistributable",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -642,6 +830,11 @@
         "internalType": "address",
         "name": "_beneficiary",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_convertedFlowAmount",
+        "type": "uint256"
       }
     ],
     "name": "sustainOwner",
@@ -659,7 +852,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_mpNumber",
+        "name": "_mpId",
         "type": "uint256"
       },
       {
@@ -674,13 +867,65 @@
       }
     ],
     "name": "tapMp",
-    "outputs": [
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
-        "internalType": "bool",
+        "internalType": "address",
         "name": "",
-        "type": "bool"
+        "type": "address"
       }
     ],
+    "name": "tickets",
+    "outputs": [
+      {
+        "internalType": "contract Ticket",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "treasury",
+    "outputs": [
+      {
+        "internalType": "contract Treasury",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawPhase1Funds",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   }

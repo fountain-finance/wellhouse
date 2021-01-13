@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
@@ -13,16 +12,17 @@ contract Ticket is ERC20 {
     }
 
     constructor(string memory _name, string memory _symbol)
+        public
         ERC20(_name, _symbol)
     {
         fountain = msg.sender;
     }
 
-    function mint(address _account, uint256 _amount) internal onlyFountain {
+    function mint(address _account, uint256 _amount) external onlyFountain {
         return _mint(_account, _amount);
     }
 
-    function burn(address _account, uint256 _amount) internal onlyFountain {
+    function burn(address _account, uint256 _amount) external onlyFountain {
         return _burn(_account, _amount);
     }
 }
