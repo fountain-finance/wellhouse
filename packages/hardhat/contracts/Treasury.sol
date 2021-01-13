@@ -26,6 +26,8 @@ contract Treasury is ITreasury {
     uint8 public constant PHASE_1_RATE = 2;
     /// @notice The rate at which to issue FLOW for DAI in phase 2.
     uint8 public constant PHASE_2_RATE = 1;
+    /// @notice The coin to accept during the phased issuance.
+    IERC20 public issuanceToken;
     /// @notice The address of the FLOW ERC20 token.
     Flow public flow;
     /// @notice The contract managing Phase 1 token transformations.
@@ -42,12 +44,12 @@ contract Treasury is ITreasury {
     constructor(Flow _flow, address _fountain) public {
         fountain = _fountain;
         flow = _flow;
-        withdrawableFunds = 0;
     }
 
     function initializePhase1(ITreasuryPhase _phase1) external {
         require(
-            _getPhase() == Phase.None || address(phase1) == address(0),
+            _getPhase(issuanceToken) == Phase.None ||
+                address(phase1) == address(0),
             "Treasury::initializePhase1: ALREADY_INITIALIZED"
         );
         require(
@@ -61,11 +63,13 @@ contract Treasury is ITreasury {
         phase1 = _phase1;
         phase1.assignTreasury(address(this));
         flow.mint(_phase1.cap());
+        emit InitializePhase(1);
     }
 
     function initializePhase2(ITreasuryPhase _phase2) external {
         require(
-            _getPhase() == Phase.One || address(phase2) == address(0),
+            _getPhase(issuanceToken) == Phase.One ||
+                address(phase2) == address(0),
             "Treasury::initializePhase2: ALREADY_INITIALIZED"
         );
         require(
@@ -83,11 +87,12 @@ contract Treasury is ITreasury {
         phase2 = _phase2;
         phase2.assignTreasury(address(this));
         flow.mint(_phase2.cap());
+        emit InitializePhase(2);
     }
 
     function initializePhase3(ITreasuryPhase _phase3) external {
         require(
-            _getPhase() == Phase.Two,
+            _getPhase(issuanceToken) == Phase.Two,
             "Treasury::initializePhase3: ALREADY_INITIALIZED"
         );
         require(
@@ -100,23 +105,26 @@ contract Treasury is ITreasury {
         );
         phase3 = _phase3;
         phase3.assignTreasury(address(this));
+        emit InitializePhase(3);
     }
 
     function transform(
+        IERC20 _from,
         uint256 _amount,
-        IERC20 _token,
+        IERC20 _to,
         uint256 _expectedConvertedAmount
-    ) external override onlyFountain returns (uint256 _flowAmount) {
-        Phase _phase = _getPhase();
+    ) external override onlyFountain returns (uint256 _resultingAmount) {
+        Phase _phase = _getPhase(_to);
         require(_phase != Phase.None, "Treasury::transform: BAD_STATE");
         if (_phase == Phase.One) {
             require(
                 address(phase1) != address(0),
                 "Treasury::transform: CONTRACT_MISSING"
             );
-            _flowAmount = phase1.transform(
+            _resultingAmount = phase1.transform(
+                _from,
                 _amount,
-                _token,
+                issuanceToken,
                 _amount.mul(PHASE_1_RATE)
             );
             withdrawableFunds = withdrawableFunds.add(_amount);
@@ -126,9 +134,10 @@ contract Treasury is ITreasury {
                 address(phase2) != address(0),
                 "Treasury::transform: CONTRACT_MISSING"
             );
-            _flowAmount = phase2.transform(
+            _resultingAmount = phase2.transform(
+                _from,
                 _amount,
-                _token,
+                issuanceToken,
                 _amount.mul(PHASE_2_RATE)
             );
             withdrawableFunds = withdrawableFunds.add(_amount);
@@ -137,12 +146,13 @@ contract Treasury is ITreasury {
             address(phase3) != address(0),
             "Treasury::transform: CONTRACT_MISSING"
         );
-        _flowAmount = phase3.transform(
+        _resultingAmount = phase3.transform(
+            _from,
             _amount,
-            _token,
+            _to,
             _expectedConvertedAmount
         );
-        emit Transform(_token, _amount, _flowAmount);
+        emit Transform(_from, _amount, _to, _resultingAmount);
     }
 
     function payout(
@@ -182,14 +192,14 @@ contract Treasury is ITreasury {
         emit Transition(_newTreasury);
     }
 
-    function _getPhase() private returns (Phase) {
+    function _getPhase(IERC20 _token) private returns (Phase) {
         if (address(phase1) == address(0)) return Phase.None;
         if (
-            phase1.tokensIssued() < phase1.cap() ||
+            phase1.tokensIssued(_token) < phase1.cap() ||
             address(phase2) == address(0)
         ) return Phase.One;
         else if (
-            phase1.tokensIssued() < phase2.cap() ||
+            phase1.tokensIssued(_token) < phase2.cap() ||
             address(phase3) == address(0)
         ) return Phase.Two;
         return Phase.Three;

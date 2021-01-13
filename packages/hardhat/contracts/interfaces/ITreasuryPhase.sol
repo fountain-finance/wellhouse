@@ -8,13 +8,14 @@ interface ITreasuryPhase {
 
     function cap() external returns (uint256);
 
-    function tokensIssued() external returns (uint256);
+    function tokensIssued(IERC20 _token) external returns (uint256);
 
     function treasury() external returns (address);
 
     function transform(
+        IERC20 _from,
         uint256 _amount,
-        IERC20 _token,
+        IERC20 _to,
         uint256 _expectedConvertedAmount
     ) external returns (uint256 _converted);
 

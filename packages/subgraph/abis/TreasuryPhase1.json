@@ -50,7 +50,13 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "name": "tokensIssued",
     "outputs": [
       {
@@ -65,13 +71,18 @@
   {
     "inputs": [
       {
+        "internalType": "contract IERC20",
+        "name": "_from",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
       },
       {
         "internalType": "contract IERC20",
-        "name": "_token",
+        "name": "_to",
         "type": "address"
       },
       {

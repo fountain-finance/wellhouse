@@ -20,20 +20,39 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "uint8",
+        "name": "number",
+        "type": "uint8"
+      }
+    ],
+    "name": "InitializePhase",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "contract IERC20",
-        "name": "token",
+        "name": "from",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "value",
+        "name": "amount",
         "type": "uint256"
       },
       {
         "indexed": false,
+        "internalType": "contract IERC20",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "resultingAmount",
         "type": "uint256"
       }
     ],
@@ -145,6 +164,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "issuanceToken",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -209,13 +241,18 @@
   {
     "inputs": [
       {
+        "internalType": "contract IERC20",
+        "name": "_from",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
       },
       {
         "internalType": "contract IERC20",
-        "name": "_token",
+        "name": "_to",
         "type": "address"
       },
       {
@@ -228,7 +265,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "_flowAmount",
+        "name": "_resultingAmount",
         "type": "uint256"
       }
     ],

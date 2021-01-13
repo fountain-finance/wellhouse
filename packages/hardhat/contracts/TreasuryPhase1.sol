@@ -14,8 +14,8 @@ contract TreasuryPhase1 is ITreasuryPhase {
 
     /// @notice The address that deployed this contract.
     address public override deployer;
-    /// @notice Amount of tokens issued.
-    uint256 public override tokensIssued;
+    /// @notice Amount of each token issued.
+    mapping(IERC20 => uint256) public override tokensIssued;
     /// @notice The address where funds are managed
     address public override treasury;
     /// @notice The max amount of tokens to issue.
@@ -23,20 +23,21 @@ contract TreasuryPhase1 is ITreasuryPhase {
 
     constructor(uint256 _cap) public {
         cap = _cap;
-        tokensIssued = 0;
         deployer = msg.sender;
     }
 
     /**
       @notice Convert the specified amount into tokens.
-      @param _token The token being converted.
+      @param _from The token being converted from.
       @param _amount The amount of tokens to use for issuing.
+      @param _to The token being converted to.
       @param _expectedConvertedAmount The amount of tokens expected in exchange.
       @return _converted The amount of tokens issued.
     */
     function transform(
+        IERC20 _from,
         uint256 _amount,
-        IERC20 _token,
+        IERC20 _to,
         uint256 _expectedConvertedAmount
     ) external override returns (uint256) {
         require(
@@ -44,10 +45,10 @@ contract TreasuryPhase1 is ITreasuryPhase {
             "TreasuryPhase1::transform: UNAUTHORIZED"
         );
         require(
-            _validIssuance(_expectedConvertedAmount),
+            _validIssuance(_expectedConvertedAmount, _to),
             "TreasuryPhase1::transform: INVALID"
         );
-        tokensIssued = tokensIssued.add(_expectedConvertedAmount);
+        tokensIssued[_to] = tokensIssued[_to].add(_expectedConvertedAmount);
         return _expectedConvertedAmount;
     }
 
@@ -59,7 +60,11 @@ contract TreasuryPhase1 is ITreasuryPhase {
         treasury = _treasury;
     }
 
-    function _validIssuance(uint256 _amount) private view returns (bool) {
-        return _amount > 0 && tokensIssued.add(_amount) <= cap;
+    function _validIssuance(uint256 _amount, IERC20 _token)
+        private
+        view
+        returns (bool)
+    {
+        return _amount > 0 && tokensIssued[_token].add(_amount) <= cap;
     }
 }
