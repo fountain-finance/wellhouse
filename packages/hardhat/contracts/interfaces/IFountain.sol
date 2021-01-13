@@ -3,8 +3,6 @@ pragma solidity >=0.6.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../libraries/MoneyPool.sol";
-import "../aux/Ticket.sol";
 import "./ITreasury.sol";
 
 interface IFountain {
@@ -20,9 +18,9 @@ interface IFountain {
         IERC20 want,
         string title,
         string link,
-        uint8 bias,
-        uint8 o,
-        uint8 b,
+        uint256 bias,
+        uint256 o,
+        uint256 b,
         address bAddress
     );
 
@@ -57,9 +55,9 @@ interface IFountain {
         IERC20 _want,
         string calldata _title,
         string calldata _link,
-        uint8 bias,
-        uint8 _o,
-        uint8 _b,
+        uint256 bias,
+        uint256 _o,
+        uint256 _b,
         address _bAddress
     ) external returns (uint256 _mpId);
 
@@ -79,9 +77,9 @@ interface IFountain {
         address _beneficiary
     ) external;
 
-    function appointTreasury(ITreasury _newTreasury) external;
-
     function mintReservedTickets(address _owner) external;
+
+    function appointTreasury(ITreasury _newTreasury) external;
 
     function withdrawFunds(uint256 _amount) external;
 }

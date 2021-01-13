@@ -8,18 +8,20 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./interfaces/ITreasury.sol";
 
 import "./Flow.sol";
-import "./Fountain.sol";
 
 contract Treasury is ITreasury {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
+
     modifier onlyFountain {
         require(msg.sender == fountain, "Treasury: UNAUTHORIZED");
         _;
     }
+
     /// @notice The treasury behaves in different ways depending on the phase.
     /// @dev The phase is determined by the amount of surplus in the system.
     enum Phase {None, One, Two, Three}
+
     /// @notice The rate at which to issue FLOW for DAI in phase 1.
     uint8 public constant PHASE_1_RATE = 2;
     /// @notice The rate at which to issue FLOW for DAI in phase 2.
@@ -164,23 +166,20 @@ contract Treasury is ITreasury {
         withdrawableFunds = withdrawableFunds.sub(_amount);
     }
 
-    function transition(ITreasury _newTreasury, IERC20[] calldata _tokens)
+    function transition(address _newTreasury, IERC20[] calldata _tokens)
         external
         override
         onlyFountain
     {
-        flow.replaceTreasury(address(_newTreasury));
-        IERC20(flow).safeTransfer(
-            address(_newTreasury),
-            flow.balanceOf(address(this))
-        );
+        flow.replaceTreasury(_newTreasury);
+        IERC20(flow).safeTransfer(_newTreasury, flow.balanceOf(address(this)));
         for (uint256 i = 0; i < _tokens.length; i++) {
             _tokens[i].safeTransfer(
-                address(_newTreasury),
+                _newTreasury,
                 _tokens[i].balanceOf(address(this))
             );
         }
-                event Transition(_newTreasury);
+        emit Transition(_newTreasury);
     }
 
     function _getPhase() private returns (Phase) {
