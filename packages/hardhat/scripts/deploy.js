@@ -9,7 +9,10 @@ const main = async () => {
   console.log("\n\n 📡 Deploying...\n");
 
   const token = await deploy("Token");
-  await deploy("Fountain", [token.address]); // <-- add in constructor args like line 16 vvvv
+  const flow = await deploy("Flow");
+  const fountain = await deploy("Fountain", [token.address, flow.address]); // <-- add in constructor args like line 16 vvvv
+  await deploy("Treasury", [flow.address, fountain.address]);
+  await deploy("TreasuryPhase1", [100000]);
 
   // const exampleToken = await deploy("ExampleToken")
   // const examplePriceOracle = await deploy("ExamplePriceOracle")

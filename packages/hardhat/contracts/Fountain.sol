@@ -9,9 +9,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./libraries/MoneyPool.sol";
 import "./interfaces/IFountain.sol";
-import "./Treasury.sol";
-import "./Ticket.sol";
-import "./Flow.sol";
+import "./aux/Ticket.sol";
 
 /**
 
@@ -41,6 +39,7 @@ The basin of the Fountain should always be the sustainers of projects.
 /// @notice The contract managing the state of all Money pools.
 contract Fountain is IFountain, Ownable {
     using SafeMath for uint256;
+    using SafeMath for uint8;
     using SafeERC20 for IERC20;
     using MoneyPool for MoneyPool.Data;
 
@@ -73,15 +72,15 @@ contract Fountain is IFountain, Ownable {
     mapping(uint256 => MoneyPool.Data) private mps;
 
     //TODO big enough
-    uint32 constant BASE_MP_WEIGHT = 1000000000E18;
+    uint256 constant BASE_MP_WEIGHT = 1000000000E18;
 
     // --- public properties --- //
 
     /// @notice The tickets handed out to Money pool sustainers. Each owner has their own set of tickets.
-    mapping(address => Ticket) ticket;
+    mapping(address => Ticket) public override tickets;
 
     /// @notice The current cumulative amount redistributable from each owner's Money pools.
-    mapping(address => uint256) redistributable; 
+    mapping(address => uint256) public override redistributable;
 
     /// @notice The latest Money pool for each owner address
     mapping(address => uint256) public override latestMpId;
@@ -97,7 +96,7 @@ contract Fountain is IFountain, Ownable {
     IERC20 public flow;
 
     /// @notice The treasury that manages funds.
-    OverflowTreasury public treasury;
+    Treasury public treasury;
 
     // --- external views --- //
 
@@ -145,10 +144,7 @@ contract Fountain is IFountain, Ownable {
         override
         returns (MoneyPool.Data memory _mp)
     {
-        require(
-            latestMpId[_owner] > 0,
-            "Fountain::getCurrentMp: NOT_FOUND"
-        );
+        require(latestMpId[_owner] > 0, "Fountain::getCurrentMp: NOT_FOUND");
 
         _mp = _activeMp(_owner);
         if (_mp.id > 0) return _mp;
@@ -183,10 +179,12 @@ contract Fountain is IFountain, Ownable {
         @param _owner The owner of the Money pools to get an amount for.
         @return _amount The amount.
     */
-    function getRedistributableAmount(
-        address _beneficiary,
-        address _owner
-    ) external view override returns (uint256) {
+    function getRedistributableAmount(address _beneficiary, address _owner)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return _redistributableAmount(_beneficiary, _owner);
     }
 
@@ -195,7 +193,28 @@ contract Fountain is IFountain, Ownable {
     constructor(IERC20 _dai, IERC20 _flow) public {
         dai = _dai;
         flow = _flow;
-        treasury = new OverflowTreasury(_flow);
+    }
+
+    /**
+        @notice Initializes an owner's tickets, which they'll need to configure their Money pool.
+        @dev Deploys an owners redistribution share tokens.
+        @param _name If this is the message sender's first Money pool configuration, this name is used for ERC-20 token's tracking surplus shares for this owner.
+        @param _symbol The tokens symbol.
+    */
+    function initializeTicket(string calldata _name, string calldata _symbol)
+        external
+        override
+    {
+        require(
+            tickets[msg.sender] == Ticket(0),
+            "Fountain::initializeProject: ALREADY_INITIALIZED"
+        );
+        require(
+            bytes(_name).length != 0 && bytes(_symbol).length != 0,
+            "Fountain::configureMp: BAD_PARAMS"
+        );
+        tickets[msg.sender] = new Ticket(_name, _symbol);
+        emit InitializeTicket(_name, _symbol);
     }
 
     /**
@@ -214,23 +233,23 @@ contract Fountain is IFountain, Ownable {
         @param _b The percentage of this Money pool's surplus to allocate towards a beneficiary address. This can be another contract, or an end user address.
         An example would be a contract that allocates towards a specific purpose, such as Gitcoin grant matching.
         @param _bAddress The address of the beneficiary contract where a specified percentage is allocated.
-        @param _tokenName If this is the message sender's first Money pool configuration, this name is used for ERC-20 token's tracking surplus shares for this owner.
-        @param _tokenSymbol The tokens symbol.
         @return _mpId The ID of the Money pool that was successfully configured.
     */
     function configureMp(
         uint256 _target,
         uint256 _duration,
         IERC20 _want,
-        string memory _title,
-        string memory _link,
-        uint8 bias,
+        string calldata _title,
+        string calldata _link,
+        uint8 _bias,
         uint8 _o,
         uint8 _b,
-        address _bAddress,
-        string memory _tokenName,
-        string memory _tokenSymbol
+        address _bAddress
     ) external override returns (uint256) {
+        require(
+            tickets[msg.sender] != Ticket(0),
+            "Fountain::configureMp: NEEDS_INITIALIZATION"
+        );
         require(_duration >= 1, "Fountain::configureMp: TOO_SHORT");
         require(_want == dai, "Fountain::configureMp: UNSUPPORTED_WANT");
         require(_target > 0, "Fountain::configureMp: BAD_TARGET");
@@ -244,12 +263,6 @@ contract Fountain is IFountain, Ownable {
             "Fountain::configureMp: BAD_LINK"
         );
         require(_o.add(_b) <= 100, "Fountain::configureMp: BAD_PERCENTAGES");
-
-        if (tickets[msg.sender] == Ticket(0)) {
-          require(_tokenName != "", "Fountain::configureMp: BAD_TOKEN_NAME");
-          require(_tokenSymbol != "", "Fountain::configureMp: BAD_TOKEN_SYMBOL");
-          tickets[msg.sender] = new Ticket(tokenName, tpk);
-        }
 
         MoneyPool.Data storage _mp = _mpToConfigure(msg.sender);
 
@@ -301,6 +314,7 @@ contract Fountain is IFountain, Ownable {
         address _beneficiary,
         uint256 _convertedFlowAmount
     ) external override lockSustain returns (uint256) {
+        require(treasury != Treasury(0), "Fountain::sustainOwner: BAD_STATE");
         require(_amount > 0, "Fountain::sustainOwner: BAD_AMOUNT");
 
         // Find the Money pool that this sustainment should go to.
@@ -310,48 +324,28 @@ contract Fountain is IFountain, Ownable {
 
         _mp.want.safeTransferFrom(msg.sender, address(treasury), _amount);
 
-        // Add the amount to the Money pool, which determines how much Flow was made available as a result.
-        uint256 _surplus = _mp._add(_amount);
-
-        if (_surplus > 0) {
-            uint256 _overflowAmount =
-                treasury.transform(
-                    _surplus,
-                    _mp.want,
-                    _surplus.mul(_convertedFlowAmount).div(_amount)
-                );
-            _mp._addOverflow(_overflowAmount);
-            redistributable[_owner] = redistributable[_owner].add(_overflowAmount); 
-        }
-
-        ownerTokens[_owner].mint(_beneficiary, _mp.weight.mul(_amount).div(_mp.target));
-
-        emit SustainMp(
-            _mp.id,
-            _mp.owner,
-            _beneficiary,
-            msg.sender,
-            _amount,
-            _want
-        );
-        return _mp.id;
+        return _sustain(_mp, _amount, _beneficiary, _convertedFlowAmount);
     }
 
     /** 
         @notice A message sender can collect what's been redistributed to it by Money pools once they have expired.
         @param _owner The owner of the Money pools being collected from.
         @param _amount The amount of FLOW to collect.
-        @return _amount If amount collected.
     */
-    function collectRedistributions(address _owner, uint256 _amount);
+    function collectRedistributions(address _owner, uint256 _amount)
         external
         override
         lockCollect
     {
-        uint256 _amountAvailable = _redistributableAmount(_beneficiary, _owner);
-        require(_amountAvailable >= _amount, "Fountain::collectRedistributions: INSUFFICIENT_FUNDS");
+        require(treasury != Treasury(0), "Fountain::sustainOwner: BAD_STATE");
+        uint256 _available = _redistributableAmount(msg.sender, _owner);
+        require(
+            _available >= _amount,
+            "Fountain::collectRedistributions: INSUFFICIENT_FUNDS"
+        );
         treasury.payout(msg.sender, flow, _amount);
-        _ownerToken.burn(msg.sender, ownerTokens[_owner].balanceOf(msg.sender));
+        Ticket _ticket = tickets[_owner];
+        _ticket.burn(msg.sender, _ticket.balanceOf(msg.sender));
         redistributable[_owner] = redistributable[_owner].sub(_amount);
         emit CollectRedistributions(msg.sender, _amount);
     }
@@ -367,6 +361,7 @@ contract Fountain is IFountain, Ownable {
         uint256 _amount,
         address _beneficiary
     ) external override lockTap {
+        require(treasury != Treasury(0), "Fountain::sustainOwner: BAD_STATE");
         MoneyPool.Data storage _mp = mps[_mpId];
         require(
             _mp.owner == msg.sender,
@@ -385,26 +380,31 @@ contract Fountain is IFountain, Ownable {
         @notice Replaces the current treasury with a new one. All funds will move over.
         @param _newTreasury The new treasury.
     */
-    function overthrowTreasury(OverflowTreasury _newTreasury)
+    function reassignTreasury(address _newTreasury)
         external
+        override
         onlyOwner
     {
-      if (treasury == Treasury(0)) treasury = _newTreasury;
-      treasury.overthrow(_newTreasury, [dai]);
+        require(
+            _newTreasury != address(0),
+            "Fountain::overthrowTreasury: ZERO_ADDRESS"
+        );
+        if (treasury == Treasury(0)) treasury = Treasury(_newTreasury);
+        IERC20[] storage _tokens;
+        _tokens.push(dai);
+        treasury.overthrow(_newTreasury, _tokens);
     }
 
-    /** 
+    /**
         @notice Allows the owner of the contract to withdraw phase 1 funds.
-        @param The amount to withdraw.
+        @param _amount The amount to withdraw.
     */
-    function withdrawPhase1Funds(uint256 _amount)
-        external
-        onlyOwner
-    {
-        treasury.withdrawPhase1Funds(msg.sender, _amount);
+    function withdrawPhase1Funds(uint256 _amount) external override onlyOwner {
+        require(treasury != Treasury(0), "Fountain::sustainOwner: BAD_STATE");
+        treasury.withdrawPhase1Funds(msg.sender, dai, _amount);
     }
 
-    /** 
+    /**
         @notice Allows the owner of the contract to allocate phase 2 funds to Money pools.
         @dev Largely the same logic from the `sustainOwner` transaction.
         @param _owner The owner of the Money pool to fund.
@@ -413,19 +413,43 @@ contract Fountain is IFountain, Ownable {
         @param _beneficiary The address to associate with this sustainment. This is usually mes.sender, but can be something else if the sender is making this sustainment on the beneficiary's behalf.
         @param _convertedFlowAmount The expected number of Flow to convert surplus into.
     */
-    function allocatePhase2Funds(address _owner,uint256 _amount,uint256 _want, address _beneficiary, uint256 _convertedFlowAmount)
-        external
-        onlyOwner
-    {
+    function allocatePhase2Funds(
+        address _owner,
+        uint256 _amount,
+        IERC20 _want,
+        address _beneficiary,
+        uint256 _convertedFlowAmount
+    ) external override onlyOwner {
+        require(treasury != Treasury(0), "Fountain::sustainOwner: BAD_STATE");
         treasury.allocatePhase2Funds(_amount);
 
         // Find the Money pool that this sustainment should go to.
         MoneyPool.Data storage _mp = _mpToSustain(_owner);
-        require(_want == _mp.want, "Fountain::allocatePhase2Funds: UNEXPECTED_WANT");
+        require(
+            _want == _mp.want,
+            "Fountain::allocatePhase2Funds: UNEXPECTED_WANT"
+        );
+        _sustain(_mp, _amount, _beneficiary, _convertedFlowAmount);
+    }
 
+    // --- private transactions --- //
+
+    /** 
+        @notice Sustain the provided Money pool.
+        @param _mp The Money pool to sustain.
+        @param _amount Amount of sustainment.
+        @param _beneficiary The address to associate with this sustainment. This is usually mes.sender, but can be something else if the sender is making this sustainment on the beneficiary's behalf.
+        @param _convertedFlowAmount The expected number of Flow to convert surplus into.
+        @return _mpId The ID of the Money pool that was successfully sustained.
+    */
+    function _sustain(
+        MoneyPool.Data storage _mp,
+        uint256 _amount,
+        address _beneficiary,
+        uint256 _convertedFlowAmount
+    ) private returns (uint256) {
         // Add the amount to the Money pool, which determines how much Flow was made available as a result.
         uint256 _surplus = _mp._add(_amount);
-
         if (_surplus > 0) {
             uint256 _overflowAmount =
                 treasury.transform(
@@ -433,11 +457,18 @@ contract Fountain is IFountain, Ownable {
                     _mp.want,
                     _surplus.mul(_convertedFlowAmount).div(_amount)
                 );
-            _mp._addOverflow(_overflowAmount);
-            redistributable[_owner] = redistributable[_owner].add(_overflowAmount); 
+            redistributable[_mp.owner] = redistributable[_mp.owner].add(
+                _overflowAmount
+            );
         }
 
-        ownerTokens[_owner].mint(_beneficiary, _mp.weight.mul(_amount).div(_mp.target));
+        Ticket _ticket = tickets[_mp.owner];
+        uint256 _baseAmount = _mp.weight.mul(_amount).div(_mp.target);
+
+        _ticket.mint(_beneficiary, _baseAmount.mul(_mp._s()).div(100));
+        if (_mp.o > 0) _ticket.mint(_mp.owner, _baseAmount.mul(_mp.o).div(100));
+        if (_mp.b > 0)
+            _ticket.mint(_mp.bAddress, _baseAmount.mul(_mp.b).div(100));
 
         emit SustainMp(
             _mp.id,
@@ -445,12 +476,10 @@ contract Fountain is IFountain, Ownable {
             _beneficiary,
             msg.sender,
             _amount,
-            _want
+            _mp.want
         );
         return _mp.id;
     }
-
-    // --- private transactions --- //
 
     /** 
         @notice The Money pool that is configurable for this owner.
@@ -471,12 +500,10 @@ contract Fountain is IFountain, Ownable {
         MoneyPool.Data storage _newMp =
             _initMp(
                 _owner,
-                _aMp.id > 0
-                    ? _aMp.start.add(_aMp.duration)
-                    : block.timestamp,
-                    _aMp.id == 0 ? BASE_MP_WEIGHT : _aMp._derivedWeight()
+                _aMp.id > 0 ? _aMp.start.add(_aMp.duration) : block.timestamp,
+                _aMp.id == 0 ? BASE_MP_WEIGHT : _aMp._derivedWeight()
             );
-        if (_mp.id > 0) _newMp._baseOn(_mp);
+        if (_mp.id > 0) _newMp._basedOn(_mp);
         return _newMp;
     }
 
@@ -511,15 +538,17 @@ contract Fountain is IFountain, Ownable {
         @notice Initializes a Money pool to be sustained for the sending address.
         @param _owner The owner of the Money pool being initialized.
         @param _start The start time for the new Money pool.
+        @param _weight The weight for the new Money pool.
         @return _newMp The initialized Money pool.
     */
-    function _initMp(address _owner, uint256 _start)
-        private
-        returns (MoneyPool.Data storage _newMp)
-    {
+    function _initMp(
+        address _owner,
+        uint256 _start,
+        uint256 _weight
+    ) private returns (MoneyPool.Data storage _newMp) {
         mpCount++;
         _newMp = mps[mpCount];
-        _newMp._init(_owner, _start, mpCount, latestMpId[_owner], );
+        _newMp._init(_owner, _start, mpCount, latestMpId[_owner], _weight);
         latestMpId[_owner] = mpCount;
     }
 
@@ -567,12 +596,16 @@ contract Fountain is IFountain, Ownable {
         @param _owner The owner of the Money pools being considered.
         @return _amount The amount that is redistributable.
     */
-    function _redistributableAmount(
-        address _beneficiary,
-        address _owner
-    ) external view override returns (uint256) {
+    function _redistributableAmount(address _beneficiary, address _owner)
+        private
+        view
+        returns (uint256)
+    {
         Ticket _ticket = tickets[_owner];
-        uint256 _currentBalance = _ticket.balanceOf(msg.sender);
-        return redistributable[_owner].mul(_currentBalance).div(_ticket.totalSupply());
+        uint256 _currentBalance = _ticket.balanceOf(_beneficiary);
+        return
+            redistributable[_owner].mul(_currentBalance).div(
+                _ticket.totalSupply()
+            );
     }
 }

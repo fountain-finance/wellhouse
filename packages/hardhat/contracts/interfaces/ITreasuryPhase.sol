@@ -6,14 +6,13 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../Treasury.sol";
 
 interface ITreasuryPhase {
-    /// @notice The max amount of tokens to issue.
+    function deployer() external returns (address);
+
     function cap() external returns (uint256);
 
-    /// @notice Amount of tokens issued.
     function tokensIssued() external returns (uint256);
 
-    /// @notice The treasury controller's address.
-    function treasuryController() external returns (address);
+    function treasury() external returns (address);
 
     function transform(
         uint256 _amount,
@@ -21,5 +20,5 @@ interface ITreasuryPhase {
         uint256 _expectedConvertedAmount
     ) external returns (uint256 _converted);
 
-    function assignTreasury(OverflowTreasury _treasury) external;
+    function assignTreasury(address _treasury) external;
 }
