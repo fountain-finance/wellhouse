@@ -10,6 +10,8 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./libraries/MoneyPool.sol";
 import "./interfaces/IFountain.sol";
 import "./Treasury.sol";
+import "./Ticket.sol";
+import "./Flow.sol";
 
 /**
 
@@ -70,29 +72,29 @@ contract Fountain is IFountain, Ownable {
     /// @dev The official record of all Money pools ever created
     mapping(uint256 => MoneyPool.Data) private mps;
 
-    /// @dev List of owners of Money pools that are redistributable to the given address
-    mapping(address => address[]) private redistributableOwners;
-
-    /// @dev Map of whether or not an address is should be able to collect redistributions from another.
-    mapping(address => mapping(address => bool)) private redistributableOwnerTracker;
-
-    // Indicates if surplus funds have been redistributed for each sustainer address.
-    mapping(uint256 => mapping(address => bool)) private hasRedistributed;
-
-    // The amount each address has contributed to sustaining this Money pool.
-    mapping(uint256 => mapping(address => uint256)) private sustainments;
+    //TODO big enough
+    uint32 constant BASE_MP_WEIGHT = 1000000000E18;
 
     // --- public properties --- //
 
-    /// @notice The latest Money pool for each owner address
-    mapping(address => uint256) public override latestMpNumber;
+    /// @notice The tickets handed out to Money pool sustainers. Each owner has their own set of tickets.
+    mapping(address => Ticket) ticket;
 
-    /// @notice The total number of Money pools created, which is used for issuing Money pool numbers.
-    /// @dev Money pools should have a number > 0.
+    /// @notice The current cumulative amount redistributable from each owner's Money pools.
+    mapping(address => uint256) redistributable; 
+
+    /// @notice The latest Money pool for each owner address
+    mapping(address => uint256) public override latestMpId;
+
+    /// @notice The total number of Money pools created, which is used for issuing Money pool IDs.
+    /// @dev Money pools should have a ID > 0.
     uint256 public override mpCount = 0;
 
     /// @notice The contract currently only supports sustainments in dai.
     IERC20 public dai;
+
+    /// @notice The token that surplus is converted into.
+    IERC20 public flow;
 
     /// @notice The treasury that manages funds.
     OverflowTreasury public treasury;
@@ -101,17 +103,17 @@ contract Fountain is IFountain, Ownable {
 
     /**  
         @notice The properties of the given Money pool.
-        @param _mpNumber The number of the Money pool to get the properties of.
+        @param _mpId The ID of the Money pool to get the properties of.
         @return _mp The Money pool.
     */
-    function getMp(uint256 _mpNumber)
+    function getMp(uint256 _mpId)
         external
         view
         override
         returns (MoneyPool.Data memory _mp)
     {
-        _mp = mps[_mpNumber];
-        require(_mp.number > 0, "Fountain::getMp: NOT_FOUND");
+        _mp = mps[_mpId];
+        require(_mp.id > 0, "Fountain::getMp: NOT_FOUND");
     }
 
     /**
@@ -127,23 +129,9 @@ contract Fountain is IFountain, Ownable {
     {
         MoneyPool.Data memory _sMp = _standbyMp(_owner);
         MoneyPool.Data memory _aMp = _activeMp(_owner);
-        if (_sMp.number > 0 && _aMp.number > 0) return _sMp;
-        require(_aMp.number > 0, "Fountain::getQueuedMp: NOT_FOUND");
-        return
-            MoneyPool.Data(
-                mpCount.add(1),
-                latestMpNumber[_aMp.owner],
-                _aMp.title,
-                _aMp.link,
-                _aMp.owner,
-                _aMp.want,
-                _aMp.target,
-                0,
-                0,
-                _aMp._determineNextStart(),
-                _aMp.duration,
-                0
-            );
+        if (_sMp.id > 0 && _aMp.id > 0) return _sMp;
+        require(_aMp.id > 0, "Fountain::getQueuedMp: NOT_FOUND");
+        return _aMp._nextUp();
     }
 
     /**
@@ -158,83 +146,33 @@ contract Fountain is IFountain, Ownable {
         returns (MoneyPool.Data memory _mp)
     {
         require(
-            latestMpNumber[_owner] > 0,
+            latestMpId[_owner] > 0,
             "Fountain::getCurrentMp: NOT_FOUND"
         );
 
         _mp = _activeMp(_owner);
-        if (_mp.number > 0) return _mp;
+        if (_mp.id > 0) return _mp;
 
         _mp = _standbyMp(_owner);
-        if (_mp.number > 0) return _mp;
+        if (_mp.id > 0) return _mp;
 
-        _mp = mps[latestMpNumber[_owner]];
-        return
-            MoneyPool.Data(
-                mpCount.add(1),
-                latestMpNumber[_mp.owner],
-                _mp.title,
-                _mp.link,
-                _mp.owner,
-                _mp.want,
-                _mp.target,
-                0,
-                0,
-                _mp._determineNextStart(),
-                _mp.duration,
-                0
-            );
-    }
-
-    /**
-        @notice The amount in a Money pool that was contributed by the given address.
-        @param _mpNumber The number of the Money pool to get a contribution for.
-        @param _sustainer The address of the sustainer to get an amount for.
-        @return amount The amount.
-    */
-    function getSustainment(uint256 _mpNumber, address _sustainer)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        require(_mpNumber > 0, "Fountain::getSustainment:: NOT_FOUND");
-        return sustainments[_mpNumber][_sustainer];
+        _mp = mps[latestMpId[_owner]];
+        return _mp._nextUp();
     }
 
     /**
         @notice The amount left to be withdrawn by the Money pool's owner.
-        @param _mpNumber The number of the Money pool to get the available sustainment from.
+        @param _mpId The ID of the Money pool to get the available sustainment from.
         @return amount The amount.
     */
-    function getTappableAmount(uint256 _mpNumber)
+    function getTappableAmount(uint256 _mpId)
         external
         view
         override
         returns (uint256)
     {
-        require(_mpNumber > 0, "Fountain::getTappableAmount:: NOT_FOUND");
-        return mps[_mpNumber]._tappableAmount();
-    }
-
-    /** 
-        @notice The amount of redistribution in a Money pool that can be claimed by the given address.
-        @param _mpNumber The number of the Money pool to get a redistribution amount for.
-        @param _sustainer The address of the sustainer to get an amount for.
-        @return amount The amount.
-    */
-    function getTrackedRedistribution(uint256 _mpNumber, address _sustainer)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        MoneyPool.Data storage _mp = mps[_mpNumber];
-        require(
-            _mp.number > 0,
-            "Fountain::getTrackedRedistribution:: NOT_FOUND"
-        );
-        return _trackedSustainerRedistribution(_mp, _sustainer);
+        require(_mpId > 0, "Fountain::getTappableAmount:: NOT_FOUND");
+        return mps[_mpId]._tappableAmount();
     }
 
     /** 
@@ -242,40 +180,22 @@ contract Fountain is IFountain, Ownable {
         @dev This function runs the same routine as _redistributeAmount to determine the summed amount.
         Look there for more documentation.
         @param _beneficiary The address to get an amount for.
-        @param _includesActive If active Money pools should be included in the calculation.
+        @param _owner The owner of the Money pools to get an amount for.
         @return _amount The amount.
     */
-    function getAllTrackedRedistribution(
+    function getRedistributableAmount(
         address _beneficiary,
-        bool _includesActive
-    ) external view override returns (uint256 _amount) {
-        _amount = 0;
-        address[] memory _owners = redistributableOwners[msg.sender];
-        for (uint256 i = 0; i < _owners.length; i++) {
-            MoneyPool.Data memory _mp = mps[latestMpNumber[_owners[i]]];
-            while (
-                _mp.number > 0 && !hasRedistributed[_mp.number][_beneficiary]
-            ) {
-                if (
-                    _mp._state() == MoneyPool.State.Redistributing ||
-                    (_includesActive && _mp._state() == MoneyPool.State.Active)
-                ) {
-                    _amount = _amount.add(
-                        _trackedSustainerRedistribution(_mp, _beneficiary)
-                    );
-                  if (_mp.owner == _beneficiary && _mp.o > 0) _amount.add(_mp.overflow.mul(_mp.o).div(100));
-                  if (_mp.bAddress == _beneficiary && _mp.b > 0) _amount.add(_mp.overflow.mul(_mp.b).div(100));
-                }
-                _mp = mps[_mp.previous];
-            }
-        }
+        address _owner
+    ) external view override returns (uint256) {
+        return _redistributableAmount(_beneficiary, _owner);
     }
 
     // --- external transactions --- //
 
-    constructor(IERC20 _dai) public {
+    constructor(IERC20 _dai, IERC20 _flow) public {
         dai = _dai;
-        treasury = new OverflowTreasury();
+        flow = _flow;
+        treasury = new OverflowTreasury(_flow);
     }
 
     /**
@@ -286,25 +206,35 @@ contract Fountain is IFountain, Ownable {
         @param _want The token that the Money pool wants.
         @param _title The title of the Money pool.
         @param _link A link to information about the Money pool.
+        @param _bias A number from 0-100 indicating how valuable a Money pool is compared to the owners previous Money pool, 
+        effectively creating a recency bias.
+        If the number is 100, each Money pool will be treated as twice as valuable than the previous, meaning sustainers get twice as much redistribution shares.
+        If it's 0, each Money pool will have equal weight.
         @param _o The percentage of this Money pool's surplus to allocate to the owner.
         @param _b The percentage of this Money pool's surplus to allocate towards a beneficiary address. This can be another contract, or an end user address.
         An example would be a contract that allocates towards a specific purpose, such as Gitcoin grant matching.
         @param _bAddress The address of the beneficiary contract where a specified percentage is allocated.
-        @return _mpNumber The number of the Money pool that was successfully configured.
+        @param _tokenName If this is the message sender's first Money pool configuration, this name is used for ERC-20 token's tracking surplus shares for this owner.
+        @param _tokenSymbol The tokens symbol.
+        @return _mpId The ID of the Money pool that was successfully configured.
     */
     function configureMp(
         uint256 _target,
         uint256 _duration,
         IERC20 _want,
-        string calldata _title,
-        string calldata _link,
+        string memory _title,
+        string memory _link,
+        uint8 bias,
         uint8 _o,
-        uint8 _b
-        address _bAddress
+        uint8 _b,
+        address _bAddress,
+        string memory _tokenName,
+        string memory _tokenSymbol
     ) external override returns (uint256) {
         require(_duration >= 1, "Fountain::configureMp: TOO_SHORT");
         require(_want == dai, "Fountain::configureMp: UNSUPPORTED_WANT");
         require(_target > 0, "Fountain::configureMp: BAD_TARGET");
+        require(_bias > 0 && _bias <= 100, "Fountain:configureMP: BAD_BIAS");
         require(
             bytes(_title).length > 0 && bytes(_title).length <= 32,
             "Fountain::configureMp: BAD_TITLE"
@@ -315,6 +245,12 @@ contract Fountain is IFountain, Ownable {
         );
         require(_o.add(_b) <= 100, "Fountain::configureMp: BAD_PERCENTAGES");
 
+        if (tickets[msg.sender] == Ticket(0)) {
+          require(_tokenName != "", "Fountain::configureMp: BAD_TOKEN_NAME");
+          require(_tokenSymbol != "", "Fountain::configureMp: BAD_TOKEN_SYMBOL");
+          tickets[msg.sender] = new Ticket(tokenName, tpk);
+        }
+
         MoneyPool.Data storage _mp = _mpToConfigure(msg.sender);
 
         // Reset the start time to now if there isn't an active Money pool.
@@ -324,38 +260,28 @@ contract Fountain is IFountain, Ownable {
             _target,
             _duration,
             _want,
-            _activeMp(msg.sender).number == 0 ? block.timestamp : _mp.start,
+            _activeMp(msg.sender).id == 0 ? block.timestamp : _mp.start,
+            _bias,
             _o,
             _b,
             _bAddress
         );
 
-        // Make sure the owner can later claim redistributions from this Money pool.
-        if (_o > 0 && redistributableOwnerTracker[_owner][_owner] == false) {
-            redistributableOwners[_owner].push(_owner);
-            redistributableOwnerTracker[_owner][_owner] == true;
-        }
-
-        // Make sure the beneficiary can later claim redistributions from this Money pool.
-        if (_b > 0 && redistributableOwnerTracker[_bAddress][_owner] == false) {
-            redistributableOwners[_bAddress].push(_owner);
-            redistributableOwnerTracker[_bAddress][_owner] == true;
-        }
-
         emit ConfigureMp(
-            _mp.number,
+            _mp.id,
             _mp.owner,
             _mp.target,
             _mp.duration,
             _mp.want,
             _mp.title,
             _mp.link,
+            _mp.bias,
             _o,
             _b,
             _bAddress
         );
 
-        return _mp.number;
+        return _mp.id;
     }
 
     /** 
@@ -366,7 +292,7 @@ contract Fountain is IFountain, Ownable {
         @param _want Must match the `want` token for the Money pool being sustained.
         @param _beneficiary The address to associate with this sustainment. This is usually mes.sender, but can be something else if the sender is making this sustainment on the beneficiary's behalf.
         @param _convertedFlowAmount The expected number of Flow to convert surplus into.
-        @return _mpNumber The number of the Money pool that was successfully sustained.
+        @return _mpId The ID of the Money pool that was successfully sustained.
     */
     function sustainOwner(
         address _owner,
@@ -382,12 +308,6 @@ contract Fountain is IFountain, Ownable {
 
         require(_want == _mp.want, "Fountain::sustainOwner: UNEXPECTED_WANT");
 
-        // Increment the sustainments to the Money pool attributed to the beneficiary.
-        sustainments[_mp.number][_beneficiary] = sustainments[_mp.number][
-            _beneficiary
-        ]
-            .add(_amount);
-
         _mp.want.safeTransferFrom(msg.sender, address(treasury), _amount);
 
         // Add the amount to the Money pool, which determines how much Flow was made available as a result.
@@ -401,54 +321,53 @@ contract Fountain is IFountain, Ownable {
                     _surplus.mul(_convertedFlowAmount).div(_amount)
                 );
             _mp._addOverflow(_overflowAmount);
+            redistributable[_owner] = redistributable[_owner].add(_overflowAmount); 
         }
 
-        // Make sure the beneficiary can later claim redistributions from this Money pool.
-        if (redistributableOwnerTracker[_beneficiary][_owner] == false) {
-            redistributableOwners[_beneficiary].push(_owner);
-            redistributableOwnerTracker[_beneficiary][_owner] == true;
-        }
+        ownerTokens[_owner].mint(_beneficiary, _mp.weight.mul(_amount).div(_mp.target));
 
         emit SustainMp(
-            _mp.number,
+            _mp.id,
             _mp.owner,
             _beneficiary,
             msg.sender,
-            _amount
+            _amount,
+            _want
         );
-
-        return _mp.number;
+        return _mp.id;
     }
 
     /** 
         @notice A message sender can collect what's been redistributed to it by Money pools once they have expired.
+        @param _owner The owner of the Money pools being collected from.
+        @param _amount The amount of FLOW to collect.
         @return _amount If amount collected.
     */
-    function collectRedistributions()
+    function collectRedistributions(address _owner, uint256 _amount);
         external
         override
         lockCollect
-        returns (uint256 _amount)
     {
-        // Iterate over all of sender's sustained addresses to make sure
-        // redistribution has completed for all redistributable Money pools
-        _amount = _redistributeAmount(msg.sender, redistributableOwners[msg.sender]);
-        _performCollectRedistributions(msg.sender, _amount);
+        uint256 _amountAvailable = _redistributableAmount(_beneficiary, _owner);
+        require(_amountAvailable >= _amount, "Fountain::collectRedistributions: INSUFFICIENT_FUNDS");
+        treasury.payout(msg.sender, flow, _amount);
+        _ownerToken.burn(msg.sender, ownerTokens[_owner].balanceOf(msg.sender));
+        redistributable[_owner] = redistributable[_owner].sub(_amount);
+        emit CollectRedistributions(msg.sender, _amount);
     }
 
     /**
         @notice A message sender can tap into funds that have been used to sustain it's Money pools.
-        @param _mpNumber The number of the Money pool to tap.
+        @param _mpId The ID of the Money pool to tap.
         @param _amount The amount to tap.
         @param _beneficiary The address to transfer the funds to.
-        @return success If the collecting was a success.
     */
     function tapMp(
-        uint256 _mpNumber,
+        uint256 _mpId,
         uint256 _amount,
         address _beneficiary
-    ) external override lockTap returns (bool) {
-        MoneyPool.Data storage _mp = mps[_mpNumber];
+    ) external override lockTap {
+        MoneyPool.Data storage _mp = mps[_mpId];
         require(
             _mp.owner == msg.sender,
             "Fountain::collectSustainment: UNAUTHORIZED"
@@ -457,13 +376,9 @@ contract Fountain is IFountain, Ownable {
             _mp._tappableAmount() >= _amount,
             "Fountain::collectSustainment: INSUFFICIENT_FUNDS"
         );
-
         _mp._tap(_amount);
         treasury.payout(_beneficiary, _mp.want, _amount);
-
-        emit TapMp(_mpNumber, msg.sender, _beneficiary, _amount, _mp.want);
-
-        return true;
+        emit TapMp(_mpId, msg.sender, _beneficiary, _amount, _mp.want);
     }
 
     /** 
@@ -474,44 +389,68 @@ contract Fountain is IFountain, Ownable {
         external
         onlyOwner
     {
-        treasury.overthrow(_newTreasury, [dai]);
+      if (treasury == Treasury(0)) treasury = _newTreasury;
+      treasury.overthrow(_newTreasury, [dai]);
     }
 
     /** 
         @notice Allows the owner of the contract to withdraw phase 1 funds.
+        @param The amount to withdraw.
     */
-    function withdrawPhase1Funds()
+    function withdrawPhase1Funds(uint256 _amount)
         external
         onlyOwner
     {
-        treasury.withdrawPhase1Funds(msg.sender);
+        treasury.withdrawPhase1Funds(msg.sender, _amount);
     }
 
     /** 
         @notice Allows the owner of the contract to allocate phase 2 funds to Money pools.
-        @param _mpNumber The number of the Money pool to fund.
+        @dev Largely the same logic from the `sustainOwner` transaction.
+        @param _owner The owner of the Money pool to fund.
         @param _amount The amount to fund.
+        @param _want Must match the `want` token for the Money pool being sustained.
+        @param _beneficiary The address to associate with this sustainment. This is usually mes.sender, but can be something else if the sender is making this sustainment on the beneficiary's behalf.
+        @param _convertedFlowAmount The expected number of Flow to convert surplus into.
     */
-    function allocatePhase2(uint256 _mpNumber, uint256 _amount)
+    function allocatePhase2Funds(address _owner,uint256 _amount,uint256 _want, address _beneficiary, uint256 _convertedFlowAmount)
         external
         onlyOwner
     {
-      //TODO
+        treasury.allocatePhase2Funds(_amount);
+
+        // Find the Money pool that this sustainment should go to.
+        MoneyPool.Data storage _mp = _mpToSustain(_owner);
+        require(_want == _mp.want, "Fountain::allocatePhase2Funds: UNEXPECTED_WANT");
+
+        // Add the amount to the Money pool, which determines how much Flow was made available as a result.
+        uint256 _surplus = _mp._add(_amount);
+
+        if (_surplus > 0) {
+            uint256 _overflowAmount =
+                treasury.transform(
+                    _surplus,
+                    _mp.want,
+                    _surplus.mul(_convertedFlowAmount).div(_amount)
+                );
+            _mp._addOverflow(_overflowAmount);
+            redistributable[_owner] = redistributable[_owner].add(_overflowAmount); 
+        }
+
+        ownerTokens[_owner].mint(_beneficiary, _mp.weight.mul(_amount).div(_mp.target));
+
+        emit SustainMp(
+            _mp.id,
+            _mp.owner,
+            _beneficiary,
+            msg.sender,
+            _amount,
+            _want
+        );
+        return _mp.id;
     }
 
     // --- private transactions --- //
-
-    /** 
-        @notice Executes the collection of redistributed funds.
-        @param _sustainer The sustainer address to redistribute to.
-        @param _amount The amount to collect.
-    */
-    function _performCollectRedistributions(address _sustainer, uint256 _amount)
-        private
-    {
-        treasury.payout(_sustainer, dai, _amount);
-        emit CollectRedistributions(_sustainer, _amount);
-    }
 
     /** 
         @notice The Money pool that is configurable for this owner.
@@ -525,22 +464,19 @@ contract Fountain is IFountain, Ownable {
     {
         // Cannot update active moneyPool, check if there is a standby moneyPool
         _mp = _standbyMp(_owner);
-        if (_mp.number > 0) return _mp;
-
-        // No upcoming moneyPool found, clone the latest moneyPool
-        _mp = mps[latestMpNumber[_owner]];
-
+        if (_mp.id > 0) return _mp;
+        _mp = mps[latestMpId[_owner]];
         // If there's an active Money pool, its end time should correspond to the start time of the new Money pool.
         MoneyPool.Data memory _aMp = _activeMp(_owner);
         MoneyPool.Data storage _newMp =
             _initMp(
                 _owner,
-                _aMp.number > 0
+                _aMp.id > 0
                     ? _aMp.start.add(_aMp.duration)
-                    : block.timestamp
+                    : block.timestamp,
+                    _aMp.id == 0 ? BASE_MP_WEIGHT : _aMp._derivedWeight()
             );
-        if (_mp.number > 0) _newMp._clone(_mp);
-
+        if (_mp.id > 0) _newMp._baseOn(_mp);
         return _newMp;
     }
 
@@ -556,72 +492,19 @@ contract Fountain is IFountain, Ownable {
     {
         // Check if there is an active moneyPool
         _mp = _activeMp(_owner);
-        if (_mp.number > 0) return _mp;
-
+        if (_mp.id > 0) return _mp;
         // No active moneyPool found, check if there is a standby moneyPool
         _mp = _standbyMp(_owner);
-        if (_mp.number > 0) return _mp;
-
+        if (_mp.id > 0) return _mp;
         // No upcoming moneyPool found, clone the latest moneyPool
-        _mp = mps[latestMpNumber[_owner]];
-
-        require(_mp.number > 0, "Fountain::_mpToSustain: NOT_FOUND");
-
+        _mp = mps[latestMpId[_owner]];
+        require(_mp.id > 0, "Fountain::_mpToSustain: NOT_FOUND");
         // Use a start date that's a multiple of the duration.
         // This creates the effect that there have been scheduled Money pools ever since the `latest`, even if `latest` is a long time in the past.
         MoneyPool.Data storage _newMp =
-            _initMp(_mp.owner, _mp._determineNextStart());
-        _newMp._clone(_mp);
+            _initMp(_mp.owner, _mp._determineNextStart(), _mp._derivedWeight());
+        _newMp._basedOn(_mp);
         return _newMp;
-    }
-
-    /** 
-        @notice Record the redistribution the amount that should be redistributed to the given sustainer by the given owners' Money pools.
-        @param _beneficiary The address being redistributed to.
-        @param _owners The Money pool owners to redistribute from.
-        @return _amount The amount that has been redistributed.
-    */
-    function _redistributeAmount(address _beneficiary, address[] memory _owners)
-        private
-        returns (uint256 _amount)
-    {
-        _amount = 0;
-        for (uint256 i = 0; i < _owners.length; i++)
-            _amount = _amount.add(_redistributeAmount(_beneficiary, _owners[i]));
-    }
-
-    /** 
-        @notice Record the redistribution the amount that should be redistributed to the given sustainer by the given owner's Money pools.
-        @dev Iterate through all Money pools for this owner address. For each iteration,
-        if the Money pool has a state of redistributing and it has not yet
-        been redistributed for the current sustainer, then process the
-        redistribution. Iterate until a Money pool is found that has already
-        been redistributed for this sustainer. This logic should skip Active
-        and Upcoming Money pools.
-        Short circuits by testing `moneyPool.hasRedistributed` to limit number
-        of iterations since all previous Money pools must have already been
-        redistributed.
-        @param _beneficiary The address being redistributed to.
-        @param _owner The Money pool owner to redistribute from.
-        @return _amount The amount that has been redistributed.
-    */
-    function _redistributeAmount(address _beneficiary, address _owner)
-        private
-        returns (uint256 _amount)
-    {
-        _amount = 0;
-        uint256 _mpNumber = latestMpNumber[_owner];
-
-        while (_mpNumber > 0 && !hasRedistributed[_mpNumber][_beneficiary]) {
-            MoneyPool.Data memory _mp = mps[latestMpNumber[_owner]];
-            if (_mp._state() == MoneyPool.State.Redistributing) {
-                _amount = _amount.add(_trackedSustainerRedistribution(_mp, _beneficiary));
-                if (_beneficiary == _mp.owner && _mp.o > 0) _amount.add(_mp.overflow.mul(_mp.o).div(100));
-                if (_beneficiary == _mp.bAddress && _mp.b > 0) _amount.add(_mp.overflow.mul(_mp.b).div(100));
-                hasRedistributed[_mp.number][_beneficiary] = true;
-            }
-            _mpNumber = _mp.previous;
-        }
     }
 
     /** 
@@ -636,8 +519,8 @@ contract Fountain is IFountain, Ownable {
     {
         mpCount++;
         _newMp = mps[mpCount];
-        _newMp._init(_owner, _start, mpCount, latestMpNumber[_owner]);
-        latestMpNumber[_owner] = mpCount;
+        _newMp._init(_owner, _start, mpCount, latestMpId[_owner], );
+        latestMpId[_owner] = mpCount;
     }
 
     // --- private views --- //
@@ -652,15 +535,13 @@ contract Fountain is IFountain, Ownable {
         view
         returns (MoneyPool.Data storage _mp)
     {
-        _mp = mps[latestMpNumber[_owner]];
-        if (_mp.number == 0) return mps[0];
-
+        _mp = mps[latestMpId[_owner]];
+        if (_mp.id == 0) return mps[0];
         // An Active moneyPool must be either the latest moneyPool or the
         // moneyPool immediately before it.
         if (_mp._state() == MoneyPool.State.Active) return _mp;
-
         _mp = mps[_mp.previous];
-        if (_mp.number == 0 || _mp._state() != MoneyPool.State.Active)
+        if (_mp.id == 0 || _mp._state() != MoneyPool.State.Active)
             return mps[0];
     }
 
@@ -674,31 +555,24 @@ contract Fountain is IFountain, Ownable {
         view
         returns (MoneyPool.Data storage _mp)
     {
-        _mp = mps[latestMpNumber[_owner]];
-        if (_mp.number == 0) return mps[0];
-
+        _mp = mps[latestMpId[_owner]];
+        if (_mp.id == 0) return mps[0];
         // There is no upcoming Money pool if the latest Money pool is not upcoming
         if (_mp._state() != MoneyPool.State.Standby) return mps[0];
     }
 
     /** 
-        @notice The amount of overflow redistribution in a Money pool that can be claimed by the given address.
-        @param _mp The Money pool to get a redistribution amount for.
-        @param _sustainer The address of the sustainer to get an amount for.
-        @return amount The amount.
+        @notice The amount that the provided beneficiary has access to from the provided owner's Money pools.
+        @param _beneficiary The account to check the balance of.
+        @param _owner The owner of the Money pools being considered.
+        @return _amount The amount that is redistributable.
     */
-    function _trackedSustainerRedistribution(
-        MoneyPool.Data memory _mp,
-        address _sustainer
-    ) private view returns (uint256) {
-        // Return 0 if there's no overflow.
-        if (_mp.overflow == 0) return 0;
-
-        // Calculate their share of the sustainment for the the given sustainer.
-        // allocate a proportional share of the surplus, overwriting any previous value.
-        uint256 _proportionOfTotal =
-            sustainments[_mp.number][_sustainer].div(_mp.total);
-
-        return _mp.overflow.mul(_proportionOfTotal).mul(_mp._s).div(100);
+    function _redistributableAmount(
+        address _beneficiary,
+        address _owner
+    ) external view override returns (uint256) {
+        Ticket _ticket = tickets[_owner];
+        uint256 _currentBalance = _ticket.balanceOf(msg.sender);
+        return redistributable[_owner].mul(_currentBalance).div(_ticket.totalSupply());
     }
 }

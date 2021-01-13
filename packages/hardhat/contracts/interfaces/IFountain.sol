@@ -4,35 +4,36 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../libraries/MoneyPool.sol";
+import "../Treasury.sol";
 
 interface IFountain {
-    function latestMpNumber(address _owner) external view returns (uint256);
+    function latestMpId(address _owner) external view returns (uint256);
 
     function mpCount() external view returns (uint256);
 
-    function paused() external view returns (bool);
-
     /// @notice This event should trigger when a Money pool is configured.
     event ConfigureMp(
-        uint256 indexed mpNumber,
+        uint256 indexed mpId,
         address indexed owner,
         uint256 indexed target,
         uint256 duration,
         IERC20 want,
         string title,
         string link,
-        uint8 c,
+        uint8 bias,
+        uint8 o,
         uint8 b,
         address bAddress
     );
 
     /// @notice This event should trigger when a Money pool is sustained.
     event SustainMp(
-        uint256 indexed mpNumber,
+        uint256 indexed mpId,
         address indexed owner,
         address indexed beneficiary,
         address sustainer,
-        uint256 amount
+        uint256 amount,
+        address want
     );
 
     /// @notice This event should trigger when redistributions are collected.
@@ -40,14 +41,14 @@ interface IFountain {
 
     /// @notice This event should trigger when sustainments are collected.
     event TapMp(
-        uint256 indexed mpNumber,
+        uint256 indexed mpId,
         address indexed owner,
         address indexed beneficiary,
         uint256 amount,
         IERC20 want
     );
 
-    function getMp(uint256 _mpNumber)
+    function getMp(uint256 _mpId)
         external
         view
         returns (MoneyPool.Data memory _mp);
@@ -62,33 +63,29 @@ interface IFountain {
         view
         returns (MoneyPool.Data memory _mp);
 
-    function getSustainment(uint256 _mpNumber, address _sustainer)
+    function getTappableAmount(uint256 _mpId)
         external
         view
         returns (uint256 _amount);
 
-    function getTappableAmount(uint256 _mpNumber)
+    function getRedistributableAmount(address _beneficiary, address _owner)
         external
         view
         returns (uint256 _amount);
-
-    function getTrackedRedistribution(uint256 _mpNumber, address _sustainer)
-        external
-        view
-        returns (uint256 _amount);
-
-    function getAllTrackedRedistribution(
-        address _sustainer,
-        bool _includesActive
-    ) external view returns (uint256 _amount);
 
     function configureMp(
         uint256 _target,
         uint256 _duration,
         IERC20 _want,
-        string calldata _title,
-        string calldata _link
-    ) external returns (uint256 _mpNumber);
+        string memory _title,
+        string memory _link,
+        uint8 bias,
+        uint8 _o,
+        uint8 _b,
+        address _bAddress,
+        string memory _tokenName,
+        string memory _tokenSymbol
+    ) external returns (uint256 _mpId);
 
     function sustainOwner(
         address _owner,
@@ -96,13 +93,25 @@ interface IFountain {
         IERC20 _want,
         address _beneficiary,
         uint256 _convertedFlowAmount
-    ) external returns (uint256 _mpNumber);
+    ) external returns (uint256 _mpId);
 
-    function collectRedistributions() external returns (uint256 _amount);
+    function collectRedistributions(address _owner, uint256 _amount) external;
 
     function tapMp(
-        uint256 _mpNumber,
+        uint256 _mpId,
         uint256 _amount,
         address _beneficiary
-    ) external returns (bool _success);
+    ) external;
+
+    function overthrowTreasury(OverflowTreasury _newTreasury) external;
+
+    function withdrawPhase1Funds(uint256 _amount) external;
+
+    function allocatePhase2Funds(
+        address _owner,
+        uint256 _amount,
+        uint256 _want,
+        address _beneficiary,
+        uint256 _convertedFlowAmount
+    ) external;
 }
