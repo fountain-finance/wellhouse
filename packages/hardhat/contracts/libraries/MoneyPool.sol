@@ -99,7 +99,7 @@ library MoneyPool {
         @param _bAddress The new beneficiary address.
     */
     function _configure(
-        Data storage self,
+        Data memory self,
         string memory _title,
         string memory _link,
         uint256 _target,
@@ -110,7 +110,7 @@ library MoneyPool {
         uint8 _o,
         uint8 _b,
         address _bAddress
-    ) internal {
+    ) internal pure {
         self.title = _title;
         self.link = _link;
         self.target = _target;
@@ -129,8 +129,9 @@ library MoneyPool {
         @param _amount Incrmented amount of sustainment.
         @return _surplus The amount of surplus in the Money pool after adding.
     */
-    function _add(Data storage self, uint256 _amount)
+    function _add(Data memory self, uint256 _amount)
         internal
+        pure
         returns (uint256)
     {
         // Increment the total amount contributed to the sustainment of the Money pool.
@@ -144,7 +145,7 @@ library MoneyPool {
         @param _amount The amount to tap.
     */
 
-    function _tap(Data storage self, uint256 _amount) internal {
+    function _tap(Data memory self, uint256 _amount) internal pure {
         self.tapped = self.tapped.add(_amount);
     }
 
@@ -154,7 +155,7 @@ library MoneyPool {
         @param self The Money pool to clone onto.
         @param _baseMp The Money pool to clone from.
     */
-    function _basedOn(Data storage self, Data memory _baseMp) internal {
+    function _basedOn(Data memory self, Data memory _baseMp) internal pure {
         self.title = _baseMp.title;
         self.link = _baseMp.link;
         self.target = _baseMp.target;
@@ -199,11 +200,7 @@ library MoneyPool {
         @param self The Money pool to make the calculation for.
         @return The resulting amount.
     */
-    function _tappableAmount(Data storage self)
-        internal
-        view
-        returns (uint256)
-    {
+    function _tappableAmount(Data memory self) internal pure returns (uint256) {
         return Math.min(self.target, self.total).sub(self.tapped);
     }
 
