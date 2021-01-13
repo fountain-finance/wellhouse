@@ -4,14 +4,13 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "./libraries/MoneyPool.sol";
 
-contract Ticket is ERC20 {
-    address controller;
-
-    modifier onlyController {
-        require(msg.sender == controller, "Ticket: UNAUTHORIZED");
+contract Ticket is ERC20, AccessControl {
+    modifier onlyAdmin {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender));
         _;
     }
 
@@ -19,14 +18,14 @@ contract Ticket is ERC20 {
         public
         ERC20(_name, _symbol)
     {
-        controller = msg.sender;
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function mint(address _account, uint256 _amount) external onlyController {
+    function mint(address _account, uint256 _amount) external onlyAdmin {
         return _mint(_account, _amount);
     }
 
-    function burn(address _account, uint256 _amount) external onlyController {
+    function burn(address _account, uint256 _amount) external onlyAdmin {
         return _burn(_account, _amount);
     }
 }
@@ -252,7 +251,7 @@ contract Store {
         @param _owner The owner of the Ticket.
         @param _ticket The Ticket to assign to the owner.
     */
-    function assignTicketOwner(address _owner, Ticket _ticket)
+    function assignTicket(address _owner, Ticket _ticket)
         external
         onlyController
     {

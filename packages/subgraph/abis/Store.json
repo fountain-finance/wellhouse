@@ -279,7 +279,7 @@
         "type": "address"
       }
     ],
-    "name": "assignTicketOwner",
+    "name": "assignTicket",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

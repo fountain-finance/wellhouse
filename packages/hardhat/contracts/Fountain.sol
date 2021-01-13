@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./interfaces/ITreasury.sol";
@@ -13,7 +13,7 @@ import "./interfaces/IFountain.sol";
 import "./Store.sol";
 
 /// @notice The contract managing the state of all Money pools.
-contract Fountain is IFountain, Ownable {
+contract Fountain is IFountain, AccessControl {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using MoneyPool for MoneyPool.Data;
@@ -41,6 +41,11 @@ contract Fountain is IFountain, Ownable {
         lock3 = 1;
     }
 
+    modifier onlyAdmin {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender));
+        _;
+    }
+
     // --- public properties --- //
 
     /// @notice The contract storing all state variables.
@@ -49,12 +54,15 @@ contract Fountain is IFountain, Ownable {
     /// @notice The treasury that manages funds.
     /// @dev Reassignable by the owner.
     ITreasury public treasury;
+    /// @notice A successor contract to this one.
+    /// @dev Reassignable by the owner, but Ticket issuance must be migrated by owners.
+    address public successor;
     /// @notice The contract currently only supports sustainments in dai.
     IERC20 public dai;
     /// @notice The token that surplus is converted into.
     IERC20 public reward;
 
-    // // --- external transactions --- //
+    // --- external transactions --- //
     constructor(
         Store _store,
         IERC20 _dai,
@@ -63,6 +71,8 @@ contract Fountain is IFountain, Ownable {
         store = _store;
         dai = _dai;
         reward = _reward;
+
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     /**
@@ -83,8 +93,8 @@ contract Fountain is IFountain, Ownable {
             bytes(_name).length != 0 && bytes(_symbol).length != 0,
             "Fountain::configureMp: BAD_PARAMS"
         );
-        store.assignTicketOwner(msg.sender, new Ticket(_name, _symbol));
-        emit InitializeTicket(_name, _symbol);
+        store.assignTicket(msg.sender, new Ticket(_name, _symbol));
+        emit InitializeTicket(msg.sender, _name, _symbol);
     }
 
     /**
@@ -168,7 +178,7 @@ contract Fountain is IFountain, Ownable {
         @param _amount Amount of sustainment.
         @param _want Must match the `want` token for the Money pool being sustained.
         @param _beneficiary The address to associate with this sustainment. This is usually mes.sender, but can be something else if the sender is making this sustainment on the beneficiary's behalf.
-        @param _convertedFlowAmount The expected number of Flow to convert surplus into.
+        @param _expectedConvertedAmount The expected number of reward tokens to convert surplus into.
         @return _mpId The ID of the Money pool that was successfully sustained.
     */
     function sustainOwner(
@@ -176,7 +186,7 @@ contract Fountain is IFountain, Ownable {
         uint256 _amount,
         IERC20 _want,
         address _beneficiary,
-        uint256 _convertedFlowAmount
+        uint256 _expectedConvertedAmount
     ) external override lockSustain returns (uint256) {
         require(treasury != ITreasury(0), "Fountain::sustainOwner: BAD_STATE");
         require(_amount > 0, "Fountain::sustainOwner: BAD_AMOUNT");
@@ -189,9 +199,10 @@ contract Fountain is IFountain, Ownable {
         if (_surplus > 0) {
             uint256 _overflowAmount =
                 treasury.transform(
-                    _surplus,
                     _mp.want,
-                    _surplus.mul(_convertedFlowAmount).div(_amount)
+                    _surplus,
+                    reward,
+                    _surplus.mul(_expectedConvertedAmount).div(_amount)
                 );
             store.addRedeemable(_mp.owner, _overflowAmount);
         }
@@ -285,7 +296,7 @@ contract Fountain is IFountain, Ownable {
     function appointTreasury(ITreasury _newTreasury)
         external
         override
-        onlyOwner
+        onlyAdmin
     {
         require(
             _newTreasury != ITreasury(0),
@@ -304,10 +315,35 @@ contract Fountain is IFountain, Ownable {
     }
 
     /**
+        @notice Appoints a successor to this contracts that Ticket owners can migrate to.
+        @param _successor The successor contract.
+    */
+    function appointSuccessor(address _successor) external override onlyAdmin {
+        require(_successor != address(0), "Fountain::migrate: ZERO_ADDRESS");
+        successor = _successor;
+    }
+
+    /**
+        @notice Allows a successor contract to manage an owner's Tickets.
+        @dev One way migration.
+    */
+    function migrate() external override {
+        require(successor != address(0), "Fountain::migrate: BAD_STATE");
+        Ticket _ticket = store.ticket(msg.sender);
+        require(_ticket != Ticket(0), "Fountain::migrate: NOT_FOUND");
+        require(
+            !_ticket.hasRole(_ticket.DEFAULT_ADMIN_ROLE(), successor),
+            "Fountain::migrate: ALREADY_MIGRATED"
+        );
+        _ticket.grantRole(_ticket.DEFAULT_ADMIN_ROLE(), successor);
+        _ticket.revokeRole(_ticket.DEFAULT_ADMIN_ROLE(), address(this));
+    }
+
+    /**
         @notice Allows the owner of the contract to withdraw phase 1 funds.
         @param _amount The amount to withdraw.
     */
-    function withdrawFunds(uint256 _amount) external override onlyOwner {
+    function withdrawFunds(uint256 _amount) external override onlyAdmin {
         require(treasury != ITreasury(0), "Fountain::withdrawFunds: BAD_STATE");
         treasury.withdraw(msg.sender, dai, _amount);
     }

@@ -7,7 +7,7 @@ import "./ITreasury.sol";
 
 interface IFountain {
     /// @notice This event should trigger when an owner initialized their tickets.
-    event InitializeTicket(string name, string symbol);
+    event InitializeTicket(address owner, string name, string symbol);
 
     /// @notice This event should trigger when a Money pool is configured.
     event ConfigureMp(
@@ -82,4 +82,8 @@ interface IFountain {
     function appointTreasury(ITreasury _newTreasury) external;
 
     function withdrawFunds(uint256 _amount) external;
+
+    function appointSuccessor(address _successor) external;
+
+    function migrate() external;
 }
