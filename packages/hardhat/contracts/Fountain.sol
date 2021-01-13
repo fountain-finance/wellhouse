@@ -10,7 +10,8 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./libraries/MoneyPool.sol";
 import "./interfaces/ITreasury.sol";
 import "./interfaces/IFountain.sol";
-import "./aux/Ticket.sol";
+
+import "./Store.sol";
 
 /**
 
@@ -67,126 +68,29 @@ contract Fountain is IFountain, Ownable {
         lock3 = 1;
     }
 
-    // --- private properties --- //
-
-    // @notice The official record of all Money pools ever created
-    mapping(uint256 => MoneyPool.Data) private mps;
-
     // --- public properties --- //
 
-    /// @notice a big number to base ticket issuance off of.
-    uint256 public constant BASE_MP_WEIGHT = 100000000000E18;
-    /// @notice The tickets handed out to Money pool sustainers. Each owner has their own set of tickets.
-    mapping(address => Ticket) public override tickets;
-    /// @notice The current cumulative amount redistributable from each owner's Money pools.
-    mapping(address => uint256) public override redeemable;
-    /// @notice The latest Money pool for each owner address
-    mapping(address => uint256) public override latestMpId;
-    /// @notice The total number of Money pools created, which is used for issuing Money pool IDs.
-    /// @dev Money pools should have a ID > 0.
-    uint256 public override mpCount = 0;
+    /// @notice The contract storing all state variables.
+    /// @dev Immutable.
+    Store public store;
     /// @notice The treasury that manages funds.
+    /// @dev Reassignable by the owner.
     ITreasury public treasury;
     /// @notice The contract currently only supports sustainments in dai.
     IERC20 public dai;
     /// @notice The token that surplus is converted into.
-    IERC20 public flow;
-
-    // --- external views --- //
-
-    /**  
-        @notice The properties of the given Money pool.
-        @param _mpId The ID of the Money pool to get the properties of.
-        @return _mp The Money pool.
-    */
-    function getMp(uint256 _mpId)
-        external
-        view
-        override
-        returns (MoneyPool.Data memory _mp)
-    {
-        require(_mpId > 0 && _mpId <= mpCount, "Fountain::getMp: NOT_FOUND");
-        _mp = mps[_mpId];
-    }
-
-    /**
-        @notice The Money pool that's next up for an owner and not currently accepting payments.
-        @param _owner The owner of the Money pool being looked for.
-        @return _mp The Money pool.
-    */
-    function getQueuedMp(address _owner)
-        external
-        view
-        override
-        returns (MoneyPool.Data memory)
-    {
-        MoneyPool.Data memory _sMp = _standbyMp(_owner);
-        MoneyPool.Data memory _aMp = _activeMp(_owner);
-        if (_sMp.id > 0 && _aMp.id > 0) return _sMp;
-        require(_aMp.id > 0, "Fountain::getQueuedMp: NOT_FOUND");
-        return _aMp._nextUp();
-    }
-
-    /**
-        @notice The properties of the Money pool that would be currently accepting sustainments.
-        @param _owner The owner of the money pool being looked for.
-        @return _mp The Money pool.
-    */
-    function getCurrentMp(address _owner)
-        external
-        view
-        override
-        returns (MoneyPool.Data memory _mp)
-    {
-        require(latestMpId[_owner] > 0, "Fountain::getCurrentMp: NOT_FOUND");
-        _mp = _activeMp(_owner);
-        if (_mp.id > 0) return _mp;
-        _mp = _standbyMp(_owner);
-        if (_mp.id > 0) return _mp;
-        _mp = mps[latestMpId[_owner]];
-        return _mp._nextUp();
-    }
-
-    /**
-        @notice The amount left to be withdrawn by the Money pool's owner.
-        @param _mpId The ID of the Money pool to get the available sustainment from.
-        @return amount The amount.
-    */
-    function getTappableAmount(uint256 _mpId)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        require(
-            _mpId > 0 && _mpId <= mpCount,
-            "Fountain::getTappableAmount:: NOT_FOUND"
-        );
-        return mps[_mpId]._tappableAmount();
-    }
-
-    /** 
-        @notice The amount of redistribution that can be claimed by the given address in the Fountain ecosystem.
-        @dev This function runs the same routine as _redistributeAmount to determine the summed amount.
-        Look there for more documentation.
-        @param _beneficiary The address to get an amount for.
-        @param _owner The owner of the Money pools to get an amount for.
-        @return _amount The amount.
-    */
-    function getRedeemableAmount(address _beneficiary, address _owner)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        return _redeemableAmount(_beneficiary, _owner);
-    }
+    IERC20 public reward;
 
     // --- external transactions --- //
 
-    constructor(IERC20 _dai, IERC20 _flow) public {
+    constructor(
+        IERC20 _dai,
+        IERC20 _reward,
+        Store _store
+    ) public {
         dai = _dai;
-        flow = _flow;
+        reward = _reward;
+        store = _store;
     }
 
     /**
@@ -200,14 +104,14 @@ contract Fountain is IFountain, Ownable {
         override
     {
         require(
-            tickets[msg.sender] == Ticket(0),
+            store.ticket(msg.sender) == Ticket(0),
             "Fountain::initializeProject: ALREADY_INITIALIZED"
         );
         require(
             bytes(_name).length != 0 && bytes(_symbol).length != 0,
             "Fountain::configureMp: BAD_PARAMS"
         );
-        tickets[msg.sender] = new Ticket(_name, _symbol);
+        store.assignTicketOwner(msg.sender, new Ticket(_name, _symbol));
         emit InitializeTicket(_name, _symbol);
     }
 
@@ -242,7 +146,7 @@ contract Fountain is IFountain, Ownable {
         address _bAddress
     ) external override returns (uint256) {
         require(
-            tickets[msg.sender] != Ticket(0),
+            store.ticket(msg.sender) != Ticket(0),
             "Fountain::configureMp: NEEDS_INITIALIZATION"
         );
         require(_duration >= 6, "Fountain::configureMp: TOO_SHORT");
@@ -259,7 +163,7 @@ contract Fountain is IFountain, Ownable {
         );
         require(_o.add(_b) <= 100, "Fountain::configureMp: BAD_PERCENTAGES");
 
-        MoneyPool.Data storage _mp = _mpToConfigure(msg.sender);
+        MoneyPool.Data memory _mp = store.ensureStandbyMp(msg.sender);
 
         // Reset the start time to now if there isn't an active Money pool.
         _mp._configure(
@@ -268,12 +172,16 @@ contract Fountain is IFountain, Ownable {
             _target,
             _duration,
             _want,
-            _activeMp(msg.sender).id == 0 ? block.timestamp : _mp.start,
+            store.getCurrentMp(msg.sender).total == 0
+                ? block.timestamp
+                : _mp.start,
             _bias,
             _o,
             _b,
             _bAddress
         );
+
+        store.saveMp(_mp);
 
         emit ConfigureMp(
             _mp.id,
@@ -313,7 +221,7 @@ contract Fountain is IFountain, Ownable {
         require(_amount > 0, "Fountain::sustainOwner: BAD_AMOUNT");
 
         // Find the Money pool that this sustainment should go to.
-        MoneyPool.Data storage _mp = _mpToSustain(_owner);
+        MoneyPool.Data memory _mp = store.ensureActiveMp(_owner);
 
         require(_want == _mp.want, "Fountain::sustainOwner: UNEXPECTED_WANT");
 
@@ -328,10 +236,12 @@ contract Fountain is IFountain, Ownable {
                     _mp.want,
                     _surplus.mul(_convertedFlowAmount).div(_amount)
                 );
-            redeemable[_mp.owner] = redeemable[_mp.owner].add(_overflowAmount);
+            store.addRedeemable(_mp.owner, _overflowAmount);
         }
 
-        tickets[_mp.owner].mint(_beneficiary, _mp._weighted(_amount));
+        store.ticket(_mp.owner).mint(_beneficiary, _mp._weighted(_amount));
+
+        store.saveMp(_mp);
 
         emit SustainMp(
             _mp.id,
@@ -355,12 +265,12 @@ contract Fountain is IFountain, Ownable {
         lockCollect
     {
         require(treasury != ITreasury(0), "Fountain::redeem: BAD_STATE");
-        uint256 _available = _redeemableAmount(msg.sender, _owner);
+        uint256 _available = store.getRedeemableAmount(msg.sender, _owner);
         require(_available >= _amount, "Fountain::redeem: INSUFFICIENT_FUNDS");
-        treasury.payout(msg.sender, flow, _amount);
-        Ticket _ticket = tickets[_owner];
+        treasury.payout(msg.sender, reward, _amount);
+        Ticket _ticket = store.ticket(_owner);
         _ticket.burn(msg.sender, _ticket.balanceOf(msg.sender));
-        redeemable[_owner] = redeemable[_owner].sub(_amount);
+        store.subtractRedeemable(_owner, _amount);
         emit Redeem(msg.sender, _amount);
     }
 
@@ -376,7 +286,7 @@ contract Fountain is IFountain, Ownable {
         address _beneficiary
     ) external override lockTap {
         require(treasury != ITreasury(0), "Fountain::tapMp: BAD_STATE");
-        MoneyPool.Data storage _mp = mps[_mpId];
+        MoneyPool.Data memory _mp = store.getMp(_mpId);
         require(
             _mp.owner == msg.sender,
             "Fountain::collectSustainment: UNAUTHORIZED"
@@ -387,7 +297,34 @@ contract Fountain is IFountain, Ownable {
         );
         _mp._tap(_amount);
         treasury.payout(_beneficiary, _mp.want, _amount);
+        store.saveMp(_mp);
         emit TapMp(_mpId, msg.sender, _beneficiary, _amount, _mp.want);
+    }
+
+    /**
+        @notice Mints all tickets reserved for owners and beneficiary addresses from the Money pools of the specified owner.
+        @param _owner The owner whose Money pools are being iterated through.
+    */
+    function mintReservedTickets(address _owner) external override {
+        Ticket _ticket = store.ticket(_owner);
+        require(
+            _ticket != Ticket(0),
+            "Fountain::mintReservedTickets: NOT_FOUND"
+        );
+        MoneyPool.Data memory _mp = store.getMp(store.latestMpId(_owner));
+        while (_mp.id > 0 && !_mp.hasMintedReserves && _mp.total > _mp.target) {
+            if (_mp._state() == MoneyPool.State.Redistributing) {
+                uint256 _baseAmount =
+                    _mp.weight.mul(_mp.total.sub(_mp.target)).div(_mp.target);
+                if (_mp.o > 0)
+                    _ticket.mint(_mp.owner, _baseAmount.mul(_mp.o).div(100));
+                if (_mp.b > 0)
+                    _ticket.mint(_mp.bAddress, _baseAmount.mul(_mp.b).div(100));
+                _mp.hasMintedReserves = true;
+                store.saveMp(_mp);
+            }
+            _mp = store.getMp(_mp.previous);
+        }
     }
 
     /** 
@@ -419,161 +356,6 @@ contract Fountain is IFountain, Ownable {
     */
     function withdrawFunds(uint256 _amount) external override onlyOwner {
         require(treasury != ITreasury(0), "Fountain::withdrawFunds: BAD_STATE");
-        treasury.withdrawFunds(msg.sender, dai, _amount);
-    }
-
-    /**
-        @notice Mints all tickets reserved for owners and beneficiary addresses from the Money pools of the specified owner.
-        @param _owner The owner whose Money pools are being iterated through.
-    */
-    function mintReservedTickets(address _owner) external override {
-        Ticket _ticket = tickets[_owner];
-        require(
-            _ticket != Ticket(0),
-            "Fountain::mintReservedTickets: NOT_FOUND"
-        );
-        MoneyPool.Data storage _mp = mps[latestMpId[_owner]];
-        while (_mp.id > 0 && !_mp.hasMintedReserves && _mp.total > _mp.target) {
-            if (_mp._state() == MoneyPool.State.Redistributing) {
-                uint256 _baseAmount =
-                    _mp.weight.mul(_mp.total.sub(_mp.target)).div(_mp.target);
-                if (_mp.o > 0)
-                    _ticket.mint(_mp.owner, _baseAmount.mul(_mp.o).div(100));
-                if (_mp.b > 0)
-                    _ticket.mint(_mp.bAddress, _baseAmount.mul(_mp.b).div(100));
-                _mp.hasMintedReserves = true;
-            }
-            _mp = mps[_mp.previous];
-        }
-    }
-
-    // --- private transactions --- //
-
-    /** 
-        @notice The Money pool that is configurable for this owner.
-        @dev The sustainability of a Money pool cannot be updated if there have been sustainments made to it.
-        @param _owner The address who owns the Money pool to look for.
-        @return _mp The resulting Money pool.
-    */
-    function _mpToConfigure(address _owner)
-        private
-        returns (MoneyPool.Data storage _mp)
-    {
-        // Cannot update active moneyPool, check if there is a standby moneyPool
-        _mp = _standbyMp(_owner);
-        if (_mp.id > 0) return _mp;
-        _mp = mps[latestMpId[_owner]];
-        // If there's an active Money pool, its end time should correspond to the start time of the new Money pool.
-        MoneyPool.Data memory _aMp = _activeMp(_owner);
-        MoneyPool.Data storage _newMp =
-            _aMp.id > 0
-                ? _initMp(
-                    _owner,
-                    _aMp.start.add(_aMp.duration),
-                    _aMp._derivedWeight()
-                )
-                : _initMp(_owner, block.timestamp, BASE_MP_WEIGHT);
-        if (_mp.id > 0) _newMp._basedOn(_mp);
-        return _newMp;
-    }
-
-    /** 
-        @notice The Money pool that is accepting sustainments for this owner.
-        @dev Only active Money pools can be sustained.
-        @param _owner The address who owns the Money pool to look for.
-        @return _mp The resulting Money pool.
-    */
-    function _mpToSustain(address _owner)
-        private
-        returns (MoneyPool.Data storage _mp)
-    {
-        // Check if there is an active moneyPool
-        _mp = _activeMp(_owner);
-        if (_mp.id > 0) return _mp;
-        // No active moneyPool found, check if there is a standby moneyPool
-        _mp = _standbyMp(_owner);
-        if (_mp.id > 0) return _mp;
-        // No upcoming moneyPool found, clone the latest moneyPool
-        _mp = mps[latestMpId[_owner]];
-        require(_mp.id > 0, "Fountain::_mpToSustain: NOT_FOUND");
-        // Use a start date that's a multiple of the duration.
-        // This creates the effect that there have been scheduled Money pools ever since the `latest`, even if `latest` is a long time in the past.
-        MoneyPool.Data storage _newMp =
-            _initMp(_mp.owner, _mp._determineNextStart(), _mp._derivedWeight());
-        _newMp._basedOn(_mp);
-        return _newMp;
-    }
-
-    /** 
-        @notice Initializes a Money pool to be sustained for the sending address.
-        @param _owner The owner of the Money pool being initialized.
-        @param _start The start time for the new Money pool.
-        @param _weight The weight for the new Money pool.
-        @return _newMp The initialized Money pool.
-    */
-    function _initMp(
-        address _owner,
-        uint256 _start,
-        uint256 _weight
-    ) private returns (MoneyPool.Data storage _newMp) {
-        mpCount++;
-        _newMp = mps[mpCount];
-        _newMp._init(_owner, _start, mpCount, latestMpId[_owner], _weight);
-        latestMpId[_owner] = mpCount;
-    }
-
-    // --- private views --- //
-
-    /** 
-        @notice The currently active Money pool for an owner.
-        @param _owner The owner of the money pool being looked for.
-        @return _mp The active Money pool.
-    */
-    function _activeMp(address _owner)
-        private
-        view
-        returns (MoneyPool.Data storage _mp)
-    {
-        _mp = mps[latestMpId[_owner]];
-        if (_mp.id == 0) return mps[0];
-        // An Active moneyPool must be either the latest moneyPool or the
-        // moneyPool immediately before it.
-        if (_mp._state() == MoneyPool.State.Active) return _mp;
-        _mp = mps[_mp.previous];
-        if (_mp.id == 0 || _mp._state() != MoneyPool.State.Active)
-            return mps[0];
-    }
-
-    /** 
-        @notice An owner's edittable Money pool.
-        @param _owner The owner of the money pool being looked for.
-        @return _mp The standby Money pool.
-    */
-    function _standbyMp(address _owner)
-        private
-        view
-        returns (MoneyPool.Data storage _mp)
-    {
-        _mp = mps[latestMpId[_owner]];
-        if (_mp.id == 0) return mps[0];
-        // There is no upcoming Money pool if the latest Money pool is not upcoming
-        if (_mp._state() != MoneyPool.State.Standby) return mps[0];
-    }
-
-    /** 
-        @notice The amount that the provided beneficiary has access to from the provided owner's Money pools.
-        @param _beneficiary The account to check the balance of.
-        @param _owner The owner of the Money pools being considered.
-        @return _amount The amount that is redistributable.
-    */
-    function _redeemableAmount(address _beneficiary, address _owner)
-        private
-        view
-        returns (uint256)
-    {
-        Ticket _ticket = tickets[_owner];
-        uint256 _currentBalance = _ticket.balanceOf(_beneficiary);
-        return
-            redeemable[_owner].mul(_currentBalance).div(_ticket.totalSupply());
+        treasury.withdraw(msg.sender, dai, _amount);
     }
 }

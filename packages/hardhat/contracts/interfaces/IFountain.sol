@@ -8,14 +8,6 @@ import "../aux/Ticket.sol";
 import "./ITreasury.sol";
 
 interface IFountain {
-    function tickets(address _owner) external view returns (Ticket);
-
-    function redeemable(address _owner) external view returns (uint256);
-
-    function latestMpId(address _owner) external view returns (uint256);
-
-    function mpCount() external view returns (uint256);
-
     /// @notice This event should trigger when an owner initialized their tickets.
     event InitializeTicket(string name, string symbol);
 
@@ -55,31 +47,6 @@ interface IFountain {
         uint256 amount,
         IERC20 want
     );
-
-    function getMp(uint256 _mpId)
-        external
-        view
-        returns (MoneyPool.Data memory _mp);
-
-    function getQueuedMp(address _owner)
-        external
-        view
-        returns (MoneyPool.Data memory _mp);
-
-    function getCurrentMp(address _owner)
-        external
-        view
-        returns (MoneyPool.Data memory _mp);
-
-    function getTappableAmount(uint256 _mpId)
-        external
-        view
-        returns (uint256 _amount);
-
-    function getRedeemableAmount(address _beneficiary, address _owner)
-        external
-        view
-        returns (uint256 _amount);
 
     function initializeTicket(string calldata _name, string calldata _symbol)
         external;
