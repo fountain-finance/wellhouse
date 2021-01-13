@@ -3,10 +3,33 @@ pragma solidity >=0.6.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./libraries/MoneyPool.sol";
 
-import "./aux/Ticket.sol";
+contract Ticket is ERC20 {
+    address controller;
+
+    modifier onlyController {
+        require(msg.sender == controller, "Ticket: UNAUTHORIZED");
+        _;
+    }
+
+    constructor(string memory _name, string memory _symbol)
+        public
+        ERC20(_name, _symbol)
+    {
+        controller = msg.sender;
+    }
+
+    function mint(address _account, uint256 _amount) external onlyController {
+        return _mint(_account, _amount);
+    }
+
+    function burn(address _account, uint256 _amount) external onlyController {
+        return _burn(_account, _amount);
+    }
+}
 
 contract Store {
     using SafeMath for uint256;
@@ -26,7 +49,7 @@ contract Store {
     // --- public properties --- //
 
     /// @notice a big number to base ticket issuance off of.
-    uint256 public constant baseWeight = 1000000000E18;
+    uint256 public constant MP_BASE_WEIGHT = 1000000000E18;
 
     /// @notice The address controlling this Store.
     address public controller;
@@ -308,7 +331,7 @@ contract Store {
                     _aMp.start.add(_aMp.duration),
                     _aMp._derivedWeight()
                 )
-                : _initMp(_owner, block.timestamp, baseWeight);
+                : _initMp(_owner, block.timestamp, MP_BASE_WEIGHT);
         if (_mp.id > 0) _newMp._basedOn(_mp);
         return _newMp;
     }
