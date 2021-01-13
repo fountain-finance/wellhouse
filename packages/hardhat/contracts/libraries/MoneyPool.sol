@@ -221,7 +221,7 @@ library MoneyPool {
         @return _weight The new weight.
     */
     function _derivedWeight(Data memory self) internal pure returns (uint256) {
-        return self.weight.add(self.weight.mul(self.bias).div(100));
+        return self.weight.mul(self.bias).div(100);
     }
 
     /** 

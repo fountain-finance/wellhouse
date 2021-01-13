@@ -71,10 +71,10 @@ contract Fountain is IFountain, Ownable {
     /// @dev The official record of all Money pools ever created
     mapping(uint256 => MoneyPool.Data) private mps;
 
-    //TODO big enough
-    uint256 constant BASE_MP_WEIGHT = 1000000000E18;
-
     // --- public properties --- //
+
+    /// @notice a big number to base ticket issuance off of.
+    uint256 public constant BASE_MP_WEIGHT = 1000000000E18;
 
     /// @notice The tickets handed out to Money pool sustainers. Each owner has their own set of tickets.
     mapping(address => Ticket) public override tickets;
@@ -89,14 +89,14 @@ contract Fountain is IFountain, Ownable {
     /// @dev Money pools should have a ID > 0.
     uint256 public override mpCount = 0;
 
+    /// @notice The treasury that manages funds.
+    Treasury public treasury;
+
     /// @notice The contract currently only supports sustainments in dai.
     IERC20 public dai;
 
     /// @notice The token that surplus is converted into.
     IERC20 public flow;
-
-    /// @notice The treasury that manages funds.
-    Treasury public treasury;
 
     // --- external views --- //
 
@@ -225,10 +225,11 @@ contract Fountain is IFountain, Ownable {
         @param _want The token that the Money pool wants.
         @param _title The title of the Money pool.
         @param _link A link to information about the Money pool.
-        @param _bias A number from 0-100 indicating how valuable a Money pool is compared to the owners previous Money pool, 
+        @param _bias A number from 0-200 indicating how valuable a Money pool is compared to the owners previous Money pool, 
         effectively creating a recency bias.
-        If the number is 100, each Money pool will be treated as twice as valuable than the previous, meaning sustainers get twice as much redistribution shares.
-        If it's 0, each Money pool will have equal weight.
+        If the number is 200, each Money pool will be treated as twice as valuable than the previous, meaning sustainers get twice as much redistribution shares.
+        If it's 100, each Money pool will have equal weight.
+        If it's 1, each Money pool will have 1% of the previous Money pool's weight.
         @param _o The percentage of this Money pool's surplus to allocate to the owner.
         @param _b The percentage of this Money pool's surplus to allocate towards a beneficiary address. This can be another contract, or an end user address.
         An example would be a contract that allocates towards a specific purpose, such as Gitcoin grant matching.
@@ -253,7 +254,7 @@ contract Fountain is IFountain, Ownable {
         require(_duration >= 1, "Fountain::configureMp: TOO_SHORT");
         require(_want == dai, "Fountain::configureMp: UNSUPPORTED_WANT");
         require(_target > 0, "Fountain::configureMp: BAD_TARGET");
-        require(_bias > 0 && _bias <= 100, "Fountain:configureMP: BAD_BIAS");
+        require(_bias > 0 && _bias <= 200, "Fountain:configureMP: BAD_BIAS");
         require(
             bytes(_title).length > 0 && bytes(_title).length <= 32,
             "Fountain::configureMp: BAD_TITLE"
