@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract Flow is ERC20 {
     address public treasury;
-
     modifier onlyTreasury {
         require(
             msg.sender == treasury,
@@ -13,7 +12,6 @@ contract Flow is ERC20 {
         );
         _;
     }
-
     event AssignTreasury(address treasury);
     event ReplaceTreasury(address treasury);
 

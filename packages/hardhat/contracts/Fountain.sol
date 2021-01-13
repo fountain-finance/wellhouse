@@ -7,48 +7,21 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-import "./libraries/MoneyPool.sol";
 import "./interfaces/ITreasury.sol";
 import "./interfaces/IFountain.sol";
 
 import "./Store.sol";
 
-/**
-
-@title Fountain
-
-@notice
-Create a Money pool (MP) that'll be used to sustain your project, and specify what its sustainability target is.
-Maybe your project is providing a service or public good, maybe it's being a YouTuber, engineer, or artist -- or anything else.
-Anyone with your address can help sustain your project, and once you're sustainable any additional contributions are redistributed back your sustainers.
-
-Each Money pool is like a tier of the fountain, and the predefined cost to pursue the project is like the bounds of that tier's pool.
-
-@dev
-An address can only be associated with one active Money pool at a time, as well as a mutable one queued up for when the active Money pool expires.
-If a Money pool expires without one queued, the current one will be cloned and sustainments at that time will be allocated to it.
-It's impossible for a Money pool's sustainability or duration to be changed once there has been a sustainment made to it.
-Any attempts to do so will just create/update the message sender's queued MP.
-
-You can collect funds of yours from the sustainers pool (where Money pool surplus is distributed) or from the sustainability pool (where Money pool sustainments are kept) at anytime.
-
-Future versions will introduce Money pool dependencies so that your project's surplus can get redistributed to the MP of projects it is composed of before reaching sustainers.
-
-The basin of the Fountain should always be the sustainers of projects.
-
-*/
-
 /// @notice The contract managing the state of all Money pools.
 contract Fountain is IFountain, Ownable {
     using SafeMath for uint256;
-    using SafeMath for uint8;
     using SafeERC20 for IERC20;
     using MoneyPool for MoneyPool.Data;
 
     /// @dev Wrap the sustain and collect transactions in unique locks to prevent reentrency.
-    uint8 private lock1 = 1;
-    uint8 private lock2 = 1;
-    uint8 private lock3 = 1;
+    uint256 private lock1 = 1;
+    uint256 private lock2 = 1;
+    uint256 private lock3 = 1;
     modifier lockSustain() {
         require(lock1 == 1, "Fountain::sustainOwner LOCKED");
         lock1 = 0;
@@ -81,16 +54,15 @@ contract Fountain is IFountain, Ownable {
     /// @notice The token that surplus is converted into.
     IERC20 public reward;
 
-    // --- external transactions --- //
-
+    // // --- external transactions --- //
     constructor(
+        Store _store,
         IERC20 _dai,
-        IERC20 _reward,
-        Store _store
+        IERC20 _reward
     ) public {
+        store = _store;
         dai = _dai;
         reward = _reward;
-        store = _store;
     }
 
     /**
@@ -123,7 +95,7 @@ contract Fountain is IFountain, Ownable {
         @param _want The token that the Money pool wants.
         @param _title The title of the Money pool.
         @param _link A link to information about the Money pool.
-        @param _bias A number from 70-130 indicating how valuable a Money pool is compared to the owners previous Money pool, 
+        @param _bias A number from 70-130 indicating how valuable a Money pool is compared to the owners previous Money pool,
         effectively creating a recency bias.
         If it's 100, each Money pool will have equal weight.
         If the number is 130, each Money pool will be treated as 1.3 times as valuable than the previous, meaning sustainers get twice as much redistribution shares.
@@ -140,9 +112,9 @@ contract Fountain is IFountain, Ownable {
         IERC20 _want,
         string calldata _title,
         string calldata _link,
-        uint8 _bias,
-        uint8 _o,
-        uint8 _b,
+        uint256 _bias,
+        uint256 _o,
+        uint256 _b,
         address _bAddress
     ) external override returns (uint256) {
         require(
@@ -162,27 +134,17 @@ contract Fountain is IFountain, Ownable {
             "Fountain::configureMp: BAD_LINK"
         );
         require(_o.add(_b) <= 100, "Fountain::configureMp: BAD_PERCENTAGES");
-
-        MoneyPool.Data memory _mp = store.ensureStandbyMp(msg.sender);
-
+        MoneyPool.Data memory _mp = store.standbyMp(msg.sender);
         // Reset the start time to now if there isn't an active Money pool.
-        _mp._configure(
-            _title,
-            _link,
+        _mp = store.configureMpDescription(_mp.id, _title, _link);
+        _mp = store.configureMpFundingSchedule(
+            _mp.id,
             _target,
             _duration,
             _want,
-            store.getCurrentMp(msg.sender).total == 0
-                ? block.timestamp
-                : _mp.start,
-            _bias,
-            _o,
-            _b,
-            _bAddress
+            store.activeMp(msg.sender).id == 0 ? block.timestamp : _mp.start
         );
-
-        store.saveMp(_mp);
-
+        _mp = store.configureMpRedistribution(_mp.id, _bias, _o, _b, _bAddress);
         emit ConfigureMp(
             _mp.id,
             _mp.owner,
@@ -196,11 +158,10 @@ contract Fountain is IFountain, Ownable {
             _b,
             _bAddress
         );
-
         return _mp.id;
     }
 
-    /** 
+    /**
         @notice Sustain an owner's active Money pool.
         @dev If the amount results in surplus, redistribute the surplus proportionally to sustainers of the Money pool.
         @param _owner The owner of the Money pool to sustain.
@@ -219,16 +180,12 @@ contract Fountain is IFountain, Ownable {
     ) external override lockSustain returns (uint256) {
         require(treasury != ITreasury(0), "Fountain::sustainOwner: BAD_STATE");
         require(_amount > 0, "Fountain::sustainOwner: BAD_AMOUNT");
-
         // Find the Money pool that this sustainment should go to.
-        MoneyPool.Data memory _mp = store.ensureActiveMp(_owner);
-
+        MoneyPool.Data memory _mp = store.activeMp(_owner);
         require(_want == _mp.want, "Fountain::sustainOwner: UNEXPECTED_WANT");
-
         _mp.want.safeTransferFrom(msg.sender, address(treasury), _amount);
-
         // Add the amount to the Money pool, which determines how much Flow was made available as a result.
-        uint256 _surplus = _mp._add(_amount);
+        uint256 _surplus = store.addToMp(_mp.id, _amount);
         if (_surplus > 0) {
             uint256 _overflowAmount =
                 treasury.transform(
@@ -238,11 +195,7 @@ contract Fountain is IFountain, Ownable {
                 );
             store.addRedeemable(_mp.owner, _overflowAmount);
         }
-
         store.ticket(_mp.owner).mint(_beneficiary, _mp._weighted(_amount));
-
-        store.saveMp(_mp);
-
         emit SustainMp(
             _mp.id,
             _mp.owner,
@@ -254,7 +207,7 @@ contract Fountain is IFountain, Ownable {
         return _mp.id;
     }
 
-    /** 
+    /**
         @notice A message sender can collect what's been redistributed to it by Money pools once they have expired.
         @param _owner The owner of the Money pools being collected from.
         @param _amount The amount of FLOW to collect.
@@ -295,9 +248,8 @@ contract Fountain is IFountain, Ownable {
             _mp._tappableAmount() >= _amount,
             "Fountain::collectSustainment: INSUFFICIENT_FUNDS"
         );
-        _mp._tap(_amount);
+        store.tapFromMp(_mp.id, _amount);
         treasury.payout(_beneficiary, _mp.want, _amount);
-        store.saveMp(_mp);
         emit TapMp(_mpId, msg.sender, _beneficiary, _amount, _mp.want);
     }
 
@@ -320,14 +272,13 @@ contract Fountain is IFountain, Ownable {
                     _ticket.mint(_mp.owner, _baseAmount.mul(_mp.o).div(100));
                 if (_mp.b > 0)
                     _ticket.mint(_mp.bAddress, _baseAmount.mul(_mp.b).div(100));
-                _mp.hasMintedReserves = true;
-                store.saveMp(_mp);
+                store.markMpReservesAsMinted(_mp.id);
             }
             _mp = store.getMp(_mp.previous);
         }
     }
 
-    /** 
+    /**
         @notice Replaces the current treasury with a new one. All funds will move over.
         @param _newTreasury The new treasury.
     */
@@ -344,10 +295,12 @@ contract Fountain is IFountain, Ownable {
             _newTreasury.fountain() == address(this),
             "Fountain::appointTreasury: INCOMPATIBLE"
         );
-        if (treasury == ITreasury(0)) treasury = _newTreasury;
-        IERC20[] storage _tokens;
-        _tokens.push(dai);
-        treasury.transition(_newTreasury, _tokens);
+        if (treasury != ITreasury(0)) {
+            IERC20[] storage _tokens;
+            _tokens.push(dai);
+            treasury.transition(address(_newTreasury), _tokens);
+        }
+        treasury = _newTreasury;
     }
 
     /**

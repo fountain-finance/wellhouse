@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// pragma solidity >=0.6.0 <0.8.0;
+pragma solidity >=0.6.0 <0.8.0;
 
 // import "@openzeppelin/contracts/access/Ownable.sol";
 // import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -29,7 +29,7 @@
 //         configureMp(target, duration, want, title, link);
 //     }
 
-//     /** 
+//     /**
 //         @notice This allows the contract owner to collect funds from your Money pool.
 //         @param _mpNumber The number of the Money pool to collect funds from.
 //         @param _amount The amount to tap into.
@@ -42,7 +42,7 @@
 //         _fountain.tapMp(_mpNumber, _amount, msg.sender);
 //     }
 
-//     /** 
+//     /**
 //         @notice This allows you to reset the Fountain contract that's running your Money pool.
 //         @dev Useful in case you need to switch to an updated Fountain contract
 //         without redeploying your contract.
@@ -62,7 +62,7 @@
 //         emit ResetFountain(_fountain, _newFountain);
 //     }
 
-//     /** 
+//     /**
 //         @notice This is how you reconfigure your Money pool.
 //         @dev The changes will take effect after your active Money pool expires.
 //         You may way to override this to create new permissions around who gets to decide
@@ -99,8 +99,8 @@
 //             );
 //     }
 
-//     /** 
-//         @notice This allows your contract to accept sustainments. 
+//     /**
+//         @notice This allows your contract to accept sustainments.
 //         @dev You can charge your customers however you like, and they'll keep the surplus if there is any.
 //         @param _amount The amount you are taking. Your contract must give Fountain allowance.
 //         @param _want The token that is being transfered.

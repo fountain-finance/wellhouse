@@ -17,7 +17,7 @@ interface ITreasury {
     function fountain() external returns (address);
 
     event Transform(IERC20 token, uint256 value, uint256 amount);
-    event Transition(ITreasury newTreasury);
+    event Transition(address newTreasury);
 
     function transform(
         uint256 _amount,
@@ -31,7 +31,7 @@ interface ITreasury {
         uint256 _amount
     ) external;
 
-    function transition(ITreasury _newTreasury, IERC20[] calldata _tokens)
+    function transition(address _newTreasury, IERC20[] calldata _tokens)
         external;
 
     function withdraw(

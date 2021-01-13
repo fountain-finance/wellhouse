@@ -41,6 +41,19 @@
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newTreasury",
+        "type": "address"
+      }
+    ],
+    "name": "Transition",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "PHASE_1_RATE",
     "outputs": [
@@ -64,19 +77,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "allocatePhase2Funds",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -148,24 +148,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_newTreasury",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IERC20[]",
-        "name": "_tokens",
-        "type": "address[]"
-      }
-    ],
-    "name": "overthrow",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "_receiver",
         "type": "address"
       },
@@ -200,38 +182,12 @@
   },
   {
     "inputs": [],
-    "name": "phase1FundsAvailable",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "phase2",
     "outputs": [
       {
         "internalType": "contract ITreasuryPhase",
         "name": "",
         "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "phase2FundsAvailable",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -283,6 +239,24 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_newTreasury",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC20[]",
+        "name": "_tokens",
+        "type": "address[]"
+      }
+    ],
+    "name": "transition",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_to",
         "type": "address"
       },
@@ -297,9 +271,22 @@
         "type": "uint256"
       }
     ],
-    "name": "withdrawPhase1Funds",
+    "name": "withdraw",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawableFunds",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ]

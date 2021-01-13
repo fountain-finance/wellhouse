@@ -10,7 +10,6 @@ import "./Math.sol";
 /// @notice Logic to manipulate MoneyPool data.
 library MoneyPool {
     using SafeMath for uint256;
-    using SafeMath for uint8;
 
     /// @notice Possible states that a Money pool may be in
     /// @dev Money pool's are immutable once the Money pool is active.
@@ -41,9 +40,9 @@ library MoneyPool {
         // The amount of available funds that have been tapped by the owner.
         uint256 tapped;
         // The percentage of overflow to reserve for the owner once the Money pool has expired.
-        uint8 o;
+        uint256 o;
         // The percentage of overflow to reserve for a specified beneficiary once the Money pool has expired.
-        uint8 b;
+        uint256 b;
         // The specified beneficiary.
         address bAddress;
         // If the reserved tickets have been minted.
@@ -51,103 +50,10 @@ library MoneyPool {
         // A number determining the amount of redistribution shares this Money pool will issue to each sustainer.
         uint256 weight;
         // A number indicating how much more weight to give a Money pool compared to its predecessor.
-        uint8 bias;
+        uint256 bias;
     }
 
     // --- internal transactions --- //
-
-    /** 
-        @notice Initializes a Money pool's parameters.
-        @param self The Money pool to initialize.
-        @param _owner The owner of the Money pool.
-        @param _start The start time of the Money pool.
-        @param _id The ID of the Money pool.
-        @param _previous The ID of the owner's previous Money pool.
-        @param _weight The weight of the Money pool.
-    */
-    function _init(
-        Data storage self,
-        address _owner,
-        uint256 _start,
-        uint256 _id,
-        uint256 _previous,
-        uint256 _weight
-    ) internal {
-        self.id = _id;
-        self.owner = _owner;
-        self.start = _start;
-        self.previous = _previous;
-        self.weight = _weight;
-        self.total = 0;
-        self.tapped = 0;
-        self.hasMintedReserves = false;
-    }
-
-    /** 
-        @dev Configures the sustainability target and duration of the sender's current Money pool if it hasn't yet received sustainments, or
-        sets the properties of the Money pool that will take effect once the current Money pool expires.
-        @param self The Money pool to configure.
-        @param _title The title of the Money pool.
-        @param _link A link to associate with the Money pool.
-        @param _target The sustainability target to set.
-        @param _duration The duration to set, measured in seconds.
-        @param _want The token that the Money pool wants.
-        @param _start The new start time.
-        @param _bias The new bias.
-        @param _o The new owners share.
-        @param _b The new beneficiary share.
-        @param _bAddress The new beneficiary address.
-    */
-    function _configure(
-        Data memory self,
-        string memory _title,
-        string memory _link,
-        uint256 _target,
-        uint256 _duration,
-        IERC20 _want,
-        uint256 _start,
-        uint8 _bias,
-        uint8 _o,
-        uint8 _b,
-        address _bAddress
-    ) internal pure {
-        self.title = _title;
-        self.link = _link;
-        self.target = _target;
-        self.duration = _duration;
-        self.want = _want;
-        self.start = _start;
-        self.bias = _bias;
-        self.o = _o;
-        self.b = _b;
-        self.bAddress = _bAddress;
-    }
-
-    /** 
-        @notice Contribute a specified amount to the sustainability this Money pool.
-        @param self The Money pool to sustain.
-        @param _amount Incrmented amount of sustainment.
-        @return _surplus The amount of surplus in the Money pool after adding.
-    */
-    function _add(Data memory self, uint256 _amount)
-        internal
-        pure
-        returns (uint256)
-    {
-        // Increment the total amount contributed to the sustainment of the Money pool.
-        self.total = self.total.add(_amount);
-        return self.total > self.target ? self.total.sub(self.target) : 0;
-    }
-
-    /** 
-        @dev Increase the amount that has been tapped by the Money pool's owner.
-        @param self The Money pool to tap.
-        @param _amount The amount to tap.
-    */
-
-    function _tap(Data memory self, uint256 _amount) internal pure {
-        self.tapped = self.tapped.add(_amount);
-    }
 
     /**
         @notice Clones the properties from the base.
@@ -155,7 +61,7 @@ library MoneyPool {
         @param self The Money pool to clone onto.
         @param _baseMp The Money pool to clone from.
     */
-    function _basedOn(Data memory self, Data memory _baseMp) internal pure {
+    function _basedOn(Data storage self, Data memory _baseMp) internal {
         self.title = _baseMp.title;
         self.link = _baseMp.link;
         self.target = _baseMp.target;
@@ -166,20 +72,6 @@ library MoneyPool {
         self.o = _baseMp.o;
         self.b = _baseMp.b;
         self.bAddress = _baseMp.bAddress;
-    }
-
-    /** 
-        @notice The weight that a certain amount carries in this Money pool.
-        @param self The Money pool to get the weight from.
-        @param _amount The amount to get the weight of.
-        @return state The weighted amount.
-    */
-    function _weighted(Data memory self, uint256 _amount)
-        internal
-        pure
-        returns (uint256)
-    {
-        return self.weight.mul(_amount).div(self.target).mul(_s(self)).div(100);
     }
 
     // --- internal views --- //
@@ -193,15 +85,6 @@ library MoneyPool {
         if (_hasExpired(self)) return State.Redistributing;
         if (_hasStarted(self) && self.total > 0) return State.Active;
         return State.Standby;
-    }
-
-    /** 
-        @notice Returns the amount available for the given Money pool's owner to tap in to.
-        @param self The Money pool to make the calculation for.
-        @return The resulting amount.
-    */
-    function _tappableAmount(Data memory self) internal pure returns (uint256) {
-        return Math.min(self.target, self.total).sub(self.tapped);
     }
 
     /** 
@@ -220,22 +103,6 @@ library MoneyPool {
         uint256 _distanceToStart =
             (block.timestamp.sub(_end)).mod(self.duration);
         return block.timestamp.sub(_distanceToStart);
-    }
-
-    /** 
-        @notice Returns the percentage of overflow to allocate to sustainers.
-        @return _percentage The percentage.
-    */
-    function _s(Data memory self) internal pure returns (uint256) {
-        return uint8(100).sub(self.o).sub(self.b);
-    }
-
-    /** 
-        @notice The weight derived from the current weight and the bias.
-        @return _weight The new weight.
-    */
-    function _derivedWeight(Data memory self) internal pure returns (uint256) {
-        return self.weight.mul(self.bias).div(100);
     }
 
     /** 
@@ -263,6 +130,45 @@ library MoneyPool {
                 self.weight,
                 self.bias
             );
+    }
+
+    /** 
+        @notice Returns the percentage of overflow to allocate to sustainers.
+        @return _percentage The percentage.
+    */
+    function _s(Data memory self) internal pure returns (uint256) {
+        return uint256(100).sub(self.o).sub(self.b);
+    }
+
+    /** 
+        @notice The weight derived from the current weight and the bias.
+        @return _weight The new weight.
+    */
+    function _derivedWeight(Data memory self) internal pure returns (uint256) {
+        return self.weight.mul(self.bias).div(100);
+    }
+
+    /** 
+        @notice Returns the amount available for the given Money pool's owner to tap in to.
+        @param self The Money pool to make the calculation for.
+        @return The resulting amount.
+    */
+    function _tappableAmount(Data memory self) internal pure returns (uint256) {
+        return Math.min(self.target, self.total).sub(self.tapped);
+    }
+
+    /** 
+        @notice The weight that a certain amount carries in this Money pool.
+        @param self The Money pool to get the weight from.
+        @param _amount The amount to get the weight of.
+        @return state The weighted amount.
+    */
+    function _weighted(Data memory self, uint256 _amount)
+        internal
+        pure
+        returns (uint256)
+    {
+        return self.weight.mul(_amount).div(self.target).mul(_s(self)).div(100);
     }
 
     // --- private views --- //

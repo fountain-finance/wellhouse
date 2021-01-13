@@ -14,13 +14,10 @@ contract TreasuryPhase1 is ITreasuryPhase {
 
     /// @notice The address that deployed this contract.
     address public override deployer;
-
     /// @notice Amount of tokens issued.
     uint256 public override tokensIssued;
-
     /// @notice The address where funds are managed
     address public override treasury;
-
     /// @notice The max amount of tokens to issue.
     uint256 public override cap;
 
@@ -30,7 +27,7 @@ contract TreasuryPhase1 is ITreasuryPhase {
         deployer = msg.sender;
     }
 
-    /** 
+    /**
       @notice Convert the specified amount into tokens.
       @param _token The token being converted.
       @param _amount The amount of tokens to use for issuing.
@@ -50,9 +47,7 @@ contract TreasuryPhase1 is ITreasuryPhase {
             _validIssuance(_expectedConvertedAmount),
             "TreasuryPhase1::transform: INVALID"
         );
-
         tokensIssued = tokensIssued.add(_expectedConvertedAmount);
-
         return _expectedConvertedAmount;
     }
 
