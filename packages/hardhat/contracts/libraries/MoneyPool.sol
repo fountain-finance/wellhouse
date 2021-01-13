@@ -19,23 +19,21 @@ library MoneyPool {
     /// @notice The Money pool structure represents a project stewarded by an address, and accounts for which addresses have helped sustain the project.
     struct Data {
         // A unique number that's incremented for each new Money pool, starting with 1.
-        uint256 number;
+        uint256 id;
+        // The address who defined this Money pool and who has access to its sustainments.
+        address owner;
         // The number of the owner's Money pool that came before this one.
         uint256 previous;
         // The title of the Money pool.
         string title;
         // A link that points to a justification for these parameters.
         string link;
-        // The address who defined this Money pool and who has access to its sustainments.
-        address owner;
         // The token that this Money pool can be funded with.
         IERC20 want;
         // The amount that represents sustainability for this Money pool.
         uint256 target;
         // The running amount that's been contributed to sustaining this Money pool.
         uint256 total;
-        // The amount of flow tokens that this Money pool can redistribute.
-        uint256 overflow;
         // The time when this Money pool will become active.
         uint256 start;
         // The number of seconds until this Money pool's surplus is redistributed.
@@ -48,6 +46,10 @@ library MoneyPool {
         uint8 b;
         // The specified beneficiary.
         address bAddress;
+        // A number determining the amount of redistribution shares this Money pool will issue to each sustainer.
+        uint256 weight;
+        // A number indicating how much more weight to give a Money pool compared to its predecessor.
+        uint8 bias;
     }
 
     // --- internal transactions --- //
@@ -57,20 +59,23 @@ library MoneyPool {
         @param self The Money pool to initialize.
         @param _owner The owner of the Money pool.
         @param _start The start time of the Money pool.
-        @param _number The number of the Money pool.
-        @param _previous The number of the owner's previous Money pool.
+        @param _id The ID of the Money pool.
+        @param _previous The ID of the owner's previous Money pool.
+        @param _weight The weight of the Money pool.
     */
     function _init(
         Data storage self,
         address _owner,
         uint256 _start,
-        uint256 _number,
-        uint256 _previous
+        uint256 _id,
+        uint256 _previous,
+        uint256 _weight
     ) internal {
-        self.number = _number;
+        self.id = _id;
         self.owner = _owner;
         self.start = _start;
         self.previous = _previous;
+        self.weight = _weight;
         self.total = 0;
         self.tapped = 0;
     }
@@ -85,6 +90,10 @@ library MoneyPool {
         @param _duration The duration to set, measured in seconds.
         @param _want The token that the Money pool wants.
         @param _start The new start time.
+        @param _bias The new bias.
+        @param _o The new owners share.
+        @param _b The new beneficiary share.
+        @param _bAddress The new beneficiary address.
     */
     function _configure(
         Data storage self,
@@ -94,6 +103,7 @@ library MoneyPool {
         uint256 _duration,
         IERC20 _want,
         uint256 _start,
+        uint8 _bias,
         uint8 _o,
         uint8 _b,
         address _bAddress
@@ -104,6 +114,7 @@ library MoneyPool {
         self.duration = _duration;
         self.want = _want;
         self.start = _start;
+        self.bias = _bias;
         self.o = _o;
         self.b = _b;
         self.bAddress = _bAddress;
@@ -125,15 +136,6 @@ library MoneyPool {
     }
 
     /** 
-        @notice Overflow the Money pool.
-        @param self The Money pool to overflow.
-        @param _amount Incrmented amount of sustainment.
-    */
-    function _addOverflow(Data storage self, uint256 _amount) internal {
-        self.overflow = self.overflow.add(_amount);
-    }
-
-    /** 
         @dev Increase the amount that has been tapped by the Money pool's owner.
         @param self The Money pool to tap.
         @param _amount The amount to tap.
@@ -145,15 +147,18 @@ library MoneyPool {
 
     /**
         @notice Clones the properties from the base.
+        @dev Assumes the base is the Money pool that directly preceeded self.
         @param self The Money pool to clone onto.
         @param _baseMp The Money pool to clone from.
     */
-    function _clone(Data storage self, Data memory _baseMp) internal {
+    function _basedOn(Data storage self, Data memory _baseMp) internal {
         self.title = _baseMp.title;
         self.link = _baseMp.link;
         self.target = _baseMp.target;
         self.duration = _baseMp.duration;
         self.want = _baseMp.want;
+        self.bias = _baseMp.bias;
+        self.weight = _derivedWeight(_baseMp);
         self.o = _baseMp.o;
         self.b = _baseMp.b;
         self.bAddress = _baseMp.bAddress;
@@ -209,6 +214,40 @@ library MoneyPool {
     */
     function _s(Data memory self) internal pure returns (uint256) {
         return uint8(100).sub(self.o).sub(self.b);
+    }
+
+    /** 
+        @notice The weight derived from the current weight and the bias.
+        @return _weight The new weight.
+    */
+    function _derivedWeight(Data memory self) internal pure returns (uint256) {
+        return self.weight.add(self.weight.mul(self.bias).div(100));
+    }
+
+    /** 
+        @notice A view of the Money pool that would be created after this one if the owner doesn't make a reconfiguration.
+        @return _mp The next Money pool, with an ID set to 0.
+    */
+    function _nextUp(Data memory self) internal view returns (Data memory _mp) {
+        return
+            Data(
+                0,
+                self.owner,
+                self.id,
+                self.title,
+                self.link,
+                self.want,
+                self.target,
+                0,
+                _determineNextStart(self),
+                self.duration,
+                0,
+                self.o,
+                self.b,
+                self.bAddress,
+                self.weight,
+                self.bias
+            );
     }
 
     // --- private views --- //
