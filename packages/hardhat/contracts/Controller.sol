@@ -23,19 +23,19 @@ contract Controller is IController, AccessControl {
     uint256 private lock2 = 1;
     uint256 private lock3 = 1;
     modifier lockSustain() {
-        require(lock1 == 1, "Fountain::sustainOwner LOCKED");
+        require(lock1 == 1, "Controller::sustainOwner LOCKED");
         lock1 = 0;
         _;
         lock1 = 1;
     }
-    modifier lockCollect() {
-        require(lock2 == 1, "Fountain::collectRedistributions: LOCKED");
+    modifier lockRedeem() {
+        require(lock2 == 1, "Controller::redeem: LOCKED");
         lock2 = 0;
         _;
         lock2 = 1;
     }
     modifier lockTap() {
-        require(lock3 == 1, "Fountain:: tapSustainments LOCKED");
+        require(lock3 == 1, "Controller:: tapSustainments LOCKED");
         lock3 = 0;
         _;
         lock3 = 1;
@@ -93,11 +93,11 @@ contract Controller is IController, AccessControl {
     {
         require(
             store.ticket(msg.sender) == Ticket(0),
-            "Fountain::initializeProject: ALREADY_INITIALIZED"
+            "Controller::initializeProject: ALREADY_INITIALIZED"
         );
         require(
             bytes(_name).length != 0 && bytes(_symbol).length != 0,
-            "Fountain::configureMp: BAD_PARAMS"
+            "Controller::configureMp: BAD_PARAMS"
         );
         store.assignTicket(msg.sender, new Ticket(_name, _symbol));
         emit InitializeTicket(msg.sender, _name, _symbol);
@@ -135,24 +135,24 @@ contract Controller is IController, AccessControl {
     ) external override returns (uint256) {
         require(
             store.ticket(msg.sender) != Ticket(0),
-            "Fountain::configureMp: NEEDS_INITIALIZATION"
+            "Controller::configureMp: NEEDS_INITIALIZATION"
         );
-        require(_duration >= 6, "Fountain::configureMp: TOO_SHORT");
-        require(_target > 0, "Fountain::configureMp: BAD_TARGET");
+        require(_duration >= 6, "Controller::configureMp: TOO_SHORT");
+        require(_target > 0, "Controller::configureMp: BAD_TARGET");
         require(
             wantTokenIsAllowed[_want],
-            "Fountain::configureMp: UNSUPPORTED_WANT"
+            "Controller::configureMp: UNSUPPORTED_WANT"
         );
-        require(_bias > 70 && _bias <= 130, "Fountain:configureMP: BAD_BIAS");
+        require(_bias > 70 && _bias <= 130, "Controller:configureMP: BAD_BIAS");
         require(
             bytes(_title).length > 0 && bytes(_title).length <= 64,
-            "Fountain::configureMp: BAD_TITLE"
+            "Controller::configureMp: BAD_TITLE"
         );
         require(
             bytes(_link).length > 0 && bytes(_link).length <= 64,
-            "Fountain::configureMp: BAD_LINK"
+            "Controller::configureMp: BAD_LINK"
         );
-        require(_o.add(_b) <= 100, "Fountain::configureMp: BAD_PERCENTAGES");
+        require(_o.add(_b) <= 100, "Controller::configureMp: BAD_PERCENTAGES");
 
         MoneyPool.Data memory _mp = store.standbyMp(msg.sender);
 
@@ -205,11 +205,14 @@ contract Controller is IController, AccessControl {
         address _beneficiary,
         uint256 _expectedConvertedAmount
     ) external override lockSustain returns (uint256) {
-        require(treasury != ITreasury(0), "Fountain::sustainOwner: BAD_STATE");
-        require(_amount > 0, "Fountain::sustainOwner: BAD_AMOUNT");
+        require(
+            treasury != ITreasury(0),
+            "Controller::sustainOwner: BAD_STATE"
+        );
+        require(_amount > 0, "Controller::sustainOwner: BAD_AMOUNT");
         // Find the Money pool that this sustainment should go to.
         MoneyPool.Data memory _mp = store.activeMp(_owner);
-        require(_want == _mp.want, "Fountain::sustainOwner: UNEXPECTED_WANT");
+        require(_want == _mp.want, "Controller::sustainOwner: UNEXPECTED_WANT");
 
         // Add the amount to the Money pool, which determines how much Flow was made available as a result.
         _mp.total = _mp.total.add(_amount);
@@ -233,7 +236,10 @@ contract Controller is IController, AccessControl {
 
         store.saveMp(_mp);
 
+        // Exchange any surplus for the reward.
         if (_surplus > 0) {
+            // Transforming during a sustainment might prove to be too expensive.
+            // Might wanna make transforms happen with async transactions.
             uint256 _overflowAmount =
                 treasury.transform(
                     _mp.want,
@@ -268,14 +274,14 @@ contract Controller is IController, AccessControl {
     function redeem(address _owner, uint256 _amount)
         external
         override
-        lockCollect
+        lockRedeem
     {
-        require(treasury != ITreasury(0), "Fountain::redeem: BAD_STATE");
+        require(treasury != ITreasury(0), "Controller::redeem: BAD_STATE");
         uint256 _redeemableAmount =
             store.getRedeemableAmount(msg.sender, _owner, rewardToken);
         require(
             _redeemableAmount >= _amount,
-            "Fountain::redeem: INSUFFICIENT_FUNDS"
+            "Controller::redeem: INSUFFICIENT_FUNDS"
         );
         Ticket _ticket = store.ticket(_owner);
         _ticket.burn(msg.sender, _amount);
@@ -284,7 +290,7 @@ contract Controller is IController, AccessControl {
         require(
             _redeemableAmount.sub(_amount) ==
                 store.getRedeemableAmount(msg.sender, _owner, rewardToken),
-            "Fountain::redeem: POSTCONDITION_FAILED"
+            "Controller::redeem: POSTCONDITION_FAILED"
         );
         emit Redeem(msg.sender, _amount);
     }
@@ -300,23 +306,23 @@ contract Controller is IController, AccessControl {
         uint256 _amount,
         address _beneficiary
     ) external override lockTap {
-        require(treasury != ITreasury(0), "Fountain::tapMp: BAD_STATE");
+        require(treasury != ITreasury(0), "Controller::tapMp: BAD_STATE");
         MoneyPool.Data memory _mp = store.getMp(_mpId);
         uint256 _tappableAmount = _mp._tappableAmount();
         require(
             _mp.owner == msg.sender,
-            "Fountain::collectSustainment: UNAUTHORIZED"
+            "Controller::collectSustainment: UNAUTHORIZED"
         );
         require(
             _tappableAmount >= _amount,
-            "Fountain::collectSustainment: INSUFFICIENT_FUNDS"
+            "Controller::collectSustainment: INSUFFICIENT_FUNDS"
         );
         _mp.tapped = _mp.tapped.add(_amount);
         store.saveMp(_mp);
         treasury.payout(_beneficiary, _mp.want, _amount);
         require(
             _tappableAmount.sub(_amount) == store.getTappableAmount(_mp.id),
-            "Fountain::redeem: POSTCONDITION_FAILED"
+            "Controller::redeem: POSTCONDITION_FAILED"
         );
         emit TapMp(_mpId, msg.sender, _beneficiary, _amount, _mp.want);
     }
@@ -329,7 +335,7 @@ contract Controller is IController, AccessControl {
         Ticket _ticket = store.ticket(_owner);
         require(
             _ticket != Ticket(0),
-            "Fountain::mintReservedTickets: NOT_FOUND"
+            "Controller::mintReservedTickets: NOT_FOUND"
         );
         MoneyPool.Data memory _mp = store.getMp(store.latestMpId(_owner));
         while (_mp.id > 0 && !_mp.hasMintedReserves && _mp.total > _mp.target) {
@@ -356,7 +362,7 @@ contract Controller is IController, AccessControl {
         @param _successor The successor contract.
     */
     function proposeSuccessor(address _successor) external override {
-        require(_successor != address(0), "Fountain::migrate: ZERO_ADDRESS");
+        require(_successor != address(0), "Controller::migrate: ZERO_ADDRESS");
         successor[msg.sender] = _successor;
     }
 
@@ -366,12 +372,12 @@ contract Controller is IController, AccessControl {
     */
     function migrate(address _proposer) external override {
         address _successor = successor[_proposer];
-        require(_successor != address(0), "Fountain::migrate: BAD_STATE");
+        require(_successor != address(0), "Controller::migrate: BAD_STATE");
         Ticket _ticket = store.ticket(msg.sender);
-        require(_ticket != Ticket(0), "Fountain::migrate: NOT_FOUND");
+        require(_ticket != Ticket(0), "Controller::migrate: NOT_FOUND");
         require(
             !_ticket.hasRole(_ticket.DEFAULT_ADMIN_ROLE(), _successor),
-            "Fountain::migrate: ALREADY_MIGRATED"
+            "Controller::migrate: ALREADY_MIGRATED"
         );
         _ticket.grantRole(_ticket.DEFAULT_ADMIN_ROLE(), _successor);
         _ticket.revokeRole(_ticket.DEFAULT_ADMIN_ROLE(), address(this));
@@ -386,7 +392,10 @@ contract Controller is IController, AccessControl {
         override
         onlyAdmin
     {
-        require(treasury != ITreasury(0), "Fountain::withdrawFunds: BAD_STATE");
+        require(
+            treasury != ITreasury(0),
+            "Controller::withdrawFunds: BAD_STATE"
+        );
         treasury.withdraw(msg.sender, _token, _amount);
     }
 
@@ -401,11 +410,11 @@ contract Controller is IController, AccessControl {
     {
         require(
             _newTreasury != ITreasury(0),
-            "Fountain::appointTreasury: ZERO_ADDRESS"
+            "Controller::appointTreasury: ZERO_ADDRESS"
         );
         require(
             _newTreasury.controller() == address(this),
-            "Fountain::appointTreasury: INCOMPATIBLE"
+            "Controller::appointTreasury: INCOMPATIBLE"
         );
 
         if (treasury != ITreasury(0))
