@@ -36,8 +36,8 @@ contract Treasury is ITreasury {
     ITreasuryPhase public override phase2;
     /// @notice The contract managing Phase 3 token transformations.
     ITreasuryPhase public override phase3;
-    /// @notice Amount of tokens from Phase 1 and Phase 2 that have yet to be withdrawn.
-    uint256 public override withdrawableFunds;
+    /// @notice Amount each tokens from Phase 1 and Phase 2 that have yet to be withdrawn.
+    mapping(IERC20 => uint256) public override withdrawableFunds;
     /// @notice The Fountain that this Treasury belongs to.
     address public override fountain;
 
@@ -127,7 +127,7 @@ contract Treasury is ITreasury {
                 issuanceToken,
                 _amount.mul(PHASE_1_RATE)
             );
-            withdrawableFunds = withdrawableFunds.add(_amount);
+            withdrawableFunds[_from] = withdrawableFunds[_from].add(_amount);
         }
         if (_phase == Phase.Two) {
             require(
@@ -140,7 +140,7 @@ contract Treasury is ITreasury {
                 issuanceToken,
                 _amount.mul(PHASE_2_RATE)
             );
-            withdrawableFunds = withdrawableFunds.add(_amount);
+            withdrawableFunds[_from] = withdrawableFunds[_from].add(_amount);
         }
         require(
             address(phase3) != address(0),
@@ -169,11 +169,11 @@ contract Treasury is ITreasury {
         uint256 _amount
     ) external override onlyFountain {
         require(
-            withdrawableFunds >= _amount,
+            withdrawableFunds[_token] >= _amount,
             "Treasury::withdrawFunds: INSUFFICIENT_FUNDS"
         );
+        withdrawableFunds[_token] = withdrawableFunds[_token].sub(_amount);
         _token.safeTransfer(_to, _amount);
-        withdrawableFunds = withdrawableFunds.sub(_amount);
     }
 
     function transition(address _newTreasury, IERC20[] calldata _tokens)

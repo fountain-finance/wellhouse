@@ -314,7 +314,13 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "name": "withdrawableFunds",
     "outputs": [
       {
