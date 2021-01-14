@@ -226,7 +226,10 @@ contract Fountain is IFountain, AccessControl {
                 );
             store.addRedeemable(_mp.owner, rewardToken, _overflowAmount);
         }
-        store.ticket(_mp.owner).mint(_beneficiary, _mp._weighted(_amount));
+        store.ticket(_mp.owner).mint(
+            _beneficiary,
+            _mp._weighted(_amount, _mp._s())
+        );
         emit SustainMp(
             _mp.id,
             _mp.owner,
@@ -313,12 +316,16 @@ contract Fountain is IFountain, AccessControl {
         MoneyPool.Data memory _mp = store.getMp(store.latestMpId(_owner));
         while (_mp.id > 0 && !_mp.hasMintedReserves && _mp.total > _mp.target) {
             if (_mp._state() == MoneyPool.State.Redistributing) {
-                uint256 _baseAmount =
-                    _mp.weight.mul(_mp.total.sub(_mp.target)).div(_mp.target);
-                if (_mp.o > 0)
-                    _ticket.mint(_mp.owner, _baseAmount.mul(_mp.o).div(100));
-                if (_mp.b > 0)
-                    _ticket.mint(_mp.bAddress, _baseAmount.mul(_mp.b).div(100));
+                uint256 _surplus = _mp.total.sub(_mp.target);
+                if (_surplus > 0) {
+                    if (_mp.o > 0)
+                        _ticket.mint(_mp.owner, _mp._weighted(_surplus, _mp.o));
+                    if (_mp.b > 0)
+                        _ticket.mint(
+                            _mp.bAddress,
+                            _mp._weighted(_surplus, _mp.b)
+                        );
+                }
                 _mp.hasMintedReserves = true;
                 store.saveMp(_mp);
             }
