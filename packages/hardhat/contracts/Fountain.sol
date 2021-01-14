@@ -54,9 +54,9 @@ contract Fountain is IFountain, AccessControl {
     /// @notice The treasury that manages funds.
     /// @dev Reassignable by the owner.
     ITreasury public treasury;
-    /// @notice A successor contract to this contract, if there is one.
-    /// @dev Reassignable by the owner, but Ticket issuance must be migrated by owners.
-    address public successor;
+    /// @notice Proposals for successor contracts to this contract.
+    /// @dev Anyone can propose a successor contract, but Ticket issuance must be migrated by owners.
+    mapping(address => address) public successor;
     /// @notice The contract currently only supports sustainments in dai.
     IERC20 public dai;
     /// @notice The token that surplus is converted into.
@@ -346,24 +346,25 @@ contract Fountain is IFountain, AccessControl {
         @notice Appoints a successor to this contracts that Ticket owners can migrate to.
         @param _successor The successor contract.
     */
-    function appointSuccessor(address _successor) external override onlyAdmin {
+    function proposeSuccessor(address _successor) external override {
         require(_successor != address(0), "Fountain::migrate: ZERO_ADDRESS");
-        successor = _successor;
+        successor[msg.sender] = _successor;
     }
 
     /**
-        @notice Allows a successor contract to manage an owner's Tickets.
+        @notice Allows an owner to migrate their Tickets to a proposed successor contract.
         @dev One way migration.
     */
-    function migrate() external override {
-        require(successor != address(0), "Fountain::migrate: BAD_STATE");
+    function migrate(address _proposer) external override {
+        address _successor = successor[_proposer];
+        require(_successor != address(0), "Fountain::migrate: BAD_STATE");
         Ticket _ticket = store.ticket(msg.sender);
         require(_ticket != Ticket(0), "Fountain::migrate: NOT_FOUND");
         require(
-            !_ticket.hasRole(_ticket.DEFAULT_ADMIN_ROLE(), successor),
+            !_ticket.hasRole(_ticket.DEFAULT_ADMIN_ROLE(), _successor),
             "Fountain::migrate: ALREADY_MIGRATED"
         );
-        _ticket.grantRole(_ticket.DEFAULT_ADMIN_ROLE(), successor);
+        _ticket.grantRole(_ticket.DEFAULT_ADMIN_ROLE(), _successor);
         _ticket.revokeRole(_ticket.DEFAULT_ADMIN_ROLE(), address(this));
     }
 

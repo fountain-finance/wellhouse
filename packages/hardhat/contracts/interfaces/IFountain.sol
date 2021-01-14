@@ -84,7 +84,7 @@ interface IFountain {
 
     function withdrawFunds(uint256 _amount) external;
 
-    function appointSuccessor(address _successor) external;
+    function proposeSuccessor(address _successor) external;
 
-    function migrate() external;
+    function migrate(address _proposer) external;
 }
