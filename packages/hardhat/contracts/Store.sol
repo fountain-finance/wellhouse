@@ -74,7 +74,7 @@ contract Store {
         view
         returns (MoneyPool.Data memory)
     {
-        require(_mpId > 0 && _mpId <= mpCount, "Fountain::getMp: NOT_FOUND");
+        require(_mpId > 0 && _mpId <= mpCount, "Store::getMp: NOT_FOUND");
         return mp[_mpId];
     }
 
@@ -91,7 +91,7 @@ contract Store {
         MoneyPool.Data memory _sMp = _standbyMp(_owner);
         MoneyPool.Data memory _aMp = _activeMp(_owner);
         if (_sMp.id > 0 && _aMp.id > 0) return _sMp;
-        require(_aMp.id > 0, "Fountain::getQueuedMp: NOT_FOUND");
+        require(_aMp.id > 0, "Store::getQueuedMp: NOT_FOUND");
         return _aMp._nextUp();
     }
 
@@ -105,7 +105,7 @@ contract Store {
         view
         returns (MoneyPool.Data memory _mp)
     {
-        require(latestMpId[_owner] > 0, "Fountain::getCurrentMp: NOT_FOUND");
+        require(latestMpId[_owner] > 0, "Store::getCurrentMp: NOT_FOUND");
         _mp = _activeMp(_owner);
         if (_mp.id > 0) return _mp;
         _mp = _standbyMp(_owner);
@@ -122,13 +122,13 @@ contract Store {
     function getTappableAmount(uint256 _mpId) external view returns (uint256) {
         require(
             _mpId > 0 && _mpId <= mpCount,
-            "Fountain::getTappableAmount:: NOT_FOUND"
+            "Store::getTappableAmount:: NOT_FOUND"
         );
         return mp[_mpId]._tappableAmount();
     }
 
     /**
-        @notice The amount of redistribution that can be claimed by the given address in the Fountain ecosystem.
+        @notice The amount of redistribution that can be claimed by the given address.
         @dev This function runs the same routine as _redistributeAmount to determine the summed amount.
         Look there for more documentation.
         @param _beneficiary The address to get an amount for.
@@ -222,7 +222,7 @@ contract Store {
         if (_mp.id > 0) return _mp;
         // No upcoming moneyPool found, clone the latest moneyPool
         _mp = mp[latestMpId[_owner]];
-        require(_mp.id > 0, "Fountain::_mpToSustain: NOT_FOUND");
+        require(_mp.id > 0, "Store::_mpToSustain: NOT_FOUND");
         // Use a start date that's a multiple of the duration.
         // This creates the effect that there have been scheduled Money pools ever since the `latest`, even if `latest` is a long time in the past.
         MoneyPool.Data storage _newMp =
