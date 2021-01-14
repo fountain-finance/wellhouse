@@ -8,12 +8,12 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./interfaces/ITreasury.sol";
-import "./interfaces/IFountain.sol";
+import "./interfaces/IController.sol";
 
 import "./Store.sol";
 
 /// @notice The contract managing the state of all Money pools.
-contract Fountain is IFountain, AccessControl {
+contract Controller is IController, AccessControl {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using MoneyPool for MoneyPool.Data;
@@ -386,7 +386,7 @@ contract Fountain is IFountain, AccessControl {
             "Fountain::appointTreasury: ZERO_ADDRESS"
         );
         require(
-            _newTreasury.fountain() == address(this),
+            _newTreasury.controller() == address(this),
             "Fountain::appointTreasury: INCOMPATIBLE"
         );
 

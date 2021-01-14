@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./ITreasury.sol";
 
-interface IFountain {
+interface IController {
     /// @notice This event should trigger when an owner initialized their tickets.
     event InitializeTicket(address owner, string name, string symbol);
 
