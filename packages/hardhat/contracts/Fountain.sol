@@ -54,7 +54,7 @@ contract Fountain is IFountain, AccessControl {
     /// @notice The treasury that manages funds.
     /// @dev Reassignable by the owner.
     ITreasury public treasury;
-    /// @notice A successor contract to this one.
+    /// @notice A successor contract to this contract, if there is one.
     /// @dev Reassignable by the owner, but Ticket issuance must be migrated by owners.
     address public successor;
     /// @notice The contract currently only supports sustainments in dai.
