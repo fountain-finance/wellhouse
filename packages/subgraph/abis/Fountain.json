@@ -8,13 +8,13 @@
       },
       {
         "internalType": "contract IERC20",
-        "name": "_dai",
+        "name": "_rewardToken",
         "type": "address"
       },
       {
-        "internalType": "contract IERC20",
-        "name": "_rewardToken",
-        "type": "address"
+        "internalType": "contract IERC20[]",
+        "name": "_wantTokenAllowList",
+        "type": "address[]"
       }
     ],
     "stateMutability": "nonpayable",
@@ -314,19 +314,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_successor",
-        "type": "address"
-      }
-    ],
-    "name": "appointSuccessor",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "contract ITreasury",
         "name": "_newTreasury",
         "type": "address"
@@ -394,19 +381,6 @@
       }
     ],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "dai",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -532,7 +506,13 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_proposer",
+        "type": "address"
+      }
+    ],
     "name": "migrate",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -547,6 +527,19 @@
       }
     ],
     "name": "mintReservedTickets",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_successor",
+        "type": "address"
+      }
+    ],
+    "name": "proposeSuccessor",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -632,7 +625,13 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "name": "successor",
     "outputs": [
       {
@@ -723,8 +722,51 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "wantTokenAllowList",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "wantTokenIsAllowed",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "_token",
+        "type": "address"
       }
     ],
     "name": "withdrawFunds",

@@ -57,22 +57,28 @@ contract Fountain is IFountain, AccessControl {
     /// @notice Proposals for successor contracts to this contract.
     /// @dev Anyone can propose a successor contract, but Ticket issuance must be migrated by owners.
     mapping(address => address) public successor;
-    /// @notice The contract currently only supports sustainments in dai.
-    IERC20 public dai;
+    /// @notice If a particular token is allowed as a `want` token of a Money pool.
+    mapping(IERC20 => bool) public wantTokenIsAllowed;
+    /// @notice Tokens that are allowed to be want tokens.
+    IERC20[] public wantTokenAllowList;
     /// @notice The token that surplus is converted into.
     IERC20 public rewardToken;
 
     // --- external transactions --- //
     constructor(
         Store _store,
-        IERC20 _dai,
-        IERC20 _rewardToken
+        IERC20 _rewardToken,
+        IERC20[] memory _wantTokenAllowList
     ) public {
         store = _store;
-        dai = _dai;
         rewardToken = _rewardToken;
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+
+        for (uint256 i = 0; i < _wantTokenAllowList.length; i++)
+            wantTokenIsAllowed[_wantTokenAllowList[i]] = true;
+
+        wantTokenAllowList = _wantTokenAllowList;
     }
 
     /**
@@ -132,8 +138,11 @@ contract Fountain is IFountain, AccessControl {
             "Fountain::configureMp: NEEDS_INITIALIZATION"
         );
         require(_duration >= 6, "Fountain::configureMp: TOO_SHORT");
-        require(_want == dai, "Fountain::configureMp: UNSUPPORTED_WANT");
         require(_target > 0, "Fountain::configureMp: BAD_TARGET");
+        require(
+            wantTokenIsAllowed[_want],
+            "Fountain::configureMp: UNSUPPORTED_WANT"
+        );
         require(_bias > 70 && _bias <= 130, "Fountain:configureMP: BAD_BIAS");
         require(
             bytes(_title).length > 0 && bytes(_title).length <= 32,
@@ -318,31 +327,6 @@ contract Fountain is IFountain, AccessControl {
     }
 
     /**
-        @notice Replaces the current treasury with a new one. All funds will move over.
-        @param _newTreasury The new treasury.
-    */
-    function appointTreasury(ITreasury _newTreasury)
-        external
-        override
-        onlyAdmin
-    {
-        require(
-            _newTreasury != ITreasury(0),
-            "Fountain::appointTreasury: ZERO_ADDRESS"
-        );
-        require(
-            _newTreasury.fountain() == address(this),
-            "Fountain::appointTreasury: INCOMPATIBLE"
-        );
-        if (treasury != ITreasury(0)) {
-            IERC20[] storage _tokens;
-            _tokens.push(dai);
-            treasury.transition(address(_newTreasury), _tokens);
-        }
-        treasury = _newTreasury;
-    }
-
-    /**
         @notice Appoints a successor to this contracts that Ticket owners can migrate to.
         @param _successor The successor contract.
     */
@@ -372,8 +356,36 @@ contract Fountain is IFountain, AccessControl {
         @notice Allows the owner of the contract to withdraw phase 1 funds.
         @param _amount The amount to withdraw.
     */
-    function withdrawFunds(uint256 _amount) external override onlyAdmin {
+    function withdrawFunds(uint256 _amount, IERC20 _token)
+        external
+        override
+        onlyAdmin
+    {
         require(treasury != ITreasury(0), "Fountain::withdrawFunds: BAD_STATE");
-        treasury.withdraw(msg.sender, dai, _amount);
+        treasury.withdraw(msg.sender, _token, _amount);
+    }
+
+    /**
+        @notice Replaces the current treasury with a new one. All funds will move over.
+        @param _newTreasury The new treasury.
+    */
+    function appointTreasury(ITreasury _newTreasury)
+        external
+        override
+        onlyAdmin
+    {
+        require(
+            _newTreasury != ITreasury(0),
+            "Fountain::appointTreasury: ZERO_ADDRESS"
+        );
+        require(
+            _newTreasury.fountain() == address(this),
+            "Fountain::appointTreasury: INCOMPATIBLE"
+        );
+
+        if (treasury != ITreasury(0))
+            treasury.transition(address(_newTreasury), wantTokenAllowList);
+
+        treasury = _newTreasury;
     }
 }

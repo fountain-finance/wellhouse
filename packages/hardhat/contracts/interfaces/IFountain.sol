@@ -82,7 +82,7 @@ interface IFountain {
 
     function appointTreasury(ITreasury _newTreasury) external;
 
-    function withdrawFunds(uint256 _amount) external;
+    function withdrawFunds(uint256 _amount, IERC20 _token) external;
 
     function proposeSuccessor(address _successor) external;
 

@@ -12,7 +12,7 @@ interface ITreasury {
 
     function phase3() external returns (ITreasuryPhase);
 
-    function withdrawableFunds() external returns (uint256);
+    function withdrawableFunds(IERC20 _token) external returns (uint256);
 
     function fountain() external returns (address);
 
