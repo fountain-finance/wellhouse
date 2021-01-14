@@ -11,9 +11,9 @@ const main = async () => {
   const token = await deploy("Token");
   const flow = await deploy("Flow");
   const store = await deploy("Store");
-  const fountain = await deploy("Fountain", [store.address, flow.address, [token.address]]); // <-- add in constructor args like line 16 vvvv
+  const fountain = await deploy("Fountain", [store.address, flow.address, [token.address]]); 
   await deploy("Treasury", [flow.address, fountain.address]);
-  await deploy("TreasuryPhase1", [100000]);
+  await deploy("TreasuryPhase1", [700000E18]);
 
   // const exampleToken = await deploy("ExampleToken")
   // const examplePriceOracle = await deploy("ExamplePriceOracle")

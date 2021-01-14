@@ -161,14 +161,16 @@ library MoneyPool {
         @notice The weight that a certain amount carries in this Money pool.
         @param self The Money pool to get the weight from.
         @param _amount The amount to get the weight of.
+        @param _percentage The percentage of surplus to account for.
         @return state The weighted amount.
     */
-    function _weighted(Data memory self, uint256 _amount)
-        internal
-        pure
-        returns (uint256)
-    {
-        return self.weight.mul(_amount).div(self.target).mul(_s(self)).div(100);
+    function _weighted(
+        Data memory self,
+        uint256 _amount,
+        uint256 _percentage
+    ) internal pure returns (uint256) {
+        return
+            self.weight.mul(_amount).mul(_percentage).div(self.target).div(100);
     }
 
     // --- private views --- //
