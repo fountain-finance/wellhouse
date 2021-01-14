@@ -8,7 +8,7 @@
       },
       {
         "internalType": "address",
-        "name": "_fountain",
+        "name": "_controller",
         "type": "address"
       }
     ],
@@ -100,10 +100,10 @@
   },
   {
     "inputs": [],
-    "name": "flow",
+    "name": "controller",
     "outputs": [
       {
-        "internalType": "contract Flow",
+        "internalType": "address",
         "name": "",
         "type": "address"
       }
@@ -113,10 +113,10 @@
   },
   {
     "inputs": [],
-    "name": "fountain",
+    "name": "flow",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "contract Flow",
         "name": "",
         "type": "address"
       }

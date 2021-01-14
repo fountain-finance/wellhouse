@@ -2,31 +2,31 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "./../interfaces/IFountain.sol";
+import "./../interfaces/IController.sol";
 
 abstract contract MoneyPoolOwner {
     using SafeERC20 for IERC20;
 
     /// @dev A reference to the Fountain contract.
-    IFountain private fountain;
+    IController private controller;
 
     /// @dev The token this contract wants to be funded in.
     IERC20 public want;
 
-    /// @notice Emitted when a new Fountain contract is set.
-    event ResetFountain(
-        IFountain indexed previousFountain,
-        IFountain indexed newFountain
+    /// @notice Emitted when a new Controller contract is set.
+    event ResetController(
+        IController indexed previousController,
+        IController indexed newController
     );
 
     constructor(
-        IFountain _fountain,
+        IController _controller,
         string memory _name,
         string memory _symbol,
         IERC20 _want
     ) internal {
-        _setFountain(_fountain);
-        fountain.initializeTicket(_name, _symbol);
+        _setController(_controller);
+        controller.initializeTicket(_name, _symbol);
         want = _want;
     }
 
@@ -36,27 +36,27 @@ abstract contract MoneyPoolOwner {
         @param _amount The amount to tap into.
     */
     function _tapMp(uint256 _mpId, uint256 _amount) internal {
-        fountain.tapMp(_mpId, _amount, msg.sender);
+        controller.tapMp(_mpId, _amount, msg.sender);
     }
 
     /**
-        @notice This allows you to reset the Fountain contract that's running your Tickets.
+        @notice This allows you to reset the Controller contract that's running your Tickets.
         @dev Useful in case you need to switch to an updated Fountain contract
         without redeploying your contract.
-        @dev You should also set the Fountain for the first time in your constructor.
-        @param _newFountain The new Fountain contract.
+        @dev You should also set the Controller for the first time in your constructor.
+        @param _newController The new Controller contract.
     */
-    function _setFountain(IFountain _newFountain) internal {
+    function _setController(IController _newController) internal {
         require(
-            _newFountain != IFountain(0),
-            "MoneyPoolOwner::setFountain: ZERO_ADDRESS"
+            _newController != IController(0),
+            "MoneyPoolOwner::_setController: ZERO_ADDRESS"
         );
         require(
-            _newFountain != fountain,
-            "MoneyPoolOwner::setFountain: NO_CHANGE"
+            _newController != controller,
+            "MoneyPoolOwner::_setController: NO_CHANGE"
         );
-        fountain = _newFountain;
-        emit ResetFountain(fountain, _newFountain);
+        controller = _newController;
+        emit ResetController(controller, _newController);
     }
 
     /**
@@ -92,10 +92,10 @@ abstract contract MoneyPoolOwner {
         address _bAddress
     ) internal virtual returns (uint256) {
         // Increse the allowance so that Fountain can transfer excess want tokens from this contract's wallet into a MoneyPool.
-        _want.safeIncreaseAllowance(address(fountain), 100000000000000E18);
+        _want.safeIncreaseAllowance(address(controller), 100000000000000E18);
 
         return
-            fountain.configureMp(
+            controller.configureMp(
                 _target,
                 _duration,
                 _want,
@@ -123,7 +123,7 @@ abstract contract MoneyPoolOwner {
         uint256 _expectedConvertedAmount
     ) internal returns (uint256) {
         return
-            fountain.sustainOwner(
+            controller.sustainOwner(
                 address(this),
                 _amount,
                 want,

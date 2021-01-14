@@ -14,7 +14,7 @@ interface ITreasury {
 
     function withdrawableFunds(IERC20 _token) external returns (uint256);
 
-    function fountain() external returns (address);
+    function controller() external returns (address);
 
     event Transform(
         IERC20 from,

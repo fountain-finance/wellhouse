@@ -12,17 +12,17 @@ contract TreasuryPhase1 is ITreasuryPhase {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
+    /// @notice The max amount of tokens to issue.
+    uint256 public constant override cap = 700000E18;
+
     /// @notice The address that deployed this contract.
     address public override deployer;
     /// @notice Amount of each token issued.
     mapping(IERC20 => uint256) public override tokensIssued;
     /// @notice The address where funds are managed
     address public override treasury;
-    /// @notice The max amount of tokens to issue.
-    uint256 public override cap;
 
-    constructor(uint256 _cap) public {
-        cap = _cap;
+    constructor() public {
         deployer = msg.sender;
     }
 

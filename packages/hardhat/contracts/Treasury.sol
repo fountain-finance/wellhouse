@@ -13,8 +13,8 @@ contract Treasury is ITreasury {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    modifier onlyFountain {
-        require(msg.sender == fountain, "Treasury: UNAUTHORIZED");
+    modifier onlyController {
+        require(msg.sender == controller, "Treasury: UNAUTHORIZED");
         _;
     }
 
@@ -38,11 +38,11 @@ contract Treasury is ITreasury {
     ITreasuryPhase public override phase3;
     /// @notice Amount each tokens from Phase 1 and Phase 2 that have yet to be withdrawn.
     mapping(IERC20 => uint256) public override withdrawableFunds;
-    /// @notice The Fountain that this Treasury belongs to.
-    address public override fountain;
+    /// @notice The controller that this Treasury belongs to.
+    address public override controller;
 
-    constructor(Flow _flow, address _fountain) public {
-        fountain = _fountain;
+    constructor(Flow _flow, address _controller) public {
+        controller = _controller;
         flow = _flow;
     }
 
@@ -113,7 +113,7 @@ contract Treasury is ITreasury {
         uint256 _amount,
         IERC20 _to,
         uint256 _expectedConvertedAmount
-    ) external override onlyFountain returns (uint256 _resultingAmount) {
+    ) external override onlyController returns (uint256 _resultingAmount) {
         Phase _phase = _getPhase(_to);
         require(_phase != Phase.None, "Treasury::transform: BAD_STATE");
         if (_phase == Phase.One) {
@@ -159,7 +159,7 @@ contract Treasury is ITreasury {
         address _receiver,
         IERC20 _token,
         uint256 _amount
-    ) external override onlyFountain {
+    ) external override onlyController {
         _token.safeTransfer(_receiver, _amount);
     }
 
@@ -167,7 +167,7 @@ contract Treasury is ITreasury {
         address _to,
         IERC20 _token,
         uint256 _amount
-    ) external override onlyFountain {
+    ) external override onlyController {
         require(
             withdrawableFunds[_token] >= _amount,
             "Treasury::withdrawFunds: INSUFFICIENT_FUNDS"
@@ -179,7 +179,7 @@ contract Treasury is ITreasury {
     function transition(address _newTreasury, IERC20[] calldata _tokens)
         external
         override
-        onlyFountain
+        onlyController
     {
         flow.replaceTreasury(_newTreasury);
         IERC20(flow).safeTransfer(_newTreasury, flow.balanceOf(address(this)));
