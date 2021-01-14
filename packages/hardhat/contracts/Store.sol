@@ -165,104 +165,6 @@ contract Store {
 
     // --- external transactions --- //
 
-    /** 
-        @notice Configures the description of a Money pool.
-        @param _mpId The ID of the Money pool to configure.
-        @param _title The title of the Money pool.
-        @param _link A link to associate with the Money pool.
-    */
-    function configureMpDescription(
-        uint256 _mpId,
-        string calldata _title,
-        string calldata _link
-    ) external onlyController returns (MoneyPool.Data memory) {
-        MoneyPool.Data storage _mp = mp[_mpId];
-        _mp.title = _title;
-        _mp.link = _link;
-        return _mp;
-    }
-
-    /** 
-        @notice Configures the core properties of a Money pool.
-        @param _mpId The ID of the Money pool to configure.
-        @param _target The sustainability target to set.
-        @param _duration The duration to set, measured in seconds.
-        @param _want The token that the Money pool wants.
-        @param _start The new start time.
-    */
-    function configureMpFundingSchedule(
-        uint256 _mpId,
-        uint256 _target,
-        uint256 _duration,
-        IERC20 _want,
-        uint256 _start
-    ) external onlyController returns (MoneyPool.Data memory) {
-        MoneyPool.Data storage _mp = mp[_mpId];
-        _mp.target = _target;
-        _mp.duration = _duration;
-        _mp.want = _want;
-        _mp.start = _start;
-        return _mp;
-    }
-
-    /** 
-        @notice Configures the properties of a Money pool that affect redistribution.
-        @param _mpId The ID of the Money pool to configure.
-        @param _bias The new bias.
-        @param _o The new owner share.
-        @param _b The new beneficiary share.
-        @param _bAddress The new beneficiary address.
-    */
-    function configureMpRedistribution(
-        uint256 _mpId,
-        uint256 _bias,
-        uint256 _o,
-        uint256 _b,
-        address _bAddress
-    ) external onlyController returns (MoneyPool.Data memory) {
-        MoneyPool.Data storage _mp = mp[_mpId];
-        _mp.bias = _bias;
-        _mp.o = _o;
-        _mp.b = _b;
-        _mp.bAddress = _bAddress;
-        return _mp;
-    }
-
-    /** 
-        @notice Contribute a specified amount to the sustainability of a Money pool.
-        @param _mpId The ID of the Money pool to sustain.
-        @param _amount Incrmented amount of sustainment.
-        @return _surplus The amount of surplus in the Money pool after adding.
-    */
-    function addToMp(uint256 _mpId, uint256 _amount)
-        external
-        onlyController
-        returns (uint256)
-    {
-        MoneyPool.Data storage _mp = mp[_mpId];
-        // Increment the total amount contributed to the sustainment of the Money pool.
-        _mp.total = _mp.total.add(_amount);
-        return _mp.total > _mp.target ? _mp.total.sub(_mp.target) : 0;
-    }
-
-    /** 
-        @dev Increase the amount that has been tapped by the Money pool's owner.
-        @param _mpId The ID of the Money pool to tap.
-        @param _amount The amount to tap.
-    */
-    function tapFromMp(uint256 _mpId, uint256 _amount) external onlyController {
-        MoneyPool.Data storage _mp = mp[_mpId];
-        _mp.tapped = _mp.tapped.add(_amount);
-    }
-
-    /** 
-        @notice Marks a Money pool as having minted all of its reserves.
-        @param _mpId The ID of the Money pool to sustain.
-    */
-    function markMpReservesAsMinted(uint256 _mpId) external onlyController {
-        mp[_mpId].hasMintedReserves = true;
-    }
-
     /**
         @notice Saves a Ticket to storage for the provided owner.
         @param _owner The owner of the Ticket.
@@ -354,6 +256,16 @@ contract Store {
                 : _initMp(_owner, block.timestamp, MP_BASE_WEIGHT);
         if (_mp.id > 0) _newMp._basedOn(_mp);
         return _newMp;
+    }
+
+    // --- public transactions --- //
+
+    /** 
+        @notice Saves a Money pool.
+        @param _mp The Money pool to save.
+    */
+    function saveMp(MoneyPool.Data memory _mp) public onlyController {
+        mp[_mp.id] = _mp;
     }
 
     // --- private transactions --- //

@@ -144,17 +144,25 @@ contract Fountain is IFountain, AccessControl {
             "Fountain::configureMp: BAD_LINK"
         );
         require(_o.add(_b) <= 100, "Fountain::configureMp: BAD_PERCENTAGES");
+
         MoneyPool.Data memory _mp = store.standbyMp(msg.sender);
+
+        _mp.title = _title;
+        _mp.link = _link;
+        _mp.target = _target;
+        _mp.duration = _duration;
+        _mp.want = _want;
         // Reset the start time to now if there isn't an active Money pool.
-        _mp = store.configureMpDescription(_mp.id, _title, _link);
-        _mp = store.configureMpFundingSchedule(
-            _mp.id,
-            _target,
-            _duration,
-            _want,
-            store.activeMp(msg.sender).id == 0 ? block.timestamp : _mp.start
-        );
-        _mp = store.configureMpRedistribution(_mp.id, _bias, _o, _b, _bAddress);
+        _mp.start = store.activeMp(msg.sender).id == 0
+            ? block.timestamp
+            : _mp.start;
+        _mp.bias = _bias;
+        _mp.o = _o;
+        _mp.b = _b;
+        _mp.bAddress = _bAddress;
+
+        store.saveMp(_mp);
+
         emit ConfigureMp(
             _mp.id,
             _mp.owner,
@@ -195,7 +203,10 @@ contract Fountain is IFountain, AccessControl {
         require(_want == _mp.want, "Fountain::sustainOwner: UNEXPECTED_WANT");
         _mp.want.safeTransferFrom(msg.sender, address(treasury), _amount);
         // Add the amount to the Money pool, which determines how much Flow was made available as a result.
-        uint256 _surplus = store.addToMp(_mp.id, _amount);
+        _mp.total = _mp.total.add(_amount);
+        store.saveMp(_mp);
+        uint256 _surplus =
+            _mp.total > _mp.target ? _mp.total.sub(_mp.target) : 0;
         if (_surplus > 0) {
             uint256 _overflowAmount =
                 treasury.transform(
@@ -270,7 +281,8 @@ contract Fountain is IFountain, AccessControl {
             _tappableAmount >= _amount,
             "Fountain::collectSustainment: INSUFFICIENT_FUNDS"
         );
-        store.tapFromMp(_mp.id, _amount);
+        _mp.tapped = _mp.tapped.add(_amount);
+        store.saveMp(_mp);
         treasury.payout(_beneficiary, _mp.want, _amount);
         require(
             _tappableAmount.sub(_amount) == store.getTappableAmount(_mp.id),
@@ -298,7 +310,8 @@ contract Fountain is IFountain, AccessControl {
                     _ticket.mint(_mp.owner, _baseAmount.mul(_mp.o).div(100));
                 if (_mp.b > 0)
                     _ticket.mint(_mp.bAddress, _baseAmount.mul(_mp.b).div(100));
-                store.markMpReservesAsMinted(_mp.id);
+                _mp.hasMintedReserves = true;
+                store.saveMp(_mp);
             }
             _mp = store.getMp(_mp.previous);
         }
