@@ -9,11 +9,12 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./interfaces/ITreasury.sol";
 import "./interfaces/IController.sol";
+import "./interfaces/ITicketStand.sol";
 
 import "./Store.sol";
 
 /// @notice The contract managing the state of all Money pools.
-contract Controller is IController, AccessControl {
+contract Controller is IController, ITicketStand, AccessControl {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using MoneyPool for MoneyPool.Data;
@@ -51,27 +52,24 @@ contract Controller is IController, AccessControl {
     /// @notice The contract storing all state variables.
     /// @dev Immutable.
     Store public store;
+
     /// @notice The treasury that manages funds.
     /// @dev Reassignable by the owner.
     ITreasury public treasury;
+
     /// @notice Proposals for successor contracts to this contract.
     /// @dev Anyone can propose a successor contract, but Ticket issuance must be migrated by owners.
     mapping(address => address) public successor;
+
     /// @notice If a particular token is allowed as a `want` token of a Money pool.
     mapping(IERC20 => bool) public wantTokenIsAllowed;
+
     /// @notice Tokens that are allowed to be want tokens.
     IERC20[] public wantTokenAllowList;
-    /// @notice The token that surplus is converted into.
-    IERC20 public rewardToken;
 
     // --- external transactions --- //
-    constructor(
-        Store _store,
-        IERC20 _rewardToken,
-        IERC20[] memory _wantTokenAllowList
-    ) public {
+    constructor(Store _store, IERC20[] memory _wantTokenAllowList) public {
         store = _store;
-        rewardToken = _rewardToken;
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
@@ -86,11 +84,13 @@ contract Controller is IController, AccessControl {
         @dev Deploys an owners redistribution share tokens.
         @param _name If this is the message sender's first Money pool configuration, this name is used for ERC-20 token's tracking surplus shares for this owner.
         @param _symbol The tokens symbol.
+        @param _redeemableFor The token that the ticket is redeemable for.
     */
-    function initializeTicket(string calldata _name, string calldata _symbol)
-        external
-        override
-    {
+    function initializeTicket(
+        string calldata _name,
+        string calldata _symbol,
+        IERC20 _redeemableFor
+    ) external override {
         require(
             store.ticket(msg.sender) == Ticket(0),
             "Controller::initializeProject: ALREADY_INITIALIZED"
@@ -99,8 +99,11 @@ contract Controller is IController, AccessControl {
             bytes(_name).length != 0 && bytes(_symbol).length != 0,
             "Controller::configureMp: BAD_PARAMS"
         );
-        store.assignTicket(msg.sender, new Ticket(_name, _symbol));
-        emit InitializeTicket(msg.sender, _name, _symbol);
+        store.assignTicket(
+            msg.sender,
+            new Ticket(_name, _symbol, msg.sender, this, _redeemableFor)
+        );
+        emit InitializeTicket(msg.sender, _name, _symbol, _redeemableFor);
     }
 
     /**
@@ -133,8 +136,9 @@ contract Controller is IController, AccessControl {
         uint256 _b,
         address _bAddress
     ) external override returns (uint256) {
+        Ticket _ticket = store.ticket(msg.sender);
         require(
-            store.ticket(msg.sender) != Ticket(0),
+            _ticket != Ticket(0),
             "Controller::configureMp: NEEDS_INITIALIZATION"
         );
         require(_duration >= 6, "Controller::configureMp: TOO_SHORT");
@@ -171,6 +175,7 @@ contract Controller is IController, AccessControl {
         _mp.bAddress = _bAddress;
 
         store.saveMp(_mp);
+        store.trackAcceptedToken(msg.sender, _ticket.redeemableFor(), _want);
 
         emit ConfigureMp(
             _mp.id,
@@ -195,15 +200,13 @@ contract Controller is IController, AccessControl {
         @param _amount Amount of sustainment.
         @param _want Must match the `want` token for the Money pool being sustained.
         @param _beneficiary The address to associate with this sustainment. This is usually mes.sender, but can be something else if the sender is making this sustainment on the beneficiary's behalf.
-        @param _expectedConvertedAmount The expected number of reward tokens to convert surplus into.
         @return _mpId The ID of the Money pool that was successfully sustained.
     */
     function sustainOwner(
         address _owner,
         uint256 _amount,
         IERC20 _want,
-        address _beneficiary,
-        uint256 _expectedConvertedAmount
+        address _beneficiary
     ) external override lockSustain returns (uint256) {
         require(
             treasury != ITreasury(0),
@@ -236,34 +239,54 @@ contract Controller is IController, AccessControl {
 
         store.saveMp(_mp);
 
-        // Exchange any surplus for the reward.
+        Ticket _ticket = store.ticket(_mp.owner);
+
         if (_surplus > 0) {
-            // Transforming during a sustainment might prove to be too expensive.
-            // Might wanna make transforms happen with async transactions.
-            uint256 _overflowAmount =
-                treasury.transform(
-                    _mp.want,
-                    _surplus,
-                    rewardToken,
-                    _surplus.mul(_expectedConvertedAmount).div(_amount)
-                );
-            store.addRedeemable(_mp.owner, rewardToken, _overflowAmount);
+            store.addTransformable(
+                _mp.owner,
+                _mp.want,
+                _surplus,
+                _ticket.redeemableFor()
+            );
         }
 
-        store.ticket(_mp.owner).mint(
-            _beneficiary,
-            _mp._weighted(_amount, _mp._s())
-        );
+        _ticket.mint(_beneficiary, _mp._weighted(_amount, _mp._s()));
+
         emit SustainMp(
             _mp.id,
             _mp.owner,
             _beneficiary,
             msg.sender,
             _amount,
-            _mp.want,
-            store.getCurrentTicketValue(_mp.owner, rewardToken)
+            _mp.want
         );
         return _mp.id;
+    }
+
+    /**
+        @notice Transforms any pending surplus from an owner's `want` token to the redeemable token.
+        @param _from The token to transform from.
+        @param _amount Amount to transform.
+        @param _to The token to transform to.
+        @param _expectedTransformedAmount The amount of redeemable tokens transformed from `want` tokens.
+    */
+    function transform(
+        address _owner,
+        IERC20 _from,
+        uint256 _amount,
+        IERC20 _to,
+        uint256 _expectedTransformedAmount
+    ) external {
+        require(_amount > 0, "Controller::transform: BAD_AMOUNT");
+        uint256 _transformable = store.transformable(_owner, _from, _to);
+        require(
+            _transformable >= _amount,
+            "Controller::transform: INSUFFICIENT_FUNDS"
+        );
+        uint256 _transformedAmount =
+            treasury.transform(_from, _amount, _to, _expectedTransformedAmount);
+        store.addRedeemable(_owner, _to, _transformedAmount);
+        store.subtractTransformable(_owner, _from, _amount, _to);
     }
 
     /**
@@ -277,19 +300,22 @@ contract Controller is IController, AccessControl {
         lockRedeem
     {
         require(treasury != ITreasury(0), "Controller::redeem: BAD_STATE");
+        Ticket _ticket = store.ticket(_owner);
+        IERC20 _redeemableFor = _ticket.redeemableFor();
         uint256 _redeemableAmount =
-            store.getRedeemableAmount(msg.sender, _owner, rewardToken);
+            store.getRedeemableAmount(msg.sender, _owner, _redeemableFor);
         require(
             _redeemableAmount >= _amount,
             "Controller::redeem: INSUFFICIENT_FUNDS"
         );
-        Ticket _ticket = store.ticket(_owner);
         _ticket.burn(msg.sender, _amount);
-        store.subtractRedeemable(_owner, rewardToken, _amount);
-        treasury.payout(msg.sender, rewardToken, _amount);
+        store.subtractRedeemable(_owner, _redeemableFor, _amount);
+        treasury.payout(msg.sender, _redeemableFor, _amount);
+
+        // Not sure if this is needed. Just being safe.
         require(
             _redeemableAmount.sub(_amount) ==
-                store.getRedeemableAmount(msg.sender, _owner, rewardToken),
+                store.getRedeemableAmount(msg.sender, _owner, _redeemableFor),
             "Controller::redeem: POSTCONDITION_FAILED"
         );
         emit Redeem(msg.sender, _amount);
@@ -320,6 +346,7 @@ contract Controller is IController, AccessControl {
         _mp.tapped = _mp.tapped.add(_amount);
         store.saveMp(_mp);
         treasury.payout(_beneficiary, _mp.want, _amount);
+        // Not sure if this is needed. Just being safe.
         require(
             _tappableAmount.sub(_amount) == store.getTappableAmount(_mp.id),
             "Controller::redeem: POSTCONDITION_FAILED"
@@ -355,6 +382,19 @@ contract Controller is IController, AccessControl {
             }
             _mp = store.getMp(_mp.previous);
         }
+    }
+
+    /**
+        @dev Does some clean up for an array in the store.
+        Probable hardly ever needed.
+        @param _owner The owner of the accepted tokens.
+        @param _redeemableToken The token that is redeemable by the accepted tokens being cleaned.
+    */
+    function cleanTrackedAcceptedTokens(address _owner, IERC20 _redeemableToken)
+        external
+        override
+    {
+        store.cleanTrackedAcceptedTokens(_owner, _redeemableToken);
     }
 
     /**

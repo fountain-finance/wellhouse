@@ -6,9 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./ITreasury.sol";
 
 interface IController {
-    /// @notice This event should trigger when an owner initialized their tickets.
-    event InitializeTicket(address owner, string name, string symbol);
-
     /// @notice This event should trigger when a Money pool is configured.
     event ConfigureMp(
         uint256 indexed mpId,
@@ -31,12 +28,8 @@ interface IController {
         address indexed beneficiary,
         address sustainer,
         uint256 amount,
-        IERC20 want,
-        uint256 currentTicketValue
+        IERC20 want
     );
-
-    /// @notice This event should trigger when redistributions are collected.
-    event Redeem(address indexed sustainer, uint256 amount);
 
     /// @notice This event should trigger when sustainments are collected.
     event TapMp(
@@ -46,9 +39,6 @@ interface IController {
         uint256 amount,
         IERC20 want
     );
-
-    function initializeTicket(string calldata _name, string calldata _symbol)
-        external;
 
     function configureMp(
         uint256 _target,
@@ -66,11 +56,8 @@ interface IController {
         address _owner,
         uint256 _amount,
         IERC20 _want,
-        address _beneficiary,
-        uint256 _convertedFlowAmount
+        address _beneficiary
     ) external returns (uint256 _mpId);
-
-    function redeem(address _owner, uint256 _amount) external;
 
     function tapMp(
         uint256 _mpId,
@@ -79,6 +66,8 @@ interface IController {
     ) external;
 
     function mintReservedTickets(address _owner) external;
+
+    function cleanTrackedAcceptedTokens(address _owner, IERC20 _token) external;
 
     function appointTreasury(ITreasury _newTreasury) external;
 

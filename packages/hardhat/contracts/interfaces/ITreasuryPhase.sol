@@ -16,7 +16,7 @@ interface ITreasuryPhase {
         IERC20 _from,
         uint256 _amount,
         IERC20 _to,
-        uint256 _expectedConvertedAmount
+        uint256 _expectedTransformAmount
     ) external returns (uint256 _converted);
 
     function assignTreasury(address _treasury) external;

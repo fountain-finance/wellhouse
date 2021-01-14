@@ -3,11 +3,11 @@ pragma solidity >=0.6.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./Math.sol";
 
-/// @notice Logic to manipulate MoneyPool data.
+/// @notice MoneyPool data and logic.
 library MoneyPool {
     using SafeMath for uint256;
 

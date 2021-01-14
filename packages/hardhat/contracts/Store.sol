@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "./libraries/MoneyPool.sol";
+import "./interfaces/ITicketStand.sol";
 
 contract Ticket is ERC20, AccessControl {
     modifier onlyAdmin {
@@ -14,11 +15,21 @@ contract Ticket is ERC20, AccessControl {
         _;
     }
 
-    constructor(string memory _name, string memory _symbol)
-        public
-        ERC20(_name, _symbol)
-    {
+    address public owner;
+    ITicketStand public stand;
+    IERC20 public redeemableFor;
+
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        address _owner,
+        ITicketStand _stand,
+        IERC20 _redeemableFor
+    ) public ERC20(_name, _symbol) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        stand = _stand;
+        owner = _owner;
+        redeemableFor = _redeemableFor;
     }
 
     function mint(address _account, uint256 _amount) external onlyAdmin {
@@ -42,7 +53,6 @@ contract Store {
     // --- private properties --- //
 
     // The official record of all Money pools ever created.
-    // TODO Making this public causes a Stack Too Deep error for some reason.
     mapping(uint256 => MoneyPool.Data) private mp;
 
     // --- public properties --- //
@@ -52,15 +62,23 @@ contract Store {
 
     /// @notice The address controlling this Store.
     address public controller;
-    /// @notice The tickets handed out to Money pool sustainers. Each owner has their own set of tickets.
+    /// @notice The Tickets handed out to Money pool sustainers. Each owner has their own Ticket contract.
     mapping(address => Ticket) public ticket;
-    /// @notice The current cumulative amount redistributable from each owner's Ticket.
+    /// @notice The current cumulative amount of redeemable tokens redistributable to each owner's Ticket holders.
     mapping(address => mapping(IERC20 => uint256)) public redeemable;
     /// @notice The latest Money pool for each owner address
     mapping(address => uint256) public latestMpId;
     /// @notice The total number of Money pools created, which is used for issuing Money pool IDs.
     /// @dev Money pools should have a ID > 0.
     uint256 public mpCount = 0;
+    /// @notice The amount of each token that is transformable into another token for each owner
+    mapping(address => mapping(IERC20 => mapping(IERC20 => uint256)))
+        public transformable;
+    /// @notice Tracks the kinds of tokens an owner has accepted relative to their tickets' redeemable token.
+    mapping(address => mapping(IERC20 => mapping(IERC20 => bool)))
+        public acceptedTokenTracker;
+    /// @notice The kinds of tokens an owner has accepted relative to their tickets' redeemable token.
+    mapping(address => mapping(IERC20 => IERC20[])) public acceptedTokens;
 
     // --- external views --- //
 
@@ -152,6 +170,7 @@ contract Store {
     /**
         @notice The value that a Ticket can be redeemed for.
         @param _owner The owner of the Ticket to get a value for.
+        @param _token The reward token of the Ticket to get a value for.
         @return _value The value.
     */
     function getCurrentTicketValue(address _owner, IERC20 _token)
@@ -161,6 +180,20 @@ contract Store {
     {
         Ticket _ticket = ticket[_owner];
         return redeemable[_owner][_token].div(_ticket.totalSupply());
+    }
+
+    /**
+        @notice All tokens that this owner has accepted.
+        @param _owner The owner to get accepted tokens for.
+        @param _token The token redeemable for the accepted tokens.
+        @return _tokens An array of tokens.
+    */
+    function getAcceptedTokens(address _owner, IERC20 _token)
+        external
+        view
+        returns (IERC20[] memory)
+    {
+        return acceptedTokens[_owner][_token];
     }
 
     // --- external transactions --- //
@@ -203,6 +236,81 @@ contract Store {
         uint256 _amount
     ) external onlyController {
         redeemable[_owner][_token] = redeemable[_owner][_token].sub(_amount);
+    }
+
+    /**
+        @notice Adds an amount that can be transformable from one token to another.
+        @param _owner The owner of the Tickets responsible for the funds.
+        @param _from The original token.
+        @param _amount The amount of token1 to make transformable.
+        @param _to The token to transform into.
+    */
+    function addTransformable(
+        address _owner,
+        IERC20 _from,
+        uint256 _amount,
+        IERC20 _to
+    ) external onlyController {
+        transformable[_owner][_from][_to] = transformable[_owner][_from][_to]
+            .add(_amount);
+    }
+
+    /**
+        @notice Subtracts the amount that can be transformable from one token to another.
+        @param _owner The owner of the Tickets responsible for the funds.
+        @param _from The original token.
+        @param _amount The amount of token1 to make transformable.
+        @param _to The token to transform into.
+    */
+    function subtractTransformable(
+        address _owner,
+        IERC20 _from,
+        uint256 _amount,
+        IERC20 _to
+    ) external onlyController {
+        transformable[_owner][_from][_to] = transformable[_owner][_from][_to]
+            .sub(_amount);
+    }
+
+    /**
+        @notice Tracks the kinds of tokens the specified owner has accepted historically.
+        @param _owner The owner associate the token with.
+        @param _redeemableToken The token that the tracked tokens can be redeemed for.
+        @param _token The token to track.
+    */
+    function trackAcceptedToken(
+        address _owner,
+        IERC20 _redeemableToken,
+        IERC20 _token
+    ) external onlyController {
+        if (!acceptedTokenTracker[_owner][_redeemableToken][_token]) {
+            acceptedTokens[_owner][_redeemableToken].push(_token);
+            acceptedTokenTracker[_owner][_redeemableToken][_token] = true;
+        }
+    }
+
+    /**
+        @notice Cleans the tracking array for an owner and a redeemable token.
+        @dev This never needs to get called, it's here precautionarily. 
+        @param _owner The owner of the Tickets responsible for the funds.
+        @param _token The redeemable token to clean accepted tokens for.
+    */
+    function cleanTrackedAcceptedTokens(address _owner, IERC20 _token)
+        external
+    {
+        IERC20[] memory currentAcceptedTokens = acceptedTokens[_owner][_token];
+        //Clear array
+        delete acceptedTokens[_owner][_token];
+        MoneyPool.Data memory _sMp = _standbyMp(_owner);
+        MoneyPool.Data memory _aMp = _activeMp(_owner);
+        for (uint256 i = 0; i < currentAcceptedTokens.length; i++) {
+            IERC20 _acceptedToken = currentAcceptedTokens[i];
+            if (
+                _aMp.want == _token ||
+                _sMp.want == _token ||
+                transformable[_owner][_acceptedToken][_token] > 0
+            ) acceptedTokens[_owner][_token].push(_acceptedToken);
+        }
     }
 
     /**
