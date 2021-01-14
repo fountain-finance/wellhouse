@@ -145,11 +145,11 @@ contract Controller is IController, AccessControl {
         );
         require(_bias > 70 && _bias <= 130, "Fountain:configureMP: BAD_BIAS");
         require(
-            bytes(_title).length > 0 && bytes(_title).length <= 32,
+            bytes(_title).length > 0 && bytes(_title).length <= 64,
             "Fountain::configureMp: BAD_TITLE"
         );
         require(
-            bytes(_link).length > 0 && bytes(_link).length <= 32,
+            bytes(_link).length > 0 && bytes(_link).length <= 64,
             "Fountain::configureMp: BAD_LINK"
         );
         require(_o.add(_b) <= 100, "Fountain::configureMp: BAD_PERCENTAGES");
@@ -322,7 +322,7 @@ contract Controller is IController, AccessControl {
     }
 
     /**
-        @notice Mints all tickets reserved for owners and beneficiary addresses from the Money pools of the specified owner.
+        @notice Mints all Tickets reserved for owners and beneficiary addresses from the Money pools of the specified owner.
         @param _owner The owner whose Money pools are being iterated through.
     */
     function mintReservedTickets(address _owner) external override {
@@ -352,7 +352,7 @@ contract Controller is IController, AccessControl {
     }
 
     /**
-        @notice Appoints a successor to this contracts that Ticket owners can migrate to.
+        @notice Proposes a successor to this contracts that Ticket owners can migrate to.
         @param _successor The successor contract.
     */
     function proposeSuccessor(address _successor) external override {
