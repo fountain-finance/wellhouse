@@ -31,7 +31,8 @@ interface IFountain {
         address indexed beneficiary,
         address sustainer,
         uint256 amount,
-        IERC20 want
+        IERC20 want,
+        uint256 currentTicketValue
     );
 
     /// @notice This event should trigger when redistributions are collected.

@@ -54,8 +54,8 @@ contract Store {
     address public controller;
     /// @notice The tickets handed out to Money pool sustainers. Each owner has their own set of tickets.
     mapping(address => Ticket) public ticket;
-    /// @notice The current cumulative amount redistributable from each owner's Money pools.
-    mapping(address => uint256) public redeemable;
+    /// @notice The current cumulative amount redistributable from each owner's Ticket.
+    mapping(address => mapping(IERC20 => uint256)) public redeemable;
     /// @notice The latest Money pool for each owner address
     mapping(address => uint256) public latestMpId;
     /// @notice The total number of Money pools created, which is used for issuing Money pool IDs.
@@ -132,18 +132,35 @@ contract Store {
         @dev This function runs the same routine as _redistributeAmount to determine the summed amount.
         Look there for more documentation.
         @param _beneficiary The address to get an amount for.
-        @param _owner The owner of the Money pools to get an amount for.
+        @param _owner The owner of the Tickets to get an amount for.
+        @param _token The token to get an amount for.
         @return _amount The amount.
     */
-    function getRedeemableAmount(address _beneficiary, address _owner)
+    function getRedeemableAmount(
+        address _beneficiary,
+        address _owner,
+        IERC20 _token
+    ) external view returns (uint256) {
+        Ticket _ticket = ticket[_owner];
+        uint256 _currentBalance = _ticket.balanceOf(_beneficiary);
+        return
+            redeemable[_owner][_token].mul(_currentBalance).div(
+                _ticket.totalSupply()
+            );
+    }
+
+    /**
+        @notice The value that a Ticket can be redeemed for.
+        @param _owner The owner of the Ticket to get a value for.
+        @return _value The value.
+    */
+    function getCurrentTicketValue(address _owner, IERC20 _token)
         external
         view
         returns (uint256)
     {
         Ticket _ticket = ticket[_owner];
-        uint256 _currentBalance = _ticket.balanceOf(_beneficiary);
-        return
-            redeemable[_owner].mul(_currentBalance).div(_ticket.totalSupply());
+        return redeemable[_owner][_token].div(_ticket.totalSupply());
     }
 
     // --- external transactions --- //
@@ -261,25 +278,29 @@ contract Store {
     /**
         @notice Adds an amount to the total that can be redeemable for the given owner's Ticket holders.
         @param _owner The owner of the Ticket.
+        @param _token The token to increment.
         @param _amount The amount to increment.
     */
-    function addRedeemable(address _owner, uint256 _amount)
-        external
-        onlyController
-    {
-        redeemable[_owner] = redeemable[_owner].add(_amount);
+    function addRedeemable(
+        address _owner,
+        IERC20 _token,
+        uint256 _amount
+    ) external onlyController {
+        redeemable[_owner][_token] = redeemable[_owner][_token].add(_amount);
     }
 
     /**
         @notice Subtracts an amount to the total that can be redeemable for the given owner's Ticket holders.
         @param _owner The owner of the Ticket.
+        @param _token The token to decrement.
         @param _amount The amount to decrement.
     */
-    function subtractRedeemable(address _owner, uint256 _amount)
-        external
-        onlyController
-    {
-        redeemable[_owner] = redeemable[_owner].sub(_amount);
+    function subtractRedeemable(
+        address _owner,
+        IERC20 _token,
+        uint256 _amount
+    ) external onlyController {
+        redeemable[_owner][_token] = redeemable[_owner][_token].sub(_amount);
     }
 
     /**
