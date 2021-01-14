@@ -210,12 +210,29 @@ contract Controller is IController, AccessControl {
         // Find the Money pool that this sustainment should go to.
         MoneyPool.Data memory _mp = store.activeMp(_owner);
         require(_want == _mp.want, "Fountain::sustainOwner: UNEXPECTED_WANT");
-        _mp.want.safeTransferFrom(msg.sender, address(treasury), _amount);
+
         // Add the amount to the Money pool, which determines how much Flow was made available as a result.
         _mp.total = _mp.total.add(_amount);
-        store.saveMp(_mp);
         uint256 _surplus =
             _mp.total > _mp.target ? _mp.total.sub(_mp.target) : 0;
+
+        // If the owner is sustaining themselves and theres no surplus, auto tap.
+        if (_mp.owner == msg.sender && _surplus < _amount) {
+            _mp.tapped = _mp.tapped.add(_amount.sub(_surplus));
+            // Transfer the surplus only.
+            if (_surplus > 0) {
+                _mp.want.safeTransferFrom(
+                    msg.sender,
+                    address(treasury),
+                    _surplus
+                );
+            }
+        } else {
+            _mp.want.safeTransferFrom(msg.sender, address(treasury), _amount);
+        }
+
+        store.saveMp(_mp);
+
         if (_surplus > 0) {
             uint256 _overflowAmount =
                 treasury.transform(
@@ -226,6 +243,7 @@ contract Controller is IController, AccessControl {
                 );
             store.addRedeemable(_mp.owner, rewardToken, _overflowAmount);
         }
+
         store.ticket(_mp.owner).mint(
             _beneficiary,
             _mp._weighted(_amount, _mp._s())
