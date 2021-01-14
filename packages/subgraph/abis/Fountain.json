@@ -13,7 +13,7 @@
       },
       {
         "internalType": "contract IERC20",
-        "name": "_reward",
+        "name": "_rewardToken",
         "type": "address"
       }
     ],
@@ -250,6 +250,12 @@
         "internalType": "contract IERC20",
         "name": "want",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "currentTicketValue",
+        "type": "uint256"
       }
     ],
     "name": "SustainMp",
@@ -601,7 +607,7 @@
   },
   {
     "inputs": [],
-    "name": "reward",
+    "name": "rewardToken",
     "outputs": [
       {
         "internalType": "contract IERC20",

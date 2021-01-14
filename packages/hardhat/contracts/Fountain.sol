@@ -60,17 +60,17 @@ contract Fountain is IFountain, AccessControl {
     /// @notice The contract currently only supports sustainments in dai.
     IERC20 public dai;
     /// @notice The token that surplus is converted into.
-    IERC20 public reward;
+    IERC20 public rewardToken;
 
     // --- external transactions --- //
     constructor(
         Store _store,
         IERC20 _dai,
-        IERC20 _reward
+        IERC20 _rewardToken
     ) public {
         store = _store;
         dai = _dai;
-        reward = _reward;
+        rewardToken = _rewardToken;
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -201,10 +201,10 @@ contract Fountain is IFountain, AccessControl {
                 treasury.transform(
                     _mp.want,
                     _surplus,
-                    reward,
+                    rewardToken,
                     _surplus.mul(_expectedConvertedAmount).div(_amount)
                 );
-            store.addRedeemable(_mp.owner, _overflowAmount);
+            store.addRedeemable(_mp.owner, rewardToken, _overflowAmount);
         }
         store.ticket(_mp.owner).mint(_beneficiary, _mp._weighted(_amount));
         emit SustainMp(
@@ -213,7 +213,8 @@ contract Fountain is IFountain, AccessControl {
             _beneficiary,
             msg.sender,
             _amount,
-            _mp.want
+            _mp.want,
+            store.getCurrentTicketValue(_mp.owner, rewardToken)
         );
         return _mp.id;
     }
@@ -229,12 +230,21 @@ contract Fountain is IFountain, AccessControl {
         lockCollect
     {
         require(treasury != ITreasury(0), "Fountain::redeem: BAD_STATE");
-        uint256 _available = store.getRedeemableAmount(msg.sender, _owner);
-        require(_available >= _amount, "Fountain::redeem: INSUFFICIENT_FUNDS");
-        treasury.payout(msg.sender, reward, _amount);
+        uint256 _redeemableAmount =
+            store.getRedeemableAmount(msg.sender, _owner, rewardToken);
+        require(
+            _redeemableAmount >= _amount,
+            "Fountain::redeem: INSUFFICIENT_FUNDS"
+        );
         Ticket _ticket = store.ticket(_owner);
-        _ticket.burn(msg.sender, _ticket.balanceOf(msg.sender));
-        store.subtractRedeemable(_owner, _amount);
+        _ticket.burn(msg.sender, _amount);
+        store.subtractRedeemable(_owner, rewardToken, _amount);
+        treasury.payout(msg.sender, rewardToken, _amount);
+        require(
+            _redeemableAmount.sub(_amount) ==
+                store.getRedeemableAmount(msg.sender, _owner, rewardToken),
+            "Fountain::redeem: POSTCONDITION_FAILED"
+        );
         emit Redeem(msg.sender, _amount);
     }
 
@@ -251,16 +261,21 @@ contract Fountain is IFountain, AccessControl {
     ) external override lockTap {
         require(treasury != ITreasury(0), "Fountain::tapMp: BAD_STATE");
         MoneyPool.Data memory _mp = store.getMp(_mpId);
+        uint256 _tappableAmount = _mp._tappableAmount();
         require(
             _mp.owner == msg.sender,
             "Fountain::collectSustainment: UNAUTHORIZED"
         );
         require(
-            _mp._tappableAmount() >= _amount,
+            _tappableAmount >= _amount,
             "Fountain::collectSustainment: INSUFFICIENT_FUNDS"
         );
         store.tapFromMp(_mp.id, _amount);
         treasury.payout(_beneficiary, _mp.want, _amount);
+        require(
+            _tappableAmount.sub(_amount) == store.getTappableAmount(_mp.id),
+            "Fountain::redeem: POSTCONDITION_FAILED"
+        );
         emit TapMp(_mpId, msg.sender, _beneficiary, _amount, _mp.want);
     }
 
