@@ -63,6 +63,7 @@ contract Controller is IController, Ownable {
     IERC20[] public wantTokenAllowList;
 
     // --- external transactions --- //
+
     constructor(IERC20[] memory _wantTokenAllowList) public {
         store = new MpStore();
         ticketStand = new TicketStand();
@@ -227,6 +228,7 @@ contract Controller is IController, Ownable {
                     _surplus
                 );
             }
+            emit TapMp(_mp.id, msg.sender, msg.sender, _surplus, _mp.want);
         } else {
             _mp.want.safeTransferFrom(msg.sender, address(treasury), _amount);
         }
@@ -362,6 +364,7 @@ contract Controller is IController, Ownable {
             }
             _mp = store.getMp(_mp.previous);
         }
+        emit MintReservedTickets(msg.sender, _owner);
     }
 
     /**
@@ -443,6 +446,7 @@ contract Controller is IController, Ownable {
         );
         _tickets.grantRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController);
         _tickets.revokeRole(_tickets.DEFAULT_ADMIN_ROLE(), address(this));
+        emit MigrateTickets(_newController);
     }
 
     /**
@@ -459,6 +463,7 @@ contract Controller is IController, Ownable {
             "Controller::withdrawFunds: BAD_STATE"
         );
         treasury.withdraw(msg.sender, _token, _amount);
+        emit WithdrawFunds(_token, _amount);
     }
 
     /**
@@ -483,5 +488,6 @@ contract Controller is IController, Ownable {
             treasury.transition(address(_newTreasury), wantTokenAllowList);
 
         treasury = _newTreasury;
+        emit AppointTreasury(_newTreasury);
     }
 }

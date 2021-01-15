@@ -15,6 +15,10 @@ interface ITicketStandController {
     /// @notice This event should trigger when a ticket is redeemed are collected.
     event Redeem(address indexed holder, uint256 amount);
 
+    event MigrateTickets(address _newController);
+
+    event MintReservedTickets(address minter, address owner);
+
     function initializeTickets(
         string calldata _name,
         string calldata _symbol,
