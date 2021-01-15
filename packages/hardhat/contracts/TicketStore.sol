@@ -16,17 +16,17 @@ contract Tickets is ERC20, AccessControl {
     address public issuer;
 
     /// @notice The token that these Tickets are redeemable for.
-    IERC20 public redeemableFor;
+    IERC20 public rewardToken;
 
     constructor(
         string memory _name,
         string memory _symbol,
         address _issuer,
-        IERC20 _redeemableFor
+        IERC20 _rewardToken
     ) public ERC20(_name, _symbol) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         issuer = _issuer;
-        redeemableFor = _redeemableFor;
+        rewardToken = _rewardToken;
     }
 
     function mint(address _account, uint256 _amount) external onlyAdmin {
@@ -38,7 +38,7 @@ contract Tickets is ERC20, AccessControl {
     }
 }
 
-contract TicketStand is AccessControl {
+contract TicketStore is AccessControl {
     using SafeMath for uint256;
 
     modifier onlyAdmin {
@@ -51,13 +51,13 @@ contract TicketStand is AccessControl {
 
     // --- public properties --- //
 
-    /// @notice The Tickets handed out by owners. Each owner has their own Ticket contract.
+    /// @notice The Tickets handed out by issuer. Each issuer has their own Ticket contract.
     mapping(address => Tickets) public tickets;
 
-    /// @notice The current cumulative amount of redeemable tokens redistributable to each owner's Ticket holders.
+    /// @notice The current cumulative amount of redeemable tokens redistributable to each issuer's Ticket holders.
     mapping(address => mapping(IERC20 => uint256)) public redeemable;
 
-    /// @notice The amount of each token that is transformable into the redeemable token for each owner
+    /// @notice The amount of each token that is transformable into the redeemable token for each issuer.
     mapping(address => mapping(IERC20 => mapping(IERC20 => uint256)))
         public transformable;
 
@@ -67,37 +67,34 @@ contract TicketStand is AccessControl {
         @notice The amount of redistribution that can be claimed by the given address.
         @dev This function runs the same routine as _redistributeAmount to determine the summed amount.
         Look there for more documentation.
-        @param _beneficiary The address to get an amount for.
-        @param _owner The owner of the Tickets to get an amount for.
-        @param _redeemableToken The token to base the value off of.
+        @param _holder The address to get an amount for.
+        @param _issuer The issuer of the Tickets to get an amount for.
         @return _amount The amount.
     */
-    function getRedeemableAmount(
-        address _beneficiary,
-        address _owner,
-        IERC20 _redeemableToken
-    ) external view returns (uint256) {
-        Tickets _tickets = tickets[_owner];
-        uint256 _currentBalance = _tickets.balanceOf(_beneficiary);
-        return
-            redeemable[_owner][_redeemableToken].mul(_currentBalance).div(
-                _tickets.totalSupply()
-            );
-    }
-
-    /**
-        @notice The value that a Ticket can be redeemed for.
-        @param _owner The owner of the Ticket to get a value for.
-        @param _redeemableToken The token to base the value off of.
-        @return _value The value.
-    */
-    function getCurrentTicketValue(address _owner, IERC20 _redeemableToken)
+    function getRedeemableAmount(address _holder, address _issuer)
         external
         view
         returns (uint256)
     {
-        Tickets _tickets = tickets[_owner];
-        return redeemable[_owner][_redeemableToken].div(_tickets.totalSupply());
+        Tickets _tickets = tickets[_issuer];
+        uint256 _currentBalance = _tickets.balanceOf(_holder);
+        return
+            redeemable[_issuer][_tickets.rewardToken()]
+                .mul(_currentBalance)
+                .div(_tickets.totalSupply());
+    }
+
+    /**
+        @notice The value that a Ticket can be redeemed for.
+        @param _issuer The issuer of the Ticket to get a value for.
+        @return _value The value.
+    */
+    function getTicketValue(address _issuer) external view returns (uint256) {
+        Tickets _tickets = tickets[_issuer];
+        return
+            redeemable[_issuer][_tickets.rewardToken()].div(
+                _tickets.totalSupply()
+            );
     }
 
     // --- external transactions --- //
@@ -106,73 +103,76 @@ contract TicketStand is AccessControl {
     }
 
     /**
-        @notice Saves a Ticket to storage for the provided owner.
-        @param _owner The owner of the Ticket.
-        @param _tickets The Ticket to assign to the owner.
+        @notice Saves a Ticket to storage for the provided issuer.
+        @param _issuer The issuer of the Ticket.
+        @param _tickets The Ticket to assign to the issuer.
     */
-    function issueTickets(address _owner, Tickets _tickets) external onlyAdmin {
-        tickets[_owner] = _tickets;
+    function issueTickets(address _issuer, Tickets _tickets)
+        external
+        onlyAdmin
+    {
+        tickets[_issuer] = _tickets;
     }
 
     /**
-        @notice Adds an amount to the total that can be redeemable for the given owner's Ticket holders.
-        @param _owner The owner of the Ticket.
+        @notice Adds an amount to the total that can be redeemable for the given issuer's Ticket holders.
+        @param _issuer The issuer of the Ticket.
         @param _token The redeemable token to increment.
         @param _amount The amount to increment.
     */
     function addRedeemable(
-        address _owner,
+        address _issuer,
         IERC20 _token,
         uint256 _amount
     ) external onlyAdmin {
-        redeemable[_owner][_token] = redeemable[_owner][_token].add(_amount);
+        redeemable[_issuer][_token] = redeemable[_issuer][_token].add(_amount);
     }
 
     /**
-        @notice Subtracts an amount to the total that can be redeemable for the given owner's Ticket holders.
-        @param _owner The owner of the Ticket.
+        @notice Subtracts an amount to the total that can be redeemable for the given issuer's Ticket holders.
+        @param _issuer The issuer of the Ticket.
         @param _token The redeemable token to decrement.
         @param _amount The amount to decrement.
     */
     function subtractRedeemable(
-        address _owner,
+        address _issuer,
         IERC20 _token,
         uint256 _amount
     ) external onlyAdmin {
-        redeemable[_owner][_token] = redeemable[_owner][_token].sub(_amount);
+        redeemable[_issuer][_token] = redeemable[_issuer][_token].sub(_amount);
     }
 
     /**
         @notice Adds an amount that can be transformable from one token to another.
-        @param _owner The owner of the Tickets responsible for the funds.
+        @param _issuer The issuer of the Tickets responsible for the funds.
         @param _from The original token.
         @param _amount The amount of `from` tokens to make transformable.
         @param _to The token to transform into.
     */
     function addTransformable(
-        address _owner,
+        address _issuer,
         IERC20 _from,
         uint256 _amount,
         IERC20 _to
     ) external onlyAdmin {
-        transformable[_owner][_from][_to] = transformable[_owner][_from][_to]
+        transformable[_issuer][_from][_to] = transformable[_issuer][_from][_to]
             .add(_amount);
     }
 
     /**
         @notice Subtracts the amount that can be transformable from one token to another.
-        @param _owner The owner of the Tickets responsible for the funds.
+        @param _issuer The issuer of the Tickets responsible for the funds.
         @param _from The original token.
         @param _amount The amount of `from` tokens to decrement.
         @param _to The token to transform into.
     */
     function subtractTransformable(
-        address _owner,
+        address _issuer,
         IERC20 _from,
         uint256 _amount,
         IERC20 _to
     ) external onlyAdmin {
-        transformable[_owner][_from][_to] = transformable[_owner][_from][_to]
+        transformable[_issuer][_from][_to] = transformable[_issuer][_from][_to]
             .sub(_amount);
     }
 }

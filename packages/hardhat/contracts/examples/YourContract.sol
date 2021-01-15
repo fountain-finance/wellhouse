@@ -8,7 +8,7 @@ contract YourContract is MoneyPoolOwner {
     constructor(
         IController _controller,
         IERC20 _want,
-        IERC20 _redeemableFor
+        IERC20 _rewardToken
     )
         public
         MoneyPoolOwner(
@@ -16,7 +16,7 @@ contract YourContract is MoneyPoolOwner {
             "Your Contract",
             "SYMBOL",
             _want,
-            _redeemableFor
+            _rewardToken
         )
     {}
 }

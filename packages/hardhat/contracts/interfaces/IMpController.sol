@@ -40,6 +40,8 @@ interface IMpController {
         IERC20 want
     );
 
+    function getWantTokenAllowList() external returns (IERC20[] memory);
+
     function configureMp(
         uint256 _target,
         uint256 _duration,
@@ -65,7 +67,7 @@ interface IMpController {
         address _beneficiary
     ) external;
 
-    function cleanTrackedAcceptedTokens(address _owner, IERC20 _token) external;
+    function cleanTrackedWantedTokens(address _owner, IERC20 _token) external;
 
     function appointMpStoreAdmin(address _newAdmin) external;
 }

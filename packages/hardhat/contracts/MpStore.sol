@@ -22,13 +22,17 @@ contract MpStore is AccessControl {
     // The official record of all Money pools ever created.
     mapping(uint256 => MoneyPool.Data) private mp;
 
+    // Tracks the kinds of tokens an owner has wanted relative to their tickets' redeemable token.
+    mapping(address => mapping(IERC20 => mapping(IERC20 => bool)))
+        private wantedTokenTracker;
+
+    // The kinds of tokens an owner has accepted relative to their tickets' redeemable token.
+    mapping(address => mapping(IERC20 => IERC20[])) private wantedTokens;
+
     // --- public properties --- //
 
     /// @notice a big number to base ticket issuance off of.
     uint256 public constant MP_BASE_WEIGHT = 1000000000E18;
-
-    /// @notice The address controlling this Store.
-    address public controller;
 
     /// @notice The latest Money pool for each owner address
     mapping(address => uint256) public latestMpId;
@@ -36,13 +40,6 @@ contract MpStore is AccessControl {
     /// @notice The total number of Money pools created, which is used for issuing Money pool IDs.
     /// @dev Money pools should have a ID > 0.
     uint256 public mpCount = 0;
-
-    /// @notice Tracks the kinds of tokens an owner has accepted relative to their tickets' redeemable token.
-    mapping(address => mapping(IERC20 => mapping(IERC20 => bool)))
-        public acceptedTokenTracker;
-
-    /// @notice The kinds of tokens an owner has accepted relative to their tickets' redeemable token.
-    mapping(address => mapping(IERC20 => IERC20[])) public acceptedTokens;
 
     // --- external views --- //
 
@@ -111,16 +108,16 @@ contract MpStore is AccessControl {
 
     /**
         @notice All tokens that this owner has accepted.
-        @param _owner The owner to get accepted tokens for.
-        @param _token The token redeemable for the accepted tokens.
+        @param _owner The owner to get wanted tokens for.
+        @param _rewardToken The token rewarded for the wanted tokens.
         @return _tokens An array of tokens.
     */
-    function getAcceptedTokens(address _owner, IERC20 _token)
+    function getWantedTokens(address _owner, IERC20 _rewardToken)
         external
         view
         returns (IERC20[] memory)
     {
-        return acceptedTokens[_owner][_token];
+        return wantedTokens[_owner][_rewardToken];
     }
 
     constructor() public {
@@ -140,9 +137,9 @@ contract MpStore is AccessControl {
         IERC20 _redeemableToken,
         IERC20 _token
     ) external onlyAdmin {
-        if (!acceptedTokenTracker[_owner][_redeemableToken][_token]) {
-            acceptedTokens[_owner][_redeemableToken].push(_token);
-            acceptedTokenTracker[_owner][_redeemableToken][_token] = true;
+        if (!wantedTokenTracker[_owner][_redeemableToken][_token]) {
+            wantedTokens[_owner][_redeemableToken].push(_token);
+            wantedTokenTracker[_owner][_redeemableToken][_token] = true;
         }
     }
 
@@ -152,8 +149,11 @@ contract MpStore is AccessControl {
         @param _owner The owner of the Tickets responsible for the funds.
         @param _token The tokens to clean accepted tokens for.
     */
-    function clearAcceptedTokens(address _owner, IERC20 _token) external {
-        delete acceptedTokens[_owner][_token];
+    function clearWantedTokens(address _owner, IERC20 _token)
+        external
+        onlyAdmin
+    {
+        delete wantedTokens[_owner][_token];
     }
 
     /**
@@ -163,6 +163,7 @@ contract MpStore is AccessControl {
     */
     function activeMp(address _owner)
         external
+        onlyAdmin
         returns (MoneyPool.Data memory _mp)
     {
         // Check if there is an active moneyPool
@@ -189,6 +190,7 @@ contract MpStore is AccessControl {
     */
     function standbyMp(address _owner)
         external
+        onlyAdmin
         returns (MoneyPool.Data memory _mp)
     {
         // Cannot update active moneyPool, check if there is a standby moneyPool

@@ -3,9 +3,9 @@ pragma solidity >=0.6.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "./IMpController.sol";
-import "./ITicketStandController.sol";
+import "./ITicketStoreController.sol";
 
-interface IController is IMpController, ITicketStandController {
+interface IController is IMpController, ITicketStoreController {
     event WithdrawFunds(IERC20 token, uint256 amount);
     event AppointTreasury(ITreasury newTreasury);
 

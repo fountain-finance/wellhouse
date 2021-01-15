@@ -120,7 +120,7 @@
       {
         "indexed": false,
         "internalType": "contract IERC20",
-        "name": "redeemableFor",
+        "name": "rewardToken",
         "type": "address"
       }
     ],
@@ -344,7 +344,7 @@
       },
       {
         "internalType": "contract IERC20",
-        "name": "_redeemableFor",
+        "name": "_rewardToken",
         "type": "address"
       }
     ],
@@ -426,7 +426,7 @@
       },
       {
         "internalType": "contract IERC20",
-        "name": "_redeemableFor",
+        "name": "_rewardToken",
         "type": "address"
       }
     ],
