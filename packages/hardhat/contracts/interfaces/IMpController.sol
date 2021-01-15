@@ -66,4 +66,6 @@ interface IMpController {
     ) external;
 
     function cleanTrackedAcceptedTokens(address _owner, IERC20 _token) external;
+
+    function appointMpStoreAdmin(address _newAdmin) external;
 }

@@ -4,15 +4,16 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "./libraries/MoneyPool.sol";
 
-contract MpStore {
+contract MpStore is AccessControl {
     using SafeMath for uint256;
     using MoneyPool for MoneyPool.Data;
 
-    modifier onlyController {
-        require(msg.sender == controller, "Store: UNAUTHORIZED");
+    modifier onlyAdmin {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender));
         _;
     }
 
@@ -122,6 +123,12 @@ contract MpStore {
         return acceptedTokens[_owner][_token];
     }
 
+    constructor() public {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    // --- external transactions --- //
+
     /**
         @notice Tracks the kinds of tokens the specified owner has accepted historically.
         @param _owner The owner associate the token with.
@@ -132,7 +139,7 @@ contract MpStore {
         address _owner,
         IERC20 _redeemableToken,
         IERC20 _token
-    ) external onlyController {
+    ) external onlyAdmin {
         if (!acceptedTokenTracker[_owner][_redeemableToken][_token]) {
             acceptedTokens[_owner][_redeemableToken].push(_token);
             acceptedTokenTracker[_owner][_redeemableToken][_token] = true;
@@ -208,7 +215,7 @@ contract MpStore {
         @notice Saves a Money pool.
         @param _mp The Money pool to save.
     */
-    function saveMp(MoneyPool.Data memory _mp) public onlyController {
+    function saveMp(MoneyPool.Data memory _mp) public onlyAdmin {
         mp[_mp.id] = _mp;
     }
 

@@ -68,13 +68,9 @@ contract Controller is IController, AccessControl {
     IERC20[] public wantTokenAllowList;
 
     // --- external transactions --- //
-    constructor(
-        MpStore _store,
-        TicketStand _ticketStand,
-        IERC20[] memory _wantTokenAllowList
-    ) public {
-        store = _store;
-        ticketStand = _ticketStand;
+    constructor(IERC20[] memory _wantTokenAllowList) public {
+        store = new MpStore();
+        ticketStand = new TicketStand();
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
@@ -431,59 +427,75 @@ contract Controller is IController, AccessControl {
         }
     }
 
-    /**
-        @notice Allows an owner to migrate their Tickets to a proposed successor contract.
-        @dev Make sure you know what you're doing.
-        @dev One way migration.
-    */
-    function migrateTickets(address _newController) external override {
-        Tickets _tickets = ticketStand.tickets(msg.sender);
-        require(_tickets != Tickets(0), "Controller::migrate: NOT_FOUND");
-        require(
-            !_tickets.hasRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController),
-            "Controller::migrate: ALREADY_MIGRATED"
-        );
-        _tickets.grantRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController);
-        _tickets.revokeRole(_tickets.DEFAULT_ADMIN_ROLE(), address(this));
-    }
-
-    /**
-        @notice Allows the owner of the contract to withdraw phase 1 funds.
-        @param _amount The amount to withdraw.
-    */
-    function withdrawFunds(uint256 _amount, IERC20 _token)
+    function appointTicketStandAdmin(address _newAdmin)
         external
         override
         onlyAdmin
     {
-        require(
-            treasury != ITreasury(0),
-            "Controller::withdrawFunds: BAD_STATE"
-        );
-        treasury.withdraw(msg.sender, _token, _amount);
+        ticketStand.grantRole(ticketStand.DEFAULT_ADMIN_ROLE(), _newAdmin);
     }
 
-    /**
-        @notice Replaces the current treasury with a new one. All funds will move over.
-        @param _newTreasury The new treasury.
-    */
-    function appointTreasury(ITreasury _newTreasury)
+    function appointMpStoreAdmin(address _newOwner)
         external
         override
         onlyAdmin
     {
-        require(
-            _newTreasury != ITreasury(0),
-            "Controller::appointTreasury: ZERO_ADDRESS"
-        );
-        require(
-            _newTreasury.controller() == address(this),
-            "Controller::appointTreasury: INCOMPATIBLE"
-        );
-
-        if (treasury != ITreasury(0))
-            treasury.transition(address(_newTreasury), wantTokenAllowList);
-
-        treasury = _newTreasury;
+        store.grantRole(ticketStand.DEFAULT_ADMIN_ROLE(), _newOwner);
     }
+
+    // /**
+    //     @notice Allows an owner to migrate their Tickets to a proposed successor contract.
+    //     @dev Make sure you know what you're doing.
+    //     @dev One way migration.
+    // */
+    // function migrateTickets(address _newController) external override {
+    //     Tickets _tickets = ticketStand.tickets(msg.sender);
+    //     require(_tickets != Tickets(0), "Controller::migrate: NOT_FOUND");
+    //     require(
+    //         !_tickets.hasRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController),
+    //         "Controller::migrate: ALREADY_MIGRATED"
+    //     );
+    //     _tickets.grantRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController);
+    //     _tickets.revokeRole(_tickets.DEFAULT_ADMIN_ROLE(), address(this));
+    // }
+
+    // /**
+    //     @notice Allows the owner of the contract to withdraw phase 1 funds.
+    //     @param _amount The amount to withdraw.
+    // */
+    // function withdrawFunds(uint256 _amount, IERC20 _token)
+    //     external
+    //     override
+    //     onlyAdmin
+    // {
+    //     require(
+    //         treasury != ITreasury(0),
+    //         "Controller::withdrawFunds: BAD_STATE"
+    //     );
+    //     treasury.withdraw(msg.sender, _token, _amount);
+    // }
+
+    // /**
+    //     @notice Replaces the current treasury with a new one. All funds will move over.
+    //     @param _newTreasury The new treasury.
+    // */
+    // function appointTreasury(ITreasury _newTreasury)
+    //     external
+    //     override
+    //     onlyAdmin
+    // {
+    //     require(
+    //         _newTreasury != ITreasury(0),
+    //         "Controller::appointTreasury: ZERO_ADDRESS"
+    //     );
+    //     require(
+    //         _newTreasury.controller() == address(this),
+    //         "Controller::appointTreasury: INCOMPATIBLE"
+    //     );
+
+    //     if (treasury != ITreasury(0))
+    //         treasury.transition(address(_newTreasury), wantTokenAllowList);
+
+    //     treasury = _newTreasury;
+    // }
 }
