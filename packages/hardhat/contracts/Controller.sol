@@ -230,11 +230,8 @@ contract Controller is IController, Ownable {
         } else {
             _mp.want.safeTransferFrom(msg.sender, address(treasury), _amount);
         }
-
         store.saveMp(_mp);
-
         Tickets _tickets = ticketStand.tickets(_mp.owner);
-
         if (_surplus > 0) {
             ticketStand.addTransformable(
                 _mp.owner,
@@ -243,9 +240,7 @@ contract Controller is IController, Ownable {
                 _tickets.redeemableFor()
             );
         }
-
         _tickets.mint(_beneficiary, _mp._weighted(_amount, _mp._s()));
-
         emit SustainMp(
             _mp.id,
             _mp.owner,
@@ -387,7 +382,8 @@ contract Controller is IController, Ownable {
 
     /**
         @notice Cleans the tracking array for an owner and a redeemable token.
-        @dev This never needs to get called, it's here precautionarily.
+        @dev This rarely needs to get called, if ever.
+        @dev It's only useful if an owner has iterated through many `want` tokens that are just taking up space.
         @param _owner The owner of the Tickets responsible for the funds.
         @param _redeemableFor The redeemable token to clean accepted tokens for.
     */
@@ -398,7 +394,6 @@ contract Controller is IController, Ownable {
         IERC20[] memory _currentAcceptedTokens =
             store.getAcceptedTokens(_owner, _redeemableFor);
         store.clearAcceptedTokens(_owner, _redeemableFor);
-        //Clear array
         MoneyPool.Data memory _cMp = store.getCurrentMp(_owner);
         for (uint256 i = 0; i < _currentAcceptedTokens.length; i++) {
             IERC20 _acceptedToken = _currentAcceptedTokens[i];
@@ -420,6 +415,11 @@ contract Controller is IController, Ownable {
         }
     }
 
+    /**
+        @notice Gives admin access to the Ticket Stand.
+        @dev Make sure you know what you're doing.
+        @dev _newAdmin The new admin of the Ticket Stand.
+    */
     function appointTicketStandAdmin(address _newAdmin)
         external
         override
@@ -428,6 +428,11 @@ contract Controller is IController, Ownable {
         ticketStand.grantRole(ticketStand.DEFAULT_ADMIN_ROLE(), _newAdmin);
     }
 
+    /**
+        @notice Gives admin access to the Money pool store.
+        @dev Make sure you know what you're doing.
+        @dev _newAdmin The new admin of the Money pool store.
+    */
     function appointMpStoreAdmin(address _newOwner)
         external
         override
