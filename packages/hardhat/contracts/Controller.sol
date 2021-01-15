@@ -436,10 +436,7 @@ contract Controller is IController, AccessControl {
         @dev Make sure you know what you're doing.
         @dev One way migration.
     */
-    function migrateTicketStandController(address _newController)
-        external
-        override
-    {
+    function migrateTickets(address _newController) external override {
         Tickets _tickets = ticketStand.tickets(msg.sender);
         require(_tickets != Tickets(0), "Controller::migrate: NOT_FOUND");
         require(

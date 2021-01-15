@@ -536,7 +536,7 @@
         "type": "address"
       }
     ],
-    "name": "migrateTicketStandController",
+    "name": "migrateTickets",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
