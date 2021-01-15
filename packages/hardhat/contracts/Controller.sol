@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./interfaces/ITreasury.sol";
@@ -14,7 +14,7 @@ import "./MpStore.sol";
 import "./TicketStand.sol";
 
 /// @notice The contract managing the state of all Money pools.
-contract Controller is IController, AccessControl {
+contract Controller is IController, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using MoneyPool for MoneyPool.Data;
@@ -42,11 +42,6 @@ contract Controller is IController, AccessControl {
         lock3 = 1;
     }
 
-    modifier onlyAdmin {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender));
-        _;
-    }
-
     // --- public properties --- //
 
     /// @notice The contract storing all Money pool state variables.
@@ -71,8 +66,6 @@ contract Controller is IController, AccessControl {
     constructor(IERC20[] memory _wantTokenAllowList) public {
         store = new MpStore();
         ticketStand = new TicketStand();
-
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         for (uint256 i = 0; i < _wantTokenAllowList.length; i++)
             wantTokenIsAllowed[_wantTokenAllowList[i]] = true;
@@ -430,7 +423,7 @@ contract Controller is IController, AccessControl {
     function appointTicketStandAdmin(address _newAdmin)
         external
         override
-        onlyAdmin
+        onlyOwner
     {
         ticketStand.grantRole(ticketStand.DEFAULT_ADMIN_ROLE(), _newAdmin);
     }
@@ -438,64 +431,64 @@ contract Controller is IController, AccessControl {
     function appointMpStoreAdmin(address _newOwner)
         external
         override
-        onlyAdmin
+        onlyOwner
     {
         store.grantRole(ticketStand.DEFAULT_ADMIN_ROLE(), _newOwner);
     }
 
-    // /**
-    //     @notice Allows an owner to migrate their Tickets to a proposed successor contract.
-    //     @dev Make sure you know what you're doing.
-    //     @dev One way migration.
-    // */
-    // function migrateTickets(address _newController) external override {
-    //     Tickets _tickets = ticketStand.tickets(msg.sender);
-    //     require(_tickets != Tickets(0), "Controller::migrate: NOT_FOUND");
-    //     require(
-    //         !_tickets.hasRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController),
-    //         "Controller::migrate: ALREADY_MIGRATED"
-    //     );
-    //     _tickets.grantRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController);
-    //     _tickets.revokeRole(_tickets.DEFAULT_ADMIN_ROLE(), address(this));
-    // }
+    /**
+        @notice Allows an owner to migrate their Tickets to a proposed successor contract.
+        @dev Make sure you know what you're doing.
+        @dev One way migration.
+    */
+    function migrateTickets(address _newController) external override {
+        Tickets _tickets = ticketStand.tickets(msg.sender);
+        require(_tickets != Tickets(0), "Controller::migrate: NOT_FOUND");
+        require(
+            !_tickets.hasRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController),
+            "Controller::migrate: ALREADY_MIGRATED"
+        );
+        _tickets.grantRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController);
+        _tickets.revokeRole(_tickets.DEFAULT_ADMIN_ROLE(), address(this));
+    }
 
-    // /**
-    //     @notice Allows the owner of the contract to withdraw phase 1 funds.
-    //     @param _amount The amount to withdraw.
-    // */
-    // function withdrawFunds(uint256 _amount, IERC20 _token)
-    //     external
-    //     override
-    //     onlyAdmin
-    // {
-    //     require(
-    //         treasury != ITreasury(0),
-    //         "Controller::withdrawFunds: BAD_STATE"
-    //     );
-    //     treasury.withdraw(msg.sender, _token, _amount);
-    // }
+    /**
+        @notice Allows the owner of the contract to withdraw phase 1 funds.
+        @param _amount The amount to withdraw.
+    */
+    function withdrawFunds(uint256 _amount, IERC20 _token)
+        external
+        override
+        onlyOwner
+    {
+        require(
+            treasury != ITreasury(0),
+            "Controller::withdrawFunds: BAD_STATE"
+        );
+        treasury.withdraw(msg.sender, _token, _amount);
+    }
 
-    // /**
-    //     @notice Replaces the current treasury with a new one. All funds will move over.
-    //     @param _newTreasury The new treasury.
-    // */
-    // function appointTreasury(ITreasury _newTreasury)
-    //     external
-    //     override
-    //     onlyAdmin
-    // {
-    //     require(
-    //         _newTreasury != ITreasury(0),
-    //         "Controller::appointTreasury: ZERO_ADDRESS"
-    //     );
-    //     require(
-    //         _newTreasury.controller() == address(this),
-    //         "Controller::appointTreasury: INCOMPATIBLE"
-    //     );
+    /**
+        @notice Replaces the current treasury with a new one. All funds will move over.
+        @param _newTreasury The new treasury.
+    */
+    function appointTreasury(ITreasury _newTreasury)
+        external
+        override
+        onlyOwner
+    {
+        require(
+            _newTreasury != ITreasury(0),
+            "Controller::appointTreasury: ZERO_ADDRESS"
+        );
+        require(
+            _newTreasury.controller() == address(this),
+            "Controller::appointTreasury: INCOMPATIBLE"
+        );
 
-    //     if (treasury != ITreasury(0))
-    //         treasury.transition(address(_newTreasury), wantTokenAllowList);
+        if (treasury != ITreasury(0))
+            treasury.transition(address(_newTreasury), wantTokenAllowList);
 
-    //     treasury = _newTreasury;
-    // }
+        treasury = _newTreasury;
+    }
 }
