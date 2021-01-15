@@ -24,10 +24,10 @@ abstract contract MoneyPoolOwner {
         string memory _name,
         string memory _symbol,
         IERC20 _want,
-        IERC20 _redeemableFor
+        IERC20 _rewardToken
     ) internal {
         _setController(_controller);
-        controller.initializeTickets(_name, _symbol, _redeemableFor);
+        controller.initializeTickets(_name, _symbol, _rewardToken);
         want = _want;
     }
 

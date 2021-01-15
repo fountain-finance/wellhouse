@@ -11,9 +11,11 @@ import "./interfaces/ITreasury.sol";
 import "./interfaces/IController.sol";
 
 import "./MpStore.sol";
-import "./TicketStand.sol";
+import "./TicketStore.sol";
 
-/// @notice The contract managing the state of all Money pools.
+/**
+@notice The contract managing the state of all Money pools.
+*/
 contract Controller is IController, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -42,6 +44,11 @@ contract Controller is IController, Ownable {
         lock3 = 1;
     }
 
+    // --- private properties --- //
+
+    // If a particular token is allowed as a `want` token of a Money pool.
+    mapping(IERC20 => bool) private wantTokenIsAllowed;
+
     // --- public properties --- //
 
     /// @notice The contract storing all Money pool state variables.
@@ -50,23 +57,35 @@ contract Controller is IController, Ownable {
 
     /// @notice The contract that manages the Tickets.
     /// @dev Immutable.
-    TicketStand public ticketStand;
+    TicketStore public ticketStore;
 
     /// @notice The treasury that manages funds.
     /// @dev Reassignable by the owner.
     ITreasury public treasury;
 
-    /// @notice If a particular token is allowed as a `want` token of a Money pool.
-    mapping(IERC20 => bool) public wantTokenIsAllowed;
-
     /// @notice Tokens that are allowed to be want tokens.
     IERC20[] public wantTokenAllowList;
+
+    // --- external views --- //
+
+    /**
+        @notice A list of tokens that a Money pool is allowed to `want`.
+        @return _list
+    */
+    function getWantTokenAllowList()
+        external
+        view
+        override
+        returns (IERC20[] memory)
+    {
+        return wantTokenAllowList;
+    }
 
     // --- external transactions --- //
 
     constructor(IERC20[] memory _wantTokenAllowList) public {
         store = new MpStore();
-        ticketStand = new TicketStand();
+        ticketStore = new TicketStore();
 
         for (uint256 i = 0; i < _wantTokenAllowList.length; i++)
             wantTokenIsAllowed[_wantTokenAllowList[i]] = true;
@@ -79,26 +98,26 @@ contract Controller is IController, Ownable {
         @dev Deploys an owners redistribution share tokens.
         @param _name If this is the message sender's first Money pool configuration, this name is used for ERC-20 token's tracking surplus shares for this owner.
         @param _symbol The tokens symbol.
-        @param _redeemableFor The token that the ticket is redeemable for.
+        @param _rewardToken The token that the ticket is redeemable for.
     */
     function initializeTickets(
         string calldata _name,
         string calldata _symbol,
-        IERC20 _redeemableFor
+        IERC20 _rewardToken
     ) external override {
         require(
-            ticketStand.tickets(msg.sender) == Tickets(0),
+            ticketStore.tickets(msg.sender) == Tickets(0),
             "Controller::initializeProject: ALREADY_INITIALIZED"
         );
         require(
             bytes(_name).length != 0 && bytes(_symbol).length != 0,
             "Controller::configureMp: BAD_PARAMS"
         );
-        ticketStand.issueTickets(
+        ticketStore.issueTickets(
             msg.sender,
-            new Tickets(_name, _symbol, msg.sender, _redeemableFor)
+            new Tickets(_name, _symbol, msg.sender, _rewardToken)
         );
-        emit InitializeTickets(msg.sender, _name, _symbol, _redeemableFor);
+        emit InitializeTickets(msg.sender, _name, _symbol, _rewardToken);
     }
 
     /**
@@ -131,7 +150,7 @@ contract Controller is IController, Ownable {
         uint256 _b,
         address _bAddress
     ) external override returns (uint256) {
-        Tickets _tickets = ticketStand.tickets(msg.sender);
+        Tickets _tickets = ticketStore.tickets(msg.sender);
         require(
             _tickets != Tickets(0),
             "Controller::configureMp: NEEDS_INITIALIZATION"
@@ -170,7 +189,7 @@ contract Controller is IController, Ownable {
         _mp.bAddress = _bAddress;
 
         store.saveMp(_mp);
-        store.trackAcceptedToken(msg.sender, _tickets.redeemableFor(), _want);
+        store.trackAcceptedToken(msg.sender, _tickets.rewardToken(), _want);
 
         emit ConfigureMp(
             _mp.id,
@@ -233,13 +252,13 @@ contract Controller is IController, Ownable {
             _mp.want.safeTransferFrom(msg.sender, address(treasury), _amount);
         }
         store.saveMp(_mp);
-        Tickets _tickets = ticketStand.tickets(_mp.owner);
+        Tickets _tickets = ticketStore.tickets(_mp.owner);
         if (_surplus > 0) {
-            ticketStand.addTransformable(
+            ticketStore.addTransformable(
                 _mp.owner,
                 _mp.want,
                 _surplus,
-                _tickets.redeemableFor()
+                _tickets.rewardToken()
             );
         }
         _tickets.mint(_beneficiary, _mp._weighted(_amount, _mp._s()));
@@ -267,17 +286,18 @@ contract Controller is IController, Ownable {
         uint256 _amount,
         IERC20 _to,
         uint256 _expectedTransformedAmount
-    ) external {
+    ) external override {
         require(_amount > 0, "Controller::transform: BAD_AMOUNT");
-        uint256 _transformable = ticketStand.transformable(_owner, _from, _to);
+        uint256 _transformable = ticketStore.transformable(_owner, _from, _to);
         require(
             _transformable >= _amount,
             "Controller::transform: INSUFFICIENT_FUNDS"
         );
         uint256 _transformedAmount =
             treasury.transform(_from, _amount, _to, _expectedTransformedAmount);
-        ticketStand.addRedeemable(_owner, _to, _transformedAmount);
-        ticketStand.subtractTransformable(_owner, _from, _amount, _to);
+        ticketStore.addRedeemable(_owner, _to, _transformedAmount);
+        ticketStore.subtractTransformable(_owner, _from, _amount, _to);
+        emit Transform(_owner, _from, _amount, _to, _transformedAmount);
     }
 
     /**
@@ -291,17 +311,17 @@ contract Controller is IController, Ownable {
         lockRedeem
     {
         require(treasury != ITreasury(0), "Controller::redeem: BAD_STATE");
-        Tickets _tickets = ticketStand.tickets(_owner);
-        IERC20 _redeemableFor = _tickets.redeemableFor();
+        Tickets _tickets = ticketStore.tickets(_owner);
+        IERC20 _rewardToken = _tickets.rewardToken();
         uint256 _redeemableAmount =
-            ticketStand.getRedeemableAmount(msg.sender, _owner, _redeemableFor);
+            ticketStore.getRedeemableAmount(msg.sender, _owner);
         require(
             _redeemableAmount >= _amount,
             "Controller::redeem: INSUFFICIENT_FUNDS"
         );
         _tickets.burn(msg.sender, _amount);
-        ticketStand.subtractRedeemable(_owner, _redeemableFor, _amount);
-        treasury.payout(msg.sender, _redeemableFor, _amount);
+        ticketStore.subtractRedeemable(_owner, _rewardToken, _amount);
+        treasury.payout(msg.sender, _rewardToken, _amount);
         emit Redeem(msg.sender, _amount);
     }
 
@@ -338,7 +358,7 @@ contract Controller is IController, Ownable {
         @param _owner The owner whose Money pools are being iterated through.
     */
     function mintReservedTickets(address _owner) external override {
-        Tickets _tickets = ticketStand.tickets(_owner);
+        Tickets _tickets = ticketStore.tickets(_owner);
         require(
             _tickets != Tickets(0),
             "Controller::mintReservedTickets: NOT_FOUND"
@@ -372,35 +392,31 @@ contract Controller is IController, Ownable {
         @dev This rarely needs to get called, if ever.
         @dev It's only useful if an owner has iterated through many `want` tokens that are just taking up space.
         @param _owner The owner of the Tickets responsible for the funds.
-        @param _redeemableFor The redeemable token to clean accepted tokens for.
+        @param _rewardToken The redeemable token to clean accepted tokens for.
     */
-    function cleanTrackedAcceptedTokens(address _owner, IERC20 _redeemableFor)
+    function cleanTrackedWantedTokens(address _owner, IERC20 _rewardToken)
         external
         override
     {
-        IERC20[] memory _currentAcceptedTokens =
-            store.getAcceptedTokens(_owner, _redeemableFor);
+        IERC20[] memory _currentWantedTokens =
+            store.getWantedTokens(_owner, _rewardToken);
         require(
-            _currentAcceptedTokens.length > 0,
+            _currentWantedTokens.length > 0,
             "Controller::cleanTrackedAcceptedTokens: NO_OP"
         );
-        store.clearAcceptedTokens(_owner, _redeemableFor);
+        store.clearWantedTokens(_owner, _rewardToken);
         MoneyPool.Data memory _cMp = store.getCurrentMp(_owner);
-        for (uint256 i = 0; i < _currentAcceptedTokens.length; i++) {
-            IERC20 _acceptedToken = _currentAcceptedTokens[i];
+        for (uint256 i = 0; i < _currentWantedTokens.length; i++) {
+            IERC20 _wantedToken = _currentWantedTokens[i];
             if (
-                _cMp.want == _acceptedToken ||
-                ticketStand.transformable(
-                    _owner,
-                    _acceptedToken,
-                    _redeemableFor
-                ) >
+                _cMp.want == _wantedToken ||
+                ticketStore.transformable(_owner, _wantedToken, _rewardToken) >
                 0
             ) {
                 store.trackAcceptedToken(
                     msg.sender,
-                    _redeemableFor,
-                    _acceptedToken
+                    _rewardToken,
+                    _wantedToken
                 );
             }
         }
@@ -416,7 +432,7 @@ contract Controller is IController, Ownable {
         override
         onlyOwner
     {
-        ticketStand.grantRole(ticketStand.DEFAULT_ADMIN_ROLE(), _newAdmin);
+        ticketStore.grantRole(ticketStore.DEFAULT_ADMIN_ROLE(), _newAdmin);
     }
 
     /**
@@ -429,7 +445,7 @@ contract Controller is IController, Ownable {
         override
         onlyOwner
     {
-        store.grantRole(ticketStand.DEFAULT_ADMIN_ROLE(), _newOwner);
+        store.grantRole(ticketStore.DEFAULT_ADMIN_ROLE(), _newOwner);
     }
 
     /**
@@ -438,7 +454,7 @@ contract Controller is IController, Ownable {
         @dev One way migration.
     */
     function migrateTickets(address _newController) external override {
-        Tickets _tickets = ticketStand.tickets(msg.sender);
+        Tickets _tickets = ticketStore.tickets(msg.sender);
         require(_tickets != Tickets(0), "Controller::migrate: NOT_FOUND");
         require(
             !_tickets.hasRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController),
