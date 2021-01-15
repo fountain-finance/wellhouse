@@ -17,8 +17,10 @@ contract TreasuryPhase1 is ITreasuryPhase {
 
     /// @notice The address that deployed this contract.
     address public override deployer;
-    /// @notice Amount of each token issued.
+
+    /// @notice Amount of each token issued so far.
     mapping(IERC20 => uint256) public override tokensIssued;
+
     /// @notice The address where funds are managed
     address public override treasury;
 

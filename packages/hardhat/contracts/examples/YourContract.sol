@@ -5,8 +5,18 @@ import "../abstract/MoneyPoolOwner.sol";
 
 /// @dev This contract is an example of how you can use Fountain to fund your own project.
 contract YourContract is MoneyPoolOwner {
-    constructor(IController _controller, IERC20 _want)
+    constructor(
+        IController _controller,
+        IERC20 _want,
+        IERC20 _redeemableFor
+    )
         public
-        MoneyPoolOwner(_controller, "Your Contract", "SYMBOL", _want)
+        MoneyPoolOwner(
+            _controller,
+            "Your Contract",
+            "SYMBOL",
+            _want,
+            _redeemableFor
+        )
     {}
 }

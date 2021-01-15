@@ -23,10 +23,11 @@ abstract contract MoneyPoolOwner {
         IController _controller,
         string memory _name,
         string memory _symbol,
-        IERC20 _want
+        IERC20 _want,
+        IERC20 _redeemableFor
     ) internal {
         _setController(_controller);
-        controller.initializeTicket(_name, _symbol);
+        controller.initializeTickets(_name, _symbol, _redeemableFor);
         want = _want;
     }
 
@@ -114,21 +115,13 @@ abstract contract MoneyPoolOwner {
         @param _amount The amount you are taking. Your contract must give Fountain allowance.
         @param _sustainer Your contracts end user who is sustaining you.
         Any surplus from your Money pool will be redistributed to this address.
-        @param _expectedConvertedAmount The expected number of reward tokens to convert surplus into.
         @return _mpId The ID of the Money pool that was sustained.
     */
-    function _sustain(
-        uint256 _amount,
-        address _sustainer,
-        uint256 _expectedConvertedAmount
-    ) internal returns (uint256) {
+    function _sustain(uint256 _amount, address _sustainer)
+        internal
+        returns (uint256)
+    {
         return
-            controller.sustainOwner(
-                address(this),
-                _amount,
-                want,
-                _sustainer,
-                _expectedConvertedAmount
-            );
+            controller.sustainOwner(address(this), _amount, want, _sustainer);
     }
 }

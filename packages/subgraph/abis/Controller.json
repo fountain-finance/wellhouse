@@ -2,13 +2,13 @@
   {
     "inputs": [
       {
-        "internalType": "contract Store",
+        "internalType": "contract MpStore",
         "name": "_store",
         "type": "address"
       },
       {
-        "internalType": "contract IERC20",
-        "name": "_rewardToken",
+        "internalType": "contract TicketStand",
+        "name": "_ticketStand",
         "type": "address"
       },
       {
@@ -113,9 +113,15 @@
         "internalType": "string",
         "name": "symbol",
         "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "contract IERC20",
+        "name": "redeemableFor",
+        "type": "address"
       }
     ],
-    "name": "InitializeTicket",
+    "name": "InitializeTickets",
     "type": "event"
   },
   {
@@ -124,7 +130,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "sustainer",
+        "name": "holder",
         "type": "address"
       },
       {
@@ -250,12 +256,6 @@
         "internalType": "contract IERC20",
         "name": "want",
         "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "currentTicketValue",
-        "type": "uint256"
       }
     ],
     "name": "SustainMp",
@@ -314,12 +314,17 @@
   {
     "inputs": [
       {
-        "internalType": "contract ITreasury",
-        "name": "_newTreasury",
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "_redeemableFor",
         "type": "address"
       }
     ],
-    "name": "appointTreasury",
+    "name": "cleanTrackedAcceptedTokens",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -498,9 +503,14 @@
         "internalType": "string",
         "name": "_symbol",
         "type": "string"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "_redeemableFor",
+        "type": "address"
       }
     ],
-    "name": "initializeTicket",
+    "name": "initializeTickets",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -600,23 +610,10 @@
   },
   {
     "inputs": [],
-    "name": "rewardToken",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "store",
     "outputs": [
       {
-        "internalType": "contract Store",
+        "internalType": "contract MpStore",
         "name": "",
         "type": "address"
       }
@@ -664,11 +661,6 @@
         "internalType": "address",
         "name": "_beneficiary",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_expectedConvertedAmount",
-        "type": "uint256"
       }
     ],
     "name": "sustainOwner",
@@ -701,6 +693,52 @@
       }
     ],
     "name": "tapMp",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ticketStand",
+    "outputs": [
+      {
+        "internalType": "contract TicketStand",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "_from",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "_to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expectedTransformedAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "transform",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
