@@ -25,5 +25,7 @@ interface ITicketStandController {
 
     function mintReservedTickets(address _owner) external;
 
-    function migrateTickets(address _newController) external;
+    // function migrateTickets(address _newController) external;
+
+    function appointTicketStandAdmin(address _newAdmin) external;
 }

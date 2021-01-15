@@ -38,18 +38,18 @@ contract Tickets is ERC20, AccessControl {
     }
 }
 
-contract TicketStand {
+contract TicketStand is AccessControl {
     using SafeMath for uint256;
 
-    modifier onlyController {
-        require(msg.sender == controller, "Store: UNAUTHORIZED");
+    modifier onlyAdmin {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "TicketStand: UNAUTHORIZED"
+        );
         _;
     }
 
     // --- public properties --- //
-
-    /// @notice The address controlling this Store.
-    address public controller;
 
     /// @notice The Tickets handed out by owners. Each owner has their own Ticket contract.
     mapping(address => Tickets) public tickets;
@@ -101,16 +101,16 @@ contract TicketStand {
     }
 
     // --- external transactions --- //
+    constructor() public {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
 
     /**
         @notice Saves a Ticket to storage for the provided owner.
         @param _owner The owner of the Ticket.
         @param _tickets The Ticket to assign to the owner.
     */
-    function issueTickets(address _owner, Tickets _tickets)
-        external
-        onlyController
-    {
+    function issueTickets(address _owner, Tickets _tickets) external onlyAdmin {
         tickets[_owner] = _tickets;
     }
 
@@ -124,7 +124,7 @@ contract TicketStand {
         address _owner,
         IERC20 _token,
         uint256 _amount
-    ) external onlyController {
+    ) external onlyAdmin {
         redeemable[_owner][_token] = redeemable[_owner][_token].add(_amount);
     }
 
@@ -138,7 +138,7 @@ contract TicketStand {
         address _owner,
         IERC20 _token,
         uint256 _amount
-    ) external onlyController {
+    ) external onlyAdmin {
         redeemable[_owner][_token] = redeemable[_owner][_token].sub(_amount);
     }
 
@@ -154,7 +154,7 @@ contract TicketStand {
         IERC20 _from,
         uint256 _amount,
         IERC20 _to
-    ) external onlyController {
+    ) external onlyAdmin {
         transformable[_owner][_from][_to] = transformable[_owner][_from][_to]
             .add(_amount);
     }
@@ -171,7 +171,7 @@ contract TicketStand {
         IERC20 _from,
         uint256 _amount,
         IERC20 _to
-    ) external onlyController {
+    ) external onlyAdmin {
         transformable[_owner][_from][_to] = transformable[_owner][_from][_to]
             .sub(_amount);
     }

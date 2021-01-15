@@ -2,16 +2,6 @@
   {
     "inputs": [
       {
-        "internalType": "contract MpStore",
-        "name": "_store",
-        "type": "address"
-      },
-      {
-        "internalType": "contract TicketStand",
-        "name": "_ticketStand",
-        "type": "address"
-      },
-      {
         "internalType": "contract IERC20[]",
         "name": "_wantTokenAllowList",
         "type": "address[]"
@@ -314,12 +304,25 @@
   {
     "inputs": [
       {
-        "internalType": "contract ITreasury",
-        "name": "_newTreasury",
+        "internalType": "address",
+        "name": "_newOwner",
         "type": "address"
       }
     ],
-    "name": "appointTreasury",
+    "name": "appointMpStoreAdmin",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newAdmin",
+        "type": "address"
+      }
+    ],
+    "name": "appointTicketStandAdmin",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -524,19 +527,6 @@
       }
     ],
     "name": "initializeTickets",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_newController",
-        "type": "address"
-      }
-    ],
-    "name": "migrateTickets",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -773,24 +763,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "contract IERC20",
-        "name": "_token",
-        "type": "address"
-      }
-    ],
-    "name": "withdrawFunds",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   }
 ]
