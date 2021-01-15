@@ -24,4 +24,6 @@ interface ITicketStandController {
     function redeem(address _owner, uint256 _amount) external;
 
     function mintReservedTickets(address _owner) external;
+
+    function migrateTicketStandController(address _newController) external;
 }

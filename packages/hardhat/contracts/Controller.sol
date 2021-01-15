@@ -61,10 +61,6 @@ contract Controller is IController, AccessControl {
     /// @dev Reassignable by the owner.
     ITreasury public treasury;
 
-    /// @notice Proposals for successor contracts to this contract.
-    /// @dev Anyone can propose a successor contract, but Ticket issuance must be migrated by owners.
-    mapping(address => address) public successor;
-
     /// @notice If a particular token is allowed as a `want` token of a Money pool.
     mapping(IERC20 => bool) public wantTokenIsAllowed;
 
@@ -436,28 +432,21 @@ contract Controller is IController, AccessControl {
     }
 
     /**
-        @notice Proposes a successor to this contracts that Ticket owners can migrate to.
-        @param _successor The successor contract.
-    */
-    function proposeSuccessor(address _successor) external override {
-        require(_successor != address(0), "Controller::migrate: ZERO_ADDRESS");
-        successor[msg.sender] = _successor;
-    }
-
-    /**
         @notice Allows an owner to migrate their Tickets to a proposed successor contract.
+        @dev Make sure you know what you're doing.
         @dev One way migration.
     */
-    function migrate(address _proposer) external override {
-        address _successor = successor[_proposer];
-        require(_successor != address(0), "Controller::migrate: BAD_STATE");
+    function migrateTicketStandController(address _newController)
+        external
+        override
+    {
         Tickets _tickets = ticketStand.tickets(msg.sender);
         require(_tickets != Tickets(0), "Controller::migrate: NOT_FOUND");
         require(
-            !_tickets.hasRole(_tickets.DEFAULT_ADMIN_ROLE(), _successor),
+            !_tickets.hasRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController),
             "Controller::migrate: ALREADY_MIGRATED"
         );
-        _tickets.grantRole(_tickets.DEFAULT_ADMIN_ROLE(), _successor);
+        _tickets.grantRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController);
         _tickets.revokeRole(_tickets.DEFAULT_ADMIN_ROLE(), address(this));
     }
 
@@ -477,27 +466,27 @@ contract Controller is IController, AccessControl {
         treasury.withdraw(msg.sender, _token, _amount);
     }
 
-    // /**
-    //     @notice Replaces the current treasury with a new one. All funds will move over.
-    //     @param _newTreasury The new treasury.
-    // */
-    // function appointTreasury(ITreasury _newTreasury)
-    //     external
-    //     override
-    //     onlyAdmin
-    // {
-    //     require(
-    //         _newTreasury != ITreasury(0),
-    //         "Controller::appointTreasury: ZERO_ADDRESS"
-    //     );
-    //     require(
-    //         _newTreasury.controller() == address(this),
-    //         "Controller::appointTreasury: INCOMPATIBLE"
-    //     );
+    /**
+        @notice Replaces the current treasury with a new one. All funds will move over.
+        @param _newTreasury The new treasury.
+    */
+    function appointTreasury(ITreasury _newTreasury)
+        external
+        override
+        onlyAdmin
+    {
+        require(
+            _newTreasury != ITreasury(0),
+            "Controller::appointTreasury: ZERO_ADDRESS"
+        );
+        require(
+            _newTreasury.controller() == address(this),
+            "Controller::appointTreasury: INCOMPATIBLE"
+        );
 
-    //     if (treasury != ITreasury(0))
-    //         treasury.transition(address(_newTreasury), wantTokenAllowList);
+        if (treasury != ITreasury(0))
+            treasury.transition(address(_newTreasury), wantTokenAllowList);
 
-    //     treasury = _newTreasury;
-    // }
+        treasury = _newTreasury;
+    }
 }

@@ -6,11 +6,7 @@ import "./IMpController.sol";
 import "./ITicketStandController.sol";
 
 interface IController is IMpController, ITicketStandController {
-    // function appointTreasury(ITreasury _newTreasury) external;
+    function appointTreasury(ITreasury _newTreasury) external;
 
     function withdrawFunds(uint256 _amount, IERC20 _token) external;
-
-    function proposeSuccessor(address _successor) external;
-
-    function migrate(address _proposer) external;
 }

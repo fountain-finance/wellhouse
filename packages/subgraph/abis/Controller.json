@@ -314,6 +314,19 @@
   {
     "inputs": [
       {
+        "internalType": "contract ITreasury",
+        "name": "_newTreasury",
+        "type": "address"
+      }
+    ],
+    "name": "appointTreasury",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "_owner",
         "type": "address"
@@ -519,11 +532,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_proposer",
+        "name": "_newController",
         "type": "address"
       }
     ],
-    "name": "migrate",
+    "name": "migrateTicketStandController",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -537,19 +550,6 @@
       }
     ],
     "name": "mintReservedTickets",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_successor",
-        "type": "address"
-      }
-    ],
-    "name": "proposeSuccessor",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -614,25 +614,6 @@
     "outputs": [
       {
         "internalType": "contract MpStore",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "successor",
-    "outputs": [
-      {
-        "internalType": "address",
         "name": "",
         "type": "address"
       }
