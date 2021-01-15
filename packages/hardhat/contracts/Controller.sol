@@ -300,17 +300,6 @@ contract Controller is IController, Ownable {
         _tickets.burn(msg.sender, _amount);
         ticketStand.subtractRedeemable(_owner, _redeemableFor, _amount);
         treasury.payout(msg.sender, _redeemableFor, _amount);
-
-        // Not sure if this is needed. Just being safe.
-        require(
-            _redeemableAmount.sub(_amount) ==
-                ticketStand.getRedeemableAmount(
-                    msg.sender,
-                    _owner,
-                    _redeemableFor
-                ),
-            "Controller::redeem: POSTCONDITION_FAILED"
-        );
         emit Redeem(msg.sender, _amount);
     }
 
@@ -339,11 +328,6 @@ contract Controller is IController, Ownable {
         _mp.tapped = _mp.tapped.add(_amount);
         store.saveMp(_mp);
         treasury.payout(_beneficiary, _mp.want, _amount);
-        // Not sure if this is needed. Just being safe.
-        require(
-            _tappableAmount.sub(_amount) == store.getTappableAmount(_mp.id),
-            "Controller::redeem: POSTCONDITION_FAILED"
-        );
         emit TapMp(_mpId, msg.sender, _beneficiary, _amount, _mp.want);
     }
 
@@ -393,6 +377,10 @@ contract Controller is IController, Ownable {
     {
         IERC20[] memory _currentAcceptedTokens =
             store.getAcceptedTokens(_owner, _redeemableFor);
+        require(
+            _currentAcceptedTokens.length > 0,
+            "Controller::cleanTrackedAcceptedTokens: NO_OP"
+        );
         store.clearAcceptedTokens(_owner, _redeemableFor);
         MoneyPool.Data memory _cMp = store.getCurrentMp(_owner);
         for (uint256 i = 0; i < _currentAcceptedTokens.length; i++) {
