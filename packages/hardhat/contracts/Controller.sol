@@ -9,12 +9,12 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./interfaces/ITreasury.sol";
 import "./interfaces/IController.sol";
-import "./interfaces/ITicketStand.sol";
 
-import "./Store.sol";
+import "./MpStore.sol";
+import "./TicketStand.sol";
 
 /// @notice The contract managing the state of all Money pools.
-contract Controller is IController, ITicketStand, AccessControl {
+contract Controller is IController, AccessControl {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using MoneyPool for MoneyPool.Data;
@@ -49,9 +49,13 @@ contract Controller is IController, ITicketStand, AccessControl {
 
     // --- public properties --- //
 
-    /// @notice The contract storing all state variables.
+    /// @notice The contract storing all Money pool state variables.
     /// @dev Immutable.
-    Store public store;
+    MpStore public store;
+
+    /// @notice The contract that manages the Tickets.
+    /// @dev Immutable.
+    TicketStand public ticketStand;
 
     /// @notice The treasury that manages funds.
     /// @dev Reassignable by the owner.
@@ -68,8 +72,13 @@ contract Controller is IController, ITicketStand, AccessControl {
     IERC20[] public wantTokenAllowList;
 
     // --- external transactions --- //
-    constructor(Store _store, IERC20[] memory _wantTokenAllowList) public {
+    constructor(
+        MpStore _store,
+        TicketStand _ticketStand,
+        IERC20[] memory _wantTokenAllowList
+    ) public {
         store = _store;
+        ticketStand = _ticketStand;
 
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
@@ -86,24 +95,24 @@ contract Controller is IController, ITicketStand, AccessControl {
         @param _symbol The tokens symbol.
         @param _redeemableFor The token that the ticket is redeemable for.
     */
-    function initializeTicket(
+    function initializeTickets(
         string calldata _name,
         string calldata _symbol,
         IERC20 _redeemableFor
     ) external override {
         require(
-            store.ticket(msg.sender) == Ticket(0),
+            ticketStand.tickets(msg.sender) == Tickets(0),
             "Controller::initializeProject: ALREADY_INITIALIZED"
         );
         require(
             bytes(_name).length != 0 && bytes(_symbol).length != 0,
             "Controller::configureMp: BAD_PARAMS"
         );
-        store.assignTicket(
+        ticketStand.issueTickets(
             msg.sender,
-            new Ticket(_name, _symbol, msg.sender, this, _redeemableFor)
+            new Tickets(_name, _symbol, msg.sender, _redeemableFor)
         );
-        emit InitializeTicket(msg.sender, _name, _symbol, _redeemableFor);
+        emit InitializeTickets(msg.sender, _name, _symbol, _redeemableFor);
     }
 
     /**
@@ -136,9 +145,9 @@ contract Controller is IController, ITicketStand, AccessControl {
         uint256 _b,
         address _bAddress
     ) external override returns (uint256) {
-        Ticket _ticket = store.ticket(msg.sender);
+        Tickets _tickets = ticketStand.tickets(msg.sender);
         require(
-            _ticket != Ticket(0),
+            _tickets != Tickets(0),
             "Controller::configureMp: NEEDS_INITIALIZATION"
         );
         require(_duration >= 6, "Controller::configureMp: TOO_SHORT");
@@ -175,7 +184,7 @@ contract Controller is IController, ITicketStand, AccessControl {
         _mp.bAddress = _bAddress;
 
         store.saveMp(_mp);
-        store.trackAcceptedToken(msg.sender, _ticket.redeemableFor(), _want);
+        store.trackAcceptedToken(msg.sender, _tickets.redeemableFor(), _want);
 
         emit ConfigureMp(
             _mp.id,
@@ -239,18 +248,18 @@ contract Controller is IController, ITicketStand, AccessControl {
 
         store.saveMp(_mp);
 
-        Ticket _ticket = store.ticket(_mp.owner);
+        Tickets _tickets = ticketStand.tickets(_mp.owner);
 
         if (_surplus > 0) {
-            store.addTransformable(
+            ticketStand.addTransformable(
                 _mp.owner,
                 _mp.want,
                 _surplus,
-                _ticket.redeemableFor()
+                _tickets.redeemableFor()
             );
         }
 
-        _ticket.mint(_beneficiary, _mp._weighted(_amount, _mp._s()));
+        _tickets.mint(_beneficiary, _mp._weighted(_amount, _mp._s()));
 
         emit SustainMp(
             _mp.id,
@@ -278,15 +287,15 @@ contract Controller is IController, ITicketStand, AccessControl {
         uint256 _expectedTransformedAmount
     ) external {
         require(_amount > 0, "Controller::transform: BAD_AMOUNT");
-        uint256 _transformable = store.transformable(_owner, _from, _to);
+        uint256 _transformable = ticketStand.transformable(_owner, _from, _to);
         require(
             _transformable >= _amount,
             "Controller::transform: INSUFFICIENT_FUNDS"
         );
         uint256 _transformedAmount =
             treasury.transform(_from, _amount, _to, _expectedTransformedAmount);
-        store.addRedeemable(_owner, _to, _transformedAmount);
-        store.subtractTransformable(_owner, _from, _amount, _to);
+        ticketStand.addRedeemable(_owner, _to, _transformedAmount);
+        ticketStand.subtractTransformable(_owner, _from, _amount, _to);
     }
 
     /**
@@ -300,22 +309,26 @@ contract Controller is IController, ITicketStand, AccessControl {
         lockRedeem
     {
         require(treasury != ITreasury(0), "Controller::redeem: BAD_STATE");
-        Ticket _ticket = store.ticket(_owner);
-        IERC20 _redeemableFor = _ticket.redeemableFor();
+        Tickets _tickets = ticketStand.tickets(_owner);
+        IERC20 _redeemableFor = _tickets.redeemableFor();
         uint256 _redeemableAmount =
-            store.getRedeemableAmount(msg.sender, _owner, _redeemableFor);
+            ticketStand.getRedeemableAmount(msg.sender, _owner, _redeemableFor);
         require(
             _redeemableAmount >= _amount,
             "Controller::redeem: INSUFFICIENT_FUNDS"
         );
-        _ticket.burn(msg.sender, _amount);
-        store.subtractRedeemable(_owner, _redeemableFor, _amount);
+        _tickets.burn(msg.sender, _amount);
+        ticketStand.subtractRedeemable(_owner, _redeemableFor, _amount);
         treasury.payout(msg.sender, _redeemableFor, _amount);
 
         // Not sure if this is needed. Just being safe.
         require(
             _redeemableAmount.sub(_amount) ==
-                store.getRedeemableAmount(msg.sender, _owner, _redeemableFor),
+                ticketStand.getRedeemableAmount(
+                    msg.sender,
+                    _owner,
+                    _redeemableFor
+                ),
             "Controller::redeem: POSTCONDITION_FAILED"
         );
         emit Redeem(msg.sender, _amount);
@@ -359,9 +372,9 @@ contract Controller is IController, ITicketStand, AccessControl {
         @param _owner The owner whose Money pools are being iterated through.
     */
     function mintReservedTickets(address _owner) external override {
-        Ticket _ticket = store.ticket(_owner);
+        Tickets _tickets = ticketStand.tickets(_owner);
         require(
-            _ticket != Ticket(0),
+            _tickets != Tickets(0),
             "Controller::mintReservedTickets: NOT_FOUND"
         );
         MoneyPool.Data memory _mp = store.getMp(store.latestMpId(_owner));
@@ -370,9 +383,12 @@ contract Controller is IController, ITicketStand, AccessControl {
                 uint256 _surplus = _mp.total.sub(_mp.target);
                 if (_surplus > 0) {
                     if (_mp.o > 0)
-                        _ticket.mint(_mp.owner, _mp._weighted(_surplus, _mp.o));
+                        _tickets.mint(
+                            _mp.owner,
+                            _mp._weighted(_surplus, _mp.o)
+                        );
                     if (_mp.b > 0)
-                        _ticket.mint(
+                        _tickets.mint(
                             _mp.bAddress,
                             _mp._weighted(_surplus, _mp.b)
                         );
@@ -385,16 +401,38 @@ contract Controller is IController, ITicketStand, AccessControl {
     }
 
     /**
-        @dev Does some clean up for an array in the store.
-        Probable hardly ever needed.
-        @param _owner The owner of the accepted tokens.
-        @param _redeemableToken The token that is redeemable by the accepted tokens being cleaned.
+        @notice Cleans the tracking array for an owner and a redeemable token.
+        @dev This never needs to get called, it's here precautionarily.
+        @param _owner The owner of the Tickets responsible for the funds.
+        @param _redeemableFor The redeemable token to clean accepted tokens for.
     */
-    function cleanTrackedAcceptedTokens(address _owner, IERC20 _redeemableToken)
+    function cleanTrackedAcceptedTokens(address _owner, IERC20 _redeemableFor)
         external
         override
     {
-        store.cleanTrackedAcceptedTokens(_owner, _redeemableToken);
+        IERC20[] memory _currentAcceptedTokens =
+            store.getAcceptedTokens(_owner, _redeemableFor);
+        store.clearAcceptedTokens(_owner, _redeemableFor);
+        //Clear array
+        MoneyPool.Data memory _cMp = store.getCurrentMp(_owner);
+        for (uint256 i = 0; i < _currentAcceptedTokens.length; i++) {
+            IERC20 _acceptedToken = _currentAcceptedTokens[i];
+            if (
+                _cMp.want == _acceptedToken ||
+                ticketStand.transformable(
+                    _owner,
+                    _acceptedToken,
+                    _redeemableFor
+                ) >
+                0
+            ) {
+                store.trackAcceptedToken(
+                    msg.sender,
+                    _redeemableFor,
+                    _acceptedToken
+                );
+            }
+        }
     }
 
     /**
@@ -413,14 +451,14 @@ contract Controller is IController, ITicketStand, AccessControl {
     function migrate(address _proposer) external override {
         address _successor = successor[_proposer];
         require(_successor != address(0), "Controller::migrate: BAD_STATE");
-        Ticket _ticket = store.ticket(msg.sender);
-        require(_ticket != Ticket(0), "Controller::migrate: NOT_FOUND");
+        Tickets _tickets = ticketStand.tickets(msg.sender);
+        require(_tickets != Tickets(0), "Controller::migrate: NOT_FOUND");
         require(
-            !_ticket.hasRole(_ticket.DEFAULT_ADMIN_ROLE(), _successor),
+            !_tickets.hasRole(_tickets.DEFAULT_ADMIN_ROLE(), _successor),
             "Controller::migrate: ALREADY_MIGRATED"
         );
-        _ticket.grantRole(_ticket.DEFAULT_ADMIN_ROLE(), _successor);
-        _ticket.revokeRole(_ticket.DEFAULT_ADMIN_ROLE(), address(this));
+        _tickets.grantRole(_tickets.DEFAULT_ADMIN_ROLE(), _successor);
+        _tickets.revokeRole(_tickets.DEFAULT_ADMIN_ROLE(), address(this));
     }
 
     /**
@@ -439,27 +477,27 @@ contract Controller is IController, ITicketStand, AccessControl {
         treasury.withdraw(msg.sender, _token, _amount);
     }
 
-    /**
-        @notice Replaces the current treasury with a new one. All funds will move over.
-        @param _newTreasury The new treasury.
-    */
-    function appointTreasury(ITreasury _newTreasury)
-        external
-        override
-        onlyAdmin
-    {
-        require(
-            _newTreasury != ITreasury(0),
-            "Controller::appointTreasury: ZERO_ADDRESS"
-        );
-        require(
-            _newTreasury.controller() == address(this),
-            "Controller::appointTreasury: INCOMPATIBLE"
-        );
+    // /**
+    //     @notice Replaces the current treasury with a new one. All funds will move over.
+    //     @param _newTreasury The new treasury.
+    // */
+    // function appointTreasury(ITreasury _newTreasury)
+    //     external
+    //     override
+    //     onlyAdmin
+    // {
+    //     require(
+    //         _newTreasury != ITreasury(0),
+    //         "Controller::appointTreasury: ZERO_ADDRESS"
+    //     );
+    //     require(
+    //         _newTreasury.controller() == address(this),
+    //         "Controller::appointTreasury: INCOMPATIBLE"
+    //     );
 
-        if (treasury != ITreasury(0))
-            treasury.transition(address(_newTreasury), wantTokenAllowList);
+    //     if (treasury != ITreasury(0))
+    //         treasury.transition(address(_newTreasury), wantTokenAllowList);
 
-        treasury = _newTreasury;
-    }
+    //     treasury = _newTreasury;
+    // }
 }
