@@ -282,6 +282,43 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "contract IERC20",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "contract IERC20",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "transformedAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Transform",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "contract IERC20",
         "name": "token",
         "type": "address"
@@ -348,7 +385,7 @@
         "type": "address"
       }
     ],
-    "name": "cleanTrackedAcceptedTokens",
+    "name": "cleanTrackedWantedTokens",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -571,10 +608,10 @@
   },
   {
     "inputs": [],
-    "name": "ticketStand",
+    "name": "ticketStore",
     "outputs": [
       {
-        "internalType": "contract TicketStand",
+        "internalType": "contract TicketStore",
         "name": "",
         "type": "address"
       }
@@ -655,25 +692,6 @@
         "internalType": "contract IERC20",
         "name": "",
         "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "wantTokenIsAllowed",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",

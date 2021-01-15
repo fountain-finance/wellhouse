@@ -40,8 +40,6 @@ interface IMpController {
         IERC20 want
     );
 
-    function getWantTokenAllowList() external returns (IERC20[] memory);
-
     function configureMp(
         uint256 _target,
         uint256 _duration,
