@@ -21,27 +21,13 @@ contract Controller is IController, Ownable {
     using SafeERC20 for IERC20;
     using MoneyPool for MoneyPool.Data;
 
-    /// @dev Wrap the sustain and collect transactions in unique locks to prevent reentrency.
-    uint256 private lock1 = 1;
-    uint256 private lock2 = 1;
-    uint256 private lock3 = 1;
-    modifier lockSustain() {
-        require(lock1 == 1, "Controller::sustainOwner LOCKED");
-        lock1 = 0;
+    /// @dev Limit sustain, redeem, transform, and tap to being called one at a time.
+    uint256 private unlocked = 1;
+    modifier lock() {
+        require(unlocked == 1, "Controller: LOCKED");
+        unlocked = 0;
         _;
-        lock1 = 1;
-    }
-    modifier lockRedeem() {
-        require(lock2 == 1, "Controller::redeem: LOCKED");
-        lock2 = 0;
-        _;
-        lock2 = 1;
-    }
-    modifier lockTap() {
-        require(lock3 == 1, "Controller:: tapSustainments LOCKED");
-        lock3 = 0;
-        _;
-        lock3 = 1;
+        unlocked = 1;
     }
 
     // --- private properties --- //
@@ -65,21 +51,6 @@ contract Controller is IController, Ownable {
 
     /// @notice Tokens that are allowed to be want tokens.
     IERC20[] public wantTokenAllowList;
-
-    // --- external views --- //
-
-    /**
-        @notice A list of tokens that a Money pool is allowed to `want`.
-        @return _list
-    */
-    function getWantTokenAllowList()
-        external
-        view
-        override
-        returns (IERC20[] memory)
-    {
-        return wantTokenAllowList;
-    }
 
     // --- external transactions --- //
 
@@ -221,7 +192,7 @@ contract Controller is IController, Ownable {
         uint256 _amount,
         IERC20 _want,
         address _beneficiary
-    ) external override lockSustain returns (uint256) {
+    ) external override lock returns (uint256) {
         require(
             treasury != ITreasury(0),
             "Controller::sustainOwner: BAD_STATE"
@@ -286,7 +257,7 @@ contract Controller is IController, Ownable {
         uint256 _amount,
         IERC20 _to,
         uint256 _expectedTransformedAmount
-    ) external override {
+    ) external override lock {
         require(_amount > 0, "Controller::transform: BAD_AMOUNT");
         uint256 _transformable = ticketStore.transformable(_owner, _from, _to);
         require(
@@ -305,11 +276,7 @@ contract Controller is IController, Ownable {
         @param _owner The owner of the Money pools being collected from.
         @param _amount The amount of FLOW to collect.
     */
-    function redeem(address _owner, uint256 _amount)
-        external
-        override
-        lockRedeem
-    {
+    function redeem(address _owner, uint256 _amount) external override lock {
         require(treasury != ITreasury(0), "Controller::redeem: BAD_STATE");
         Tickets _tickets = ticketStore.tickets(_owner);
         IERC20 _rewardToken = _tickets.rewardToken();
@@ -335,7 +302,7 @@ contract Controller is IController, Ownable {
         uint256 _mpId,
         uint256 _amount,
         address _beneficiary
-    ) external override lockTap {
+    ) external override lock {
         require(treasury != ITreasury(0), "Controller::tapMp: BAD_STATE");
         MoneyPool.Data memory _mp = store.getMp(_mpId);
         uint256 _tappableAmount = _mp._tappableAmount();
