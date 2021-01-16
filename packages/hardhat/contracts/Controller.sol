@@ -155,7 +155,7 @@ contract Controller is IController, Ownable {
             "Controller::configureMp: NEEDS_INITIALIZATION"
         );
 
-        MoneyPool.Data memory _mp = mpStore.getStandbyMp(msg.sender);
+        MoneyPool.Data memory _mp = mpStore.standbyMp(msg.sender);
 
         _mp.title = _title;
         _mp.link = _link;
@@ -211,7 +211,7 @@ contract Controller is IController, Ownable {
         );
         require(_amount > 0, "Controller::sustainOwner: BAD_AMOUNT");
         // Find the Money pool that this sustainment should go to.
-        MoneyPool.Data memory _mp = mpStore.getActiveMp(_owner);
+        MoneyPool.Data memory _mp = mpStore.activeMp(_owner);
         require(_want == _mp.want, "Controller::sustainOwner: UNEXPECTED_WANT");
 
         // Add the amount to the Money pool, which determines how much Flow was made available as a result.
