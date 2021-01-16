@@ -47,7 +47,7 @@ export default function TicketsBalance({
         padding: 10,
       }}
     >
-      <div>{balance !== undefined ? balance : 'Loading ticket balance...'}</div>
+      <div>Ticket balance: {balance !== undefined ? balance : 'loading...'}</div>
       <div>
         <input
           onChange={e => setRedeemAmount(parseFloat(e.target.value))}
