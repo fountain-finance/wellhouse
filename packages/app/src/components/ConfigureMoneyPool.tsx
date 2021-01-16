@@ -38,7 +38,7 @@ export default function ConfigureMoneyPool({
     const _beneficiaryAllocation = eth.abi.encodeParameter('uint256', beneficiaryAllocation)
     const _beneficiaryAddress = beneficiaryAddress ?? '0'
 
-    console.log('configuring mp with params', {
+    console.log('🧃 Calling Controller.configureMp(...)', {
       _target,
       _duration,
       want: contracts.Token.address,

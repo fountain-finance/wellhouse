@@ -15,6 +15,8 @@ export default function InitTickets({ transactor, contracts }: { transactor?: Tr
     const _symbol = symbol && Web3.utils.utf8ToHex(symbol)
     const _rewardToken = contracts.Token.address
 
+    console.log('🧃 Calling Controller.initializeTickets(name, symbol, rewardToken)', { _name, _symbol, _rewardToken })
+
     transactor(contracts.Controller.initializeTickets(_name, _symbol, _rewardToken), () => (window.location.href = '/'))
   }
 

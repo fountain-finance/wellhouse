@@ -33,6 +33,8 @@ export default function TicketsBalance({
     const eth = new Web3(Web3.givenProvider).eth
     const _amount = eth.abi.encodeParameter('uint256', balance)
 
+    console.log('🧃 Calling Controller.redeem(issuerAddress, amount)', { issuerAddress, amount: _amount })
+
     transactor(contracts?.Controller.redeem(issuerAddress, _amount))
   }
 

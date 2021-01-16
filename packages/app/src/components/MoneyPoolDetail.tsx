@@ -77,11 +77,21 @@ export default function MoneyPoolDetail({
     // TODO handle conversion. Use 1:1 for now
     const _expectedAmount = _swappable
 
+    console.log('🧃 Calling Controller.swap(owner, want, swappable, target, expectedAmount)', {
+      owner: mp.owner,
+      want: mp.want,
+      swappable: _swappable,
+      target: daiAddress,
+      expectedAmount: _expectedAmount,
+    })
+
     transactor(contracts.Controller.swap(mp.owner, mp.want, _swappable, daiAddress, _expectedAmount))
   }
 
   function mint() {
     if (!transactor || !contracts || !mp) return
+
+    console.log('🧃 Calling Controller.mintReservedTickets(owner)', { owner: mp.owner })
 
     transactor(contracts.Controller.mintReservedTickets(mp.owner))
   }
@@ -91,10 +101,12 @@ export default function MoneyPoolDetail({
 
     const eth = new Web3(Web3.givenProvider).eth
 
-    const number = eth.abi.encodeParameter('uint256', mp.id)
+    const id = eth.abi.encodeParameter('uint256', mp.id)
     const amount = eth.abi.encodeParameter('uint256', tapAmount)
 
-    transactor(contracts.Controller?.tapMp(number, amount, address))
+    console.log('🧃 Calling Controller.tapMp(number, amount, address)', { id, amount, address })
+
+    transactor(contracts.Controller?.tapMp(id, amount, address))
   }
 
   return mp ? (
