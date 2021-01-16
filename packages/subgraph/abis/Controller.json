@@ -12,6 +12,11 @@
         "type": "address"
       },
       {
+        "internalType": "uint256",
+        "name": "_fee",
+        "type": "uint256"
+      },
+      {
         "internalType": "contract IERC20[]",
         "name": "_wantTokenAllowList",
         "type": "address[]"
@@ -473,6 +478,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "fee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "string",
@@ -576,7 +594,7 @@
     "inputs": [
       {
         "internalType": "contract ITreasury",
-        "name": "_newTreasury",
+        "name": "_treasury",
         "type": "address"
       }
     ],

@@ -52,17 +52,23 @@ contract Controller is IController, Ownable {
     /// @notice Tokens that are allowed to be want tokens.
     IERC20[] public wantTokenAllowList;
 
+    /// @notice The percent fee the contract owner takes from surplus.
+    uint256 public fee;
+
     // --- external transactions --- //
 
     constructor(
         MpStore _mpStore,
         TicketStore _ticketStore,
+        uint256 _fee,
         IERC20[] memory _wantTokenAllowList
     ) public {
         mpStore = _mpStore;
         ticketStore = _ticketStore;
         mpStore.claimOwnership();
         ticketStore.claimOwnership();
+
+        fee = _fee;
 
         for (uint256 i = 0; i < _wantTokenAllowList.length; i++)
             wantTokenIsAllowed[_wantTokenAllowList[i]] = true;
@@ -146,7 +152,10 @@ contract Controller is IController, Ownable {
             _b == 0 || _bAddress != address(0),
             "Controller::configureMp: BAD_ADDRESS"
         );
-        require(_o.add(_b) <= 100, "Controller::configureMp: BAD_PERCENTAGES");
+        require(
+            _o.add(_b).add(fee) <= 100,
+            "Controller::configureMp: BAD_PERCENTAGES"
+        );
 
         Tickets _tickets = ticketStore.tickets(msg.sender);
 
@@ -162,8 +171,8 @@ contract Controller is IController, Ownable {
         _mp.target = _target;
         _mp.duration = _duration;
         _mp.want = _want;
-        // Reset the start time to now if there isn't an active Money pool.
-        _mp.start = mpStore.getActiveMp(msg.sender).id == 0
+        // Reset the start time to now if the current Money pool has no sustainments.
+        _mp.start = mpStore.getCurrentMp(msg.sender).total == 0
             ? block.timestamp
             : _mp.start;
         _mp.bias = _bias;
@@ -244,7 +253,7 @@ contract Controller is IController, Ownable {
                 _tickets.rewardToken()
             );
         }
-        _tickets.mint(_beneficiary, _mp._weighted(_amount, _mp._s()));
+        _tickets.mint(_beneficiary, _mp._weighted(_amount, _mp._s(fee)));
         emit SustainMp(
             _mp.id,
             _mp.owner,
@@ -343,6 +352,7 @@ contract Controller is IController, Ownable {
             if (_mp._state() == MoneyPool.State.Redistributing) {
                 uint256 _surplus = _mp.total.sub(_mp.target);
                 if (_surplus > 0) {
+                    _tickets.mint(owner(), _mp._weighted(_surplus, fee));
                     if (_mp.o > 0)
                         _tickets.mint(
                             _mp.owner,
@@ -364,8 +374,12 @@ contract Controller is IController, Ownable {
 
     // function getReservedTickets(address _owner)
     //     external
-    //     override
-    //     returns (uint256 _owners, uint256 _beneficiarys)
+    //     view
+    //     returns (
+    //         uint256 _owners,
+    //         uint256 _beneficiarys,
+    //         uint256 _contractOwner
+    //     )
     // {
     //     Tickets _tickets = ticketStore.tickets(_owner);
     //     require(
@@ -377,6 +391,9 @@ contract Controller is IController, Ownable {
     //         if (_mp._state() == MoneyPool.State.Redistributing) {
     //             uint256 _surplus = _mp.total.sub(_mp.target);
     //             if (_surplus > 0) {
+    //                 _contractOwner = _contractOwner.add(
+    //                     _mp._weighted(_surplus, fee)
+    //                 );
     //                 if (_mp.o > 0)
     //                     _owners = _owners.add(_mp._weighted(_surplus, _mp.o));
     //                 if (_mp.b > 0)
@@ -519,7 +536,7 @@ contract Controller is IController, Ownable {
             treasury == ITreasury(0),
             "Controller::setTreasury: ALREADY_SET"
         );
-        treasury = _newTreasury;
-        emit SetTreasury(_newTreasury);
+        treasury = _treasury;
+        emit SetTreasury(_treasury);
     }
 }

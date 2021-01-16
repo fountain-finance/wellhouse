@@ -12,7 +12,7 @@ const main = async () => {
   const flow = await deploy("Flow");
   const mpStore = await deploy("MpStore");
   const ticketStore = await deploy("TicketStore");
-  const fountain = await deploy("Controller", [mpStore.address, ticketStore.address, [token.address]]); 
+  const fountain = await deploy("Controller", [mpStore.address, ticketStore.address, 3, [token.address]]); 
   await deploy("Treasury", [flow.address, fountain.address]);
   await deploy("TreasuryPhase1");
 

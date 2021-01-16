@@ -123,6 +123,19 @@ contract TicketStore is AccessControl {
         return tickets[_issuer].totalSupply();
     }
 
+    /**
+        @notice Gets the reward token for the provided issuer's tickets.
+        @param _issuer The issuer of the Ticket to get a value for.
+        @return _value The value.
+    */
+    function getTicketRewardToken(address _issuer)
+        external
+        view
+        returns (IERC20)
+    {
+        return tickets[_issuer].rewardToken();
+    }
+
     // --- external transactions --- //
 
     constructor() public {}

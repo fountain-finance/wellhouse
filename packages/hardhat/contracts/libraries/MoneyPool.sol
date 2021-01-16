@@ -134,10 +134,15 @@ library MoneyPool {
 
     /** 
         @notice Returns the percentage of overflow to allocate to sustainers.
+        @param _withholding An additional percentage to withhold.
         @return _percentage The percentage.
     */
-    function _s(Data memory self) internal pure returns (uint256) {
-        return uint256(100).sub(self.o).sub(self.b);
+    function _s(Data memory self, uint256 _withholding)
+        internal
+        pure
+        returns (uint256)
+    {
+        return uint256(100).sub(self.o).sub(self.b).sub(_withholding);
     }
 
     /** 
