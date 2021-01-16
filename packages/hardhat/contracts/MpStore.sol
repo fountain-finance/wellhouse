@@ -35,7 +35,7 @@ contract MpStore is AccessControl {
     address public owner;
 
     /// @notice A big number to base ticket issuance off of.
-    uint256 public constant MP_BASE_WEIGHT = 1000000000E18;
+    uint256 public constant MP_BASE_WEIGHT = 1E18;
 
     /// @notice The latest Money pool for each owner address
     mapping(address => uint256) public latestMpId;

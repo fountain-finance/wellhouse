@@ -362,6 +362,33 @@ contract Controller is IController, Ownable {
         emit MintReservedTickets(msg.sender, _owner);
     }
 
+    // function getReservedTickets(address _owner)
+    //     external
+    //     override
+    //     returns (uint256 _owners, uint256 _beneficiarys)
+    // {
+    //     Tickets _tickets = ticketStore.tickets(_owner);
+    //     require(
+    //         _tickets != Tickets(0),
+    //         "Controller::mintReservedTickets: NOT_FOUND"
+    //     );
+    //     MoneyPool.Data memory _mp = mpStore.getMp(mpStore.latestMpId(_owner));
+    //     while (_mp.id > 0 && !_mp.hasMintedReserves && _mp.total > _mp.target) {
+    //         if (_mp._state() == MoneyPool.State.Redistributing) {
+    //             uint256 _surplus = _mp.total.sub(_mp.target);
+    //             if (_surplus > 0) {
+    //                 if (_mp.o > 0)
+    //                     _owners = _owners.add(_mp._weighted(_surplus, _mp.o));
+    //                 if (_mp.b > 0)
+    //                     _beneficiarys = _beneficiarys.add(
+    //                         _mp._weighted(_surplus, _mp.b)
+    //                     );
+    //             }
+    //         }
+    //         _mp = mpStore.getMp(_mp.previous);
+    //     }
+    // }
+
     /**
         @notice Cleans the tracking array for an owner and a redeemable token.
         @dev This rarely needs to get called, if ever.
@@ -483,7 +510,11 @@ contract Controller is IController, Ownable {
         emit AppointTreasury(_newTreasury);
     }
 
-    function setTreasury(ITreasury _newTreasury) external override {
+    /**
+        @notice Sets the treasury if there isn't one.
+        @param _treasury The new treasury.
+    */
+    function setTreasury(ITreasury _treasury) external override {
         require(
             treasury == ITreasury(0),
             "Controller::setTreasury: ALREADY_SET"
