@@ -63,7 +63,7 @@ export default function MoneyPoolDetail({
   })
 
   const swappable: number | undefined = useContractReader({
-    contract: contracts?.Controller,
+    contract: contracts?.TicketStore,
     functionName: 'swappable',
     args: [mp?.owner, rewardToken, daiAddress],
     formatter: (num: BigNumber | undefined) => num?.toNumber(),
