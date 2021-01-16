@@ -2,6 +2,16 @@
   {
     "inputs": [
       {
+        "internalType": "contract MpStore",
+        "name": "_mpStore",
+        "type": "address"
+      },
+      {
+        "internalType": "contract TicketStore",
+        "name": "_ticketStore",
+        "type": "address"
+      },
+      {
         "internalType": "contract IERC20[]",
         "name": "_wantTokenAllowList",
         "type": "address[]"
@@ -500,6 +510,19 @@
   },
   {
     "inputs": [],
+    "name": "mpStore",
+    "outputs": [
+      {
+        "internalType": "contract MpStore",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "owner",
     "outputs": [
       {
@@ -534,19 +557,6 @@
     "name": "renounceOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "store",
-    "outputs": [
-      {
-        "internalType": "contract MpStore",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

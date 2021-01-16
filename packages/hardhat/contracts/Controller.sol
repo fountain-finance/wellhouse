@@ -61,8 +61,8 @@ contract Controller is IController, Ownable {
     ) public {
         mpStore = _mpStore;
         ticketStore = _ticketStore;
-        _mpStore.claimOwnership();
-        _ticketStore.claimOwnership();
+        mpStore.claimOwnership();
+        ticketStore.claimOwnership();
 
         for (uint256 i = 0; i < _wantTokenAllowList.length; i++)
             wantTokenIsAllowed[_wantTokenAllowList[i]] = true;
