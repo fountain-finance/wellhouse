@@ -100,6 +100,29 @@ contract TicketStore is AccessControl {
             );
     }
 
+    /**
+        @notice Gets the amount of an owner's tickets that a holder has.
+        @param _issuer The issuer of the Ticket to get a value for.
+        @param _holder The ticket holder to get a value for.
+        @return _value The value.
+    */
+    function getTicketBalance(address _issuer, address _holder)
+        external
+        view
+        returns (uint256)
+    {
+        return tickets[_issuer].balanceOf(_holder);
+    }
+
+    /**
+        @notice Gets the total circulating supply of an owner's tickets.
+        @param _issuer The issuer of the Ticket to get a value for.
+        @return _value The value.
+    */
+    function getTicketSupply(address _issuer) external view returns (uint256) {
+        return tickets[_issuer].totalSupply();
+    }
+
     // --- external transactions --- //
 
     constructor() public {}

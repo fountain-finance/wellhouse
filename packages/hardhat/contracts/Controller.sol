@@ -144,7 +144,7 @@ contract Controller is IController, Ownable {
         );
         require(
             _b == 0 || _bAddress != address(0),
-            "Controller::configureMp: BAD_LINK"
+            "Controller::configureMp: BAD_ADDRESS"
         );
         require(_o.add(_b) <= 100, "Controller::configureMp: BAD_PERCENTAGES");
 
@@ -314,13 +314,12 @@ contract Controller is IController, Ownable {
     ) external override lock {
         require(treasury != ITreasury(0), "Controller::tapMp: BAD_STATE");
         MoneyPool.Data memory _mp = mpStore.getMp(_mpId);
-        uint256 _tappableAmount = _mp._tappableAmount();
         require(
             _mp.owner == msg.sender,
             "Controller::collectSustainment: UNAUTHORIZED"
         );
         require(
-            _tappableAmount >= _amount,
+            _mp._tappableAmount() >= _amount,
             "Controller::collectSustainment: INSUFFICIENT_FUNDS"
         );
         _mp.tapped = _mp.tapped.add(_amount);
@@ -471,14 +470,25 @@ contract Controller is IController, Ownable {
             "Controller::appointTreasury: ZERO_ADDRESS"
         );
         require(
-            _newTreasury.controller() == address(this),
+            _newTreasury.controller() == this,
             "Controller::appointTreasury: INCOMPATIBLE"
         );
+        require(
+            treasury == ITreasury(0),
+            "Controller::appointTreasury: ZERO_ADDRESS"
+        );
 
-        if (treasury != ITreasury(0))
-            treasury.transition(address(_newTreasury), wantTokenAllowList);
-
+        treasury.transition(address(_newTreasury), wantTokenAllowList);
         treasury = _newTreasury;
         emit AppointTreasury(_newTreasury);
+    }
+
+    function setTreasury(ITreasury _newTreasury) external override {
+        require(
+            treasury == ITreasury(0),
+            "Controller::setTreasury: ALREADY_SET"
+        );
+        treasury = _newTreasury;
+        emit SetTreasury(_newTreasury);
     }
 }

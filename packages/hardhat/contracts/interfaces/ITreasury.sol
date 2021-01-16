@@ -4,6 +4,7 @@ pragma solidity >=0.6.0 <0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./ITreasuryPhase.sol";
+import "./IController.sol";
 
 interface ITreasury {
     function phase1() external returns (ITreasuryPhase);
@@ -14,7 +15,7 @@ interface ITreasury {
 
     function withdrawableFunds(IERC20 _token) external returns (uint256);
 
-    function controller() external returns (address);
+    function controller() external returns (IController);
 
     event Swap(IERC20 from, uint256 amount, IERC20 to, uint256 swappedAmount);
 

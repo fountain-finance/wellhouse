@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "./interfaces/ITreasury.sol";
+import "./interfaces/IController.sol";
 
 import "./Flow.sol";
 
@@ -14,7 +15,7 @@ contract Treasury is ITreasury {
     using SafeERC20 for IERC20;
 
     modifier onlyController {
-        require(msg.sender == controller, "Treasury: UNAUTHORIZED");
+        require(msg.sender == address(controller), "Treasury: UNAUTHORIZED");
         _;
     }
 
@@ -39,10 +40,11 @@ contract Treasury is ITreasury {
     /// @notice Amount each tokens from Phase 1 and Phase 2 that have yet to be withdrawn.
     mapping(IERC20 => uint256) public override withdrawableFunds;
     /// @notice The controller that this Treasury belongs to.
-    address public override controller;
+    IController public override controller;
 
-    constructor(Flow _flow, address _controller) public {
+    constructor(Flow _flow, IController _controller) public {
         controller = _controller;
+        controller.setTreasury(this);
         flow = _flow;
     }
 
