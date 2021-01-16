@@ -13,6 +13,7 @@ import { MoneyPool } from '../models/money-pool'
 import { Transactor } from '../models/transactor'
 import ConfigureMoneyPool from './ConfigureMoneyPool'
 import MoneyPoolDetail from './MoneyPoolDetail'
+import TicketsBalance from './TicketsBalance'
 
 export default function MoneyPools({
   address,
@@ -33,57 +34,57 @@ export default function MoneyPools({
   const isOwner = owner === address
 
   const currentMp: MoneyPool | undefined = useContractReader({
-    contract: contracts?.Fountain,
+    contract: contracts?.Controller,
     functionName: 'getCurrentMp',
     args: [owner],
   })
 
   const queuedMp: MoneyPool | undefined = useContractReader({
-    contract: contracts?.Fountain,
+    contract: contracts?.Controller,
     functionName: 'getQueuedMp',
     args: [owner],
   })
 
   const tappableAmount: number | undefined = useContractReader<number>({
-    contract: contracts?.Fountain,
+    contract: contracts?.Controller,
     functionName: 'getTappableAmount',
-    args: [currentMp?.number],
+    args: [currentMp?.id],
     formatter: (result: BigNumber) => result?.toNumber(),
   })
 
   const currentSustainEvents = (useEventListener({
     contracts,
-    contractName: ContractName.Fountain,
+    contractName: ContractName.Controller,
     eventName: 'SustainMp',
     provider: localProvider,
     startBlock: 1,
     getInitial: true,
-    topics: currentMp?.number ? [BigNumber.from(currentMp?.number)] : [],
+    topics: currentMp?.id ? [BigNumber.from(currentMp?.id)] : [],
   }) as SustainEvent[])
     .filter(e => e.owner === owner)
-    .filter(e => e.mpNumber.toNumber() === currentMp?.number.toNumber())
+    .filter(e => e.mpNumber.toNumber() === currentMp?.id.toNumber())
 
   function sustain() {
-    if (!transactor || !contracts?.Fountain || !currentMp?.owner) return
+    if (!transactor || !contracts?.Controller || !currentMp?.owner) return
 
     const eth = new Web3(Web3.givenProvider).eth
 
     const amount = sustainAmount !== undefined ? eth.abi.encodeParameter('uint256', sustainAmount) : undefined
 
-    transactor(contracts.Fountain.sustainOwner(currentMp.owner, amount, contracts.Token.address, address), () =>
+    transactor(contracts.Controller.sustainOwner(currentMp.owner, amount, contracts.Token.address, address), () =>
       setSustainAmount(0),
     )
   }
 
   function tap() {
-    if (!transactor || !contracts?.Fountain || !currentMp) return
+    if (!transactor || !contracts?.Controller || !currentMp) return
 
     const eth = new Web3(Web3.givenProvider).eth
 
-    const number = eth.abi.encodeParameter('uint256', currentMp.number)
+    const number = eth.abi.encodeParameter('uint256', currentMp.id)
     const amount = eth.abi.encodeParameter('uint256', tapAmount)
 
-    transactor(contracts.Fountain?.tapMp(number, amount, address))
+    transactor(contracts.Controller?.tapMp(number, amount, address))
   }
 
   const configureMoneyPool = <ConfigureMoneyPool transactor={transactor} contracts={contracts} />
@@ -112,6 +113,12 @@ export default function MoneyPools({
   const pools =
     !currentMp && !queuedMp ? null : (
       <div>
+        <TicketsBalance
+          contracts={contracts}
+          issuerAddress={owner}
+          ticketsHolderAddress={address}
+          transactor={transactor}
+        />
         <h3>{owner}</h3>
         <h1 style={{ marginRight: spacing }}>Money Pool</h1>
         <div
@@ -131,7 +138,13 @@ export default function MoneyPools({
             >
               {header('Current')}
               {currentMp ? (
-                <MoneyPoolDetail mp={currentMp} showSustained={true} showTimeLeft={true} />
+                <MoneyPoolDetail
+                  mp={currentMp}
+                  showSustained={true}
+                  showTimeLeft={true}
+                  contracts={contracts}
+                  transactor={transactor}
+                />
               ) : (
                 <div>Getting money pool...</div>
               )}
@@ -168,7 +181,7 @@ export default function MoneyPools({
               <a
                 href={
                   '/history/' +
-                  (currentMp?.total?.toNumber() ? currentMp?.number?.toNumber() : currentMp?.previous?.toNumber())
+                  (currentMp?.total?.toNumber() ? currentMp?.id?.toNumber() : currentMp?.previous?.toNumber())
                 }
               >
                 Pool history
@@ -212,6 +225,9 @@ export default function MoneyPools({
       {pools}
       {!currentMp ? (
         <div>
+          <div style={{ marginBottom: 30 }}>
+            <a href="/init">Initialize tickets</a> if you haven't yet!
+          </div>
           <h1>Create money pool</h1>
           {configureMoneyPool}
         </div>

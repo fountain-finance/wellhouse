@@ -15,6 +15,7 @@ import { useContractLoader } from './hooks/ContractLoader'
 import { useGasPrice } from './hooks/GasPrice'
 import { useUserProvider } from './hooks/UserProvider'
 import MoneyPoolsHistory from './components/MoneyPoolsHistory'
+import InitTickets from './components/InitTickets'
 
 function App() {
   const [injectedProvider, setInjectedProvider] = useState<Web3Provider>()
@@ -52,17 +53,15 @@ function App() {
 
   return (
     <div className="App">
-      <Navbar
-        contracts={contracts}
-        address={address}
-        userProvider={userProvider}
-        onConnectWallet={loadWeb3Modal}
-      ></Navbar>
+      <Navbar address={address} userProvider={userProvider} onConnectWallet={loadWeb3Modal}></Navbar>
 
       <div style={{ padding: 20 }}>
         <BrowserRouter>
           <Switch>
             <Route exact path="/"></Route>
+            <Route exact path="/init">
+              <InitTickets contracts={contracts} transactor={transactor} />
+            </Route>
             <Route exact path="/gimme">
               <Gimme contracts={contracts} transactor={transactor} address={address}></Gimme>
             </Route>

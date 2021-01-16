@@ -31,7 +31,7 @@ export default function MoneyPoolsHistory({
   const pollTime = allPoolsLoaded ? undefined : 100
 
   useContractReader<MoneyPool>({
-    contract: contracts?.Fountain,
+    contract: contracts?.MpStore,
     functionName: 'getMp',
     args: [poolNumber],
     pollTime,
@@ -43,7 +43,7 @@ export default function MoneyPoolsHistory({
   })
 
   useContractReader<BigNumber>({
-    contract: contracts?.Fountain,
+    contract: contracts?.Controller,
     functionName: 'getTappableAmount',
     args: [poolNumber],
     pollTime,
@@ -51,14 +51,14 @@ export default function MoneyPoolsHistory({
   })
 
   function tap(mpNumber: BigNumber, amount: number) {
-    if (!transactor || !contracts?.Fountain) return
+    if (!transactor || !contracts?.Controller) return
 
     const eth = new Web3(Web3.givenProvider).eth
 
     const _mpNumber = eth.abi.encodeParameter('uint256', mpNumber)
     const _amount = eth.abi.encodeParameter('uint256', amount)
 
-    transactor(contracts.Fountain?.tapMp(_mpNumber, _amount, address), () =>
+    transactor(contracts.Controller?.tapMp(_mpNumber, _amount, address), () =>
       // reset tappable amount for withdrawn pool
       setTappableAmounts({
         ...tappableAmounts,
@@ -76,11 +76,11 @@ export default function MoneyPoolsHistory({
       }}
     >
       {moneyPools.map((mp, index) => {
-        const tappable = tappableAmounts[mp.number.toNumber()]?.toNumber()
+        const tappable = tappableAmounts[mp.id.toNumber()]?.toNumber()
 
         return (
           <div key={index}>
-            <MoneyPoolDetail mp={mp} showSustained={true} />
+            <MoneyPoolDetail mp={mp} showSustained={true} transactor={transactor} contracts={contracts} />
             {tappable ? (
               <button
                 style={{
@@ -88,7 +88,7 @@ export default function MoneyPoolsHistory({
                   background: 'green',
                   fontWeight: 'bold',
                 }}
-                onClick={() => tap(mp.number, tappable)}
+                onClick={() => tap(mp.id, tappable)}
               >
                 Withdraw {tappable}
               </button>
