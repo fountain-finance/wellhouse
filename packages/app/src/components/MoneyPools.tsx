@@ -55,7 +55,7 @@ export default function MoneyPools({
     topics: currentMp?.id ? [BigNumber.from(currentMp?.id)] : [],
   }) as SustainEvent[])
     .filter(e => e.owner === owner)
-    .filter(e => e.mpNumber.toNumber() === currentMp?.id.toNumber())
+    .filter(e => e.mpId.toNumber() === currentMp?.id.toNumber())
 
   function sustain() {
     if (!transactor || !contracts?.Controller || !currentMp?.owner) return
@@ -64,14 +64,14 @@ export default function MoneyPools({
 
     const amount = sustainAmount !== undefined ? eth.abi.encodeParameter('uint256', sustainAmount) : undefined
 
-    console.log('🧃 Calling Controller.sustain(owner, amount, token, address)', {
+    console.log('🧃 Calling Controller.sustain(owner, amount, want, address)', {
       owner: currentMp.owner,
       amount,
-      token: contracts.Token.address,
+      want: currentMp.want,
       address,
     })
 
-    transactor(contracts.Controller.sustainOwner(currentMp.owner, amount, contracts.Token.address, address), () =>
+    transactor(contracts.Controller.sustainOwner(currentMp.owner, amount, currentMp.want, address), () =>
       setSustainAmount(0),
     )
   }
@@ -201,26 +201,28 @@ export default function MoneyPools({
         }}
       >
         <div>
-          <a
-            style={{
-              fontWeight: 600,
-              color: '#fff',
-              textDecoration: 'none',
-            }}
-            href="/init"
-          >
-            {section(
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                }}
-              >
-                Initialize tickets if you haven't yet!<span>&gt;</span>
-              </div>,
-              '#2255ff',
-            )}
-          </a>
+          {!currentMp ? (
+            <a
+              style={{
+                fontWeight: 600,
+                color: '#fff',
+                textDecoration: 'none',
+              }}
+              href="/init"
+            >
+              {section(
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  Initialize tickets if you haven't yet!<span>&gt;</span>
+                </div>,
+                '#2255ff',
+              )}
+            </a>
+          ) : null}
 
           {section(
             current ?? (

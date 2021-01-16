@@ -16,13 +16,12 @@ export default function TicketsBalance({
   contracts?: Contracts
   transactor?: Transactor
 }) {
-  const [redeemAmount, setRedeemAmount] = useState<number>(0)
+  const [redeemAmount, setRedeemAmount] = useState<BigNumber>(BigNumber.from(0))
 
-  const balance: number | undefined = useContractReader<number>({
+  const balance = useContractReader<BigNumber>({
     contract: contracts?.TicketStore,
-    functionName: 'getRedeemableAmount',
-    args: [ticketsHolderAddress, issuerAddress],
-    formatter: (result: BigNumber) => result?.toNumber(),
+    functionName: 'getTicketBalance',
+    args: [issuerAddress, ticketsHolderAddress],
   })
 
   if (balance && balance !== redeemAmount) setRedeemAmount(balance)
@@ -31,7 +30,7 @@ export default function TicketsBalance({
     if (!transactor || !contracts) return
 
     const eth = new Web3(Web3.givenProvider).eth
-    const _amount = eth.abi.encodeParameter('uint256', balance)
+    const _amount = eth.abi.encodeParameter('uint256', redeemAmount)
 
     console.log('🧃 Calling Controller.redeem(issuerAddress, amount)', { issuerAddress, amount: _amount })
 
@@ -49,10 +48,10 @@ export default function TicketsBalance({
         padding: 10,
       }}
     >
-      <div>Ticket balance: {balance !== undefined ? balance : 'loading...'}</div>
+      <div>Ticket balance: {balance !== undefined ? balance.toString() : 'loading...'}</div>
       <div>
         <input
-          onChange={e => setRedeemAmount(parseFloat(e.target.value))}
+          onChange={e => setRedeemAmount(BigNumber.from(parseFloat(e.target.value)))}
           style={{ marginRight: 10 }}
           type="number"
           placeholder="0"
