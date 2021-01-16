@@ -9,6 +9,7 @@ import "./interfaces/ITreasury.sol";
 import "./interfaces/IController.sol";
 
 import "./Flow.sol";
+import "./Admin.sol";
 
 contract Treasury is ITreasury {
     using SafeMath for uint256;
@@ -16,6 +17,11 @@ contract Treasury is ITreasury {
 
     modifier onlyController {
         require(msg.sender == address(controller), "Treasury: UNAUTHORIZED");
+        _;
+    }
+
+    modifier onlyAdmin {
+        require(msg.sender == admin, "Treasury: UNAUTHORIZED");
         _;
     }
 
@@ -42,10 +48,17 @@ contract Treasury is ITreasury {
     /// @notice The controller that this Treasury belongs to.
     IController public override controller;
 
-    constructor(Flow _flow, IController _controller) public {
+    address public override admin;
+
+    constructor(
+        Flow _flow,
+        IController _controller,
+        address _admin
+    ) public {
         controller = _controller;
         controller.setTreasury(this);
         flow = _flow;
+        admin = _admin;
     }
 
     function initializePhase1(ITreasuryPhase _phase1) external {
@@ -169,7 +182,7 @@ contract Treasury is ITreasury {
         address _to,
         IERC20 _token,
         uint256 _amount
-    ) external override onlyController {
+    ) external override onlyAdmin {
         require(
             withdrawableFunds[_token] >= _amount,
             "Treasury::withdrawFunds: INSUFFICIENT_FUNDS"

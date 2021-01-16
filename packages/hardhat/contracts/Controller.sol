@@ -16,7 +16,7 @@ import "./TicketStore.sol";
 /**
 @notice The contract managing the state of all Money pools.
 */
-contract Controller is IController, Ownable {
+contract Controller is IController {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using MoneyPool for MoneyPool.Data;
@@ -37,6 +37,9 @@ contract Controller is IController, Ownable {
 
     // --- public properties --- //
 
+    //TODO
+    address public admin;
+
     /// @notice The contract storing all Money pool state variables.
     /// @dev Immutable.
     MpStore public mpStore;
@@ -47,13 +50,53 @@ contract Controller is IController, Ownable {
 
     /// @notice The treasury that manages funds.
     /// @dev Reassignable by the owner.
-    ITreasury public treasury;
+    ITreasury public override treasury;
 
     /// @notice Tokens that are allowed to be want tokens.
     IERC20[] public wantTokenAllowList;
 
     /// @notice The percent fee the contract owner takes from surplus.
     uint256 public fee;
+
+    function getWantTokenAllowList()
+        external
+        override
+        returns (IERC20[] memory)
+    {
+        return wantTokenAllowList;
+    }
+
+    function getReservedTickets(address _owner)
+        external
+        view
+        returns (
+            uint256 _owners,
+            uint256 _beneficiarys,
+            uint256 _admin
+        )
+    {
+        Tickets _tickets = ticketStore.tickets(_owner);
+        require(
+            _tickets != Tickets(0),
+            "Controller::mintReservedTickets: NOT_FOUND"
+        );
+        MoneyPool.Data memory _mp = mpStore.getMp(mpStore.latestMpId(_owner));
+        while (_mp.id > 0 && !_mp.hasMintedReserves && _mp.total > _mp.target) {
+            if (_mp._state() == MoneyPool.State.Redistributing) {
+                uint256 _surplus = _mp.total.sub(_mp.target);
+                if (_surplus > 0) {
+                    _admin = _admin.add(_mp._weighted(_surplus, fee));
+                    if (_mp.o > 0)
+                        _owners = _owners.add(_mp._weighted(_surplus, _mp.o));
+                    if (_mp.b > 0)
+                        _beneficiarys = _beneficiarys.add(
+                            _mp._weighted(_surplus, _mp.b)
+                        );
+                }
+            }
+            _mp = mpStore.getMp(_mp.previous);
+        }
+    }
 
     // --- external transactions --- //
 
@@ -65,8 +108,6 @@ contract Controller is IController, Ownable {
     ) public {
         mpStore = _mpStore;
         ticketStore = _ticketStore;
-        mpStore.claimOwnership();
-        ticketStore.claimOwnership();
 
         fee = _fee;
 
@@ -352,7 +393,7 @@ contract Controller is IController, Ownable {
             if (_mp._state() == MoneyPool.State.Redistributing) {
                 uint256 _surplus = _mp.total.sub(_mp.target);
                 if (_surplus > 0) {
-                    _tickets.mint(owner(), _mp._weighted(_surplus, fee));
+                    _tickets.mint(admin, _mp._weighted(_surplus, fee));
                     if (_mp.o > 0)
                         _tickets.mint(
                             _mp.owner,
@@ -371,40 +412,6 @@ contract Controller is IController, Ownable {
         }
         emit MintReservedTickets(msg.sender, _owner);
     }
-
-    // function getReservedTickets(address _owner)
-    //     external
-    //     view
-    //     returns (
-    //         uint256 _owners,
-    //         uint256 _beneficiarys,
-    //         uint256 _contractOwner
-    //     )
-    // {
-    //     Tickets _tickets = ticketStore.tickets(_owner);
-    //     require(
-    //         _tickets != Tickets(0),
-    //         "Controller::mintReservedTickets: NOT_FOUND"
-    //     );
-    //     MoneyPool.Data memory _mp = mpStore.getMp(mpStore.latestMpId(_owner));
-    //     while (_mp.id > 0 && !_mp.hasMintedReserves && _mp.total > _mp.target) {
-    //         if (_mp._state() == MoneyPool.State.Redistributing) {
-    //             uint256 _surplus = _mp.total.sub(_mp.target);
-    //             if (_surplus > 0) {
-    //                 _contractOwner = _contractOwner.add(
-    //                     _mp._weighted(_surplus, fee)
-    //                 );
-    //                 if (_mp.o > 0)
-    //                     _owners = _owners.add(_mp._weighted(_surplus, _mp.o));
-    //                 if (_mp.b > 0)
-    //                     _beneficiarys = _beneficiarys.add(
-    //                         _mp._weighted(_surplus, _mp.b)
-    //                     );
-    //             }
-    //         }
-    //         _mp = mpStore.getMp(_mp.previous);
-    //     }
-    // }
 
     /**
         @notice Cleans the tracking array for an owner and a redeemable token.
@@ -441,35 +448,8 @@ contract Controller is IController, Ownable {
     }
 
     /**
-        @notice Gives admin access to the Ticket Stand.
-        @dev Make sure you know what you're doing.
-        @dev _newAdmin The new admin of the Ticket Stand.
-    */
-    function appointTicketStandAdmin(address _newAdmin)
-        external
-        override
-        onlyOwner
-    {
-        ticketStore.grantRole(ticketStore.DEFAULT_ADMIN_ROLE(), _newAdmin);
-    }
-
-    /**
-        @notice Gives admin access to the Money pool store.
-        @dev Make sure you know what you're doing.
-        @dev _newAdmin The new admin of the Money pool store.
-    */
-    function appointMpStoreAdmin(address _newOwner)
-        external
-        override
-        onlyOwner
-    {
-        mpStore.grantRole(ticketStore.DEFAULT_ADMIN_ROLE(), _newOwner);
-    }
-
-    /**
         @notice Allows an owner to migrate their Tickets to a proposed successor contract.
-        @dev Make sure you know what you're doing.
-        @dev One way migration.
+        @dev Make sure you know what you're doing. This is a one way migration
     */
     function migrateTickets(address _newController) external override {
         Tickets _tickets = ticketStore.tickets(msg.sender);
@@ -483,60 +463,17 @@ contract Controller is IController, Ownable {
         emit MigrateTickets(_newController);
     }
 
-    /**
-        @notice Allows the owner of the contract to withdraw phase 1 funds.
-        @param _amount The amount to withdraw.
-    */
-    function withdrawFunds(uint256 _amount, IERC20 _token)
-        external
-        override
-        onlyOwner
-    {
-        require(
-            treasury != ITreasury(0),
-            "Controller::withdrawFunds: BAD_STATE"
-        );
-        treasury.withdraw(msg.sender, _token, _amount);
-        emit WithdrawFunds(_token, _amount);
-    }
-
-    /**
-        @notice Replaces the current treasury with a new one. All funds will move over.
-        @param _newTreasury The new treasury.
-    */
-    function appointTreasury(ITreasury _newTreasury)
-        external
-        override
-        onlyOwner
-    {
-        require(
-            _newTreasury != ITreasury(0),
-            "Controller::appointTreasury: ZERO_ADDRESS"
-        );
-        require(
-            _newTreasury.controller() == this,
-            "Controller::appointTreasury: INCOMPATIBLE"
-        );
-        require(
-            treasury == ITreasury(0),
-            "Controller::appointTreasury: ZERO_ADDRESS"
-        );
-
-        treasury.transition(address(_newTreasury), wantTokenAllowList);
-        treasury = _newTreasury;
-        emit AppointTreasury(_newTreasury);
-    }
-
-    /**
-        @notice Sets the treasury if there isn't one.
-        @param _treasury The new treasury.
-    */
     function setTreasury(ITreasury _treasury) external override {
+        //Anyone can appoint the first treasury. Only the admin can update the treasury.
         require(
-            treasury == ITreasury(0),
-            "Controller::setTreasury: ALREADY_SET"
+            treasury == ITreasury(0) || msg.sender == admin,
+            "Controller::setTreasury: UNAUTHORIZED"
         );
         treasury = _treasury;
-        emit SetTreasury(_treasury);
+    }
+
+    function setAdmin(address _admin) external override {
+        require(admin == address(0), "Controller::setAdmin: ALREADY_SET");
+        admin = _admin;
     }
 }

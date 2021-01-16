@@ -17,6 +17,8 @@ interface ITreasury {
 
     function controller() external returns (IController);
 
+    function admin() external returns (address);
+
     event Swap(IERC20 from, uint256 amount, IERC20 to, uint256 swappedAmount);
 
     event Transition(address newTreasury);

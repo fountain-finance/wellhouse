@@ -6,13 +6,11 @@ import "./IMpController.sol";
 import "./ITicketStoreController.sol";
 
 interface IController is IMpController, ITicketStoreController {
-    event WithdrawFunds(IERC20 token, uint256 amount);
-    event SetTreasury(ITreasury treasury);
-    event AppointTreasury(ITreasury newTreasury);
+    function treasury() external returns (ITreasury);
+
+    function getWantTokenAllowList() external returns (IERC20[] memory);
 
     function setTreasury(ITreasury _treasury) external;
 
-    function appointTreasury(ITreasury _newTreasury) external;
-
-    function withdrawFunds(uint256 _amount, IERC20 _token) external;
+    function setAdmin(address _admin) external;
 }
