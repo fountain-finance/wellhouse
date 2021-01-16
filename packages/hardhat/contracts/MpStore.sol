@@ -97,32 +97,6 @@ contract MpStore is AccessControl {
     }
 
     /**
-        @notice The Money pool in the Standby state for the owner.
-        @param _owner The owner of the money pool being looked for.
-        @return _mp The Money pool.
-    */
-    function getStandbyMp(address _owner)
-        external
-        view
-        returns (MoneyPool.Data memory _mp)
-    {
-        return _standbyMp(_owner);
-    }
-
-    /**
-        @notice The Money pool in the Active state for the owner.
-        @param _owner The owner of the money pool being looked for.
-        @return _mp The Money pool.
-    */
-    function getActiveMp(address _owner)
-        external
-        view
-        returns (MoneyPool.Data memory _mp)
-    {
-        return _activeMp(_owner);
-    }
-
-    /**
         @notice The amount left to be withdrawn by the Money pool's owner.
         @param _mpId The ID of the Money pool to get the available sustainment from.
         @return amount The amount.
