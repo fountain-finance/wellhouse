@@ -12,12 +12,12 @@ interface ITreasuryPhase {
 
     function treasury() external returns (address);
 
-    function transform(
+    function swap(
         IERC20 _from,
         uint256 _amount,
         IERC20 _to,
-        uint256 _expectedTransformAmount
-    ) external returns (uint256 _converted);
+        uint256 _expectedSwappedAmount
+    ) external returns (uint256 _swapped);
 
     function assignTreasury(address _treasury) external;
 }

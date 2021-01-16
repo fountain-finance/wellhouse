@@ -52,11 +52,11 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "resultingAmount",
+        "name": "swappedAmount",
         "type": "uint256"
       }
     ],
-    "name": "Transform",
+    "name": "Swap",
     "type": "event"
   },
   {
@@ -257,11 +257,11 @@
       },
       {
         "internalType": "uint256",
-        "name": "_expectedConvertedAmount",
+        "name": "_expectedSwappedAmount",
         "type": "uint256"
       }
     ],
-    "name": "transform",
+    "name": "swap",
     "outputs": [
       {
         "internalType": "uint256",

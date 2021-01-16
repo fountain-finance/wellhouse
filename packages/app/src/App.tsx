@@ -14,6 +14,7 @@ import { createTransactor } from './helpers/Transactor'
 import { useContractLoader } from './hooks/ContractLoader'
 import { useGasPrice } from './hooks/GasPrice'
 import { useUserProvider } from './hooks/UserProvider'
+import MoneyPoolsHistory from './components/MoneyPoolsHistory'
 
 function App() {
   const [injectedProvider, setInjectedProvider] = useState<Web3Provider>()
@@ -67,6 +68,9 @@ function App() {
             </Route>
             <Route exact path="/:owner">
               <MoneyPools contracts={contracts} transactor={transactor} address={address} />
+            </Route>
+            <Route exact path="/history/:number">
+              <MoneyPoolsHistory contracts={contracts} transactor={transactor} address={address} />
             </Route>
           </Switch>
         </BrowserRouter>

@@ -19,12 +19,12 @@ interface ITicketStoreController {
 
     event MintReservedTickets(address minter, address owner);
 
-    event Transform(
+    event Swap(
         address owner,
         IERC20 from,
         uint256 amount,
         IERC20 to,
-        uint256 transformedAmount
+        uint256 swappedAmount
     );
 
     function initializeTickets(
@@ -35,12 +35,12 @@ interface ITicketStoreController {
 
     function redeem(address _owner, uint256 _amount) external;
 
-    function transform(
+    function swap(
         address _owner,
         IERC20 _from,
         uint256 _amount,
         IERC20 _to,
-        uint256 _expectedTransformedAmount
+        uint256 _expectedSwappedAmount
     ) external;
 
     function mintReservedTickets(address _owner) external;

@@ -10,8 +10,8 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./interfaces/ITreasury.sol";
 import "./interfaces/IController.sol";
 
-import "./MpStore.sol";
-import "./TicketStore.sol";
+import "./stores/MpStore.sol";
+import "./stores/TicketStore.sol";
 
 /**
 @notice The contract managing the state of all Money pools.
@@ -21,7 +21,7 @@ contract Controller is IController, Ownable {
     using SafeERC20 for IERC20;
     using MoneyPool for MoneyPool.Data;
 
-    /// @dev Limit sustain, redeem, transform, and tap to being called one at a time.
+    /// @dev Limit sustain, redeem, swap, and tap to being called one at a time.
     uint256 private unlocked = 1;
     modifier lock() {
         require(unlocked == 1, "Controller: LOCKED");
@@ -225,7 +225,7 @@ contract Controller is IController, Ownable {
         store.saveMp(_mp);
         Tickets _tickets = ticketStore.tickets(_mp.owner);
         if (_surplus > 0) {
-            ticketStore.addTransformable(
+            ticketStore.addSwappable(
                 _mp.owner,
                 _mp.want,
                 _surplus,
@@ -245,30 +245,27 @@ contract Controller is IController, Ownable {
     }
 
     /**
-        @notice Transforms any pending surplus from an owner's `want` token to the redeemable token.
-        @param _from The token to transform from.
-        @param _amount Amount to transform.
-        @param _to The token to transform to.
-        @param _expectedTransformedAmount The amount of redeemable tokens transformed from `want` tokens.
+        @notice Swaps any pending surplus from an owner's `want` token to the redeemable token.
+        @param _from The token to swap from.
+        @param _amount Amount to swap.
+        @param _to The token to swap to.
+        @param _expectedSwappedAmount The amount of redeemable tokens  from `want` tokens.
     */
-    function transform(
+    function swap(
         address _owner,
         IERC20 _from,
         uint256 _amount,
         IERC20 _to,
-        uint256 _expectedTransformedAmount
+        uint256 _expectedSwappedAmount
     ) external override lock {
-        require(_amount > 0, "Controller::transform: BAD_AMOUNT");
-        uint256 _transformable = ticketStore.transformable(_owner, _from, _to);
-        require(
-            _transformable >= _amount,
-            "Controller::transform: INSUFFICIENT_FUNDS"
-        );
-        uint256 _transformedAmount =
-            treasury.transform(_from, _amount, _to, _expectedTransformedAmount);
-        ticketStore.addRedeemable(_owner, _to, _transformedAmount);
-        ticketStore.subtractTransformable(_owner, _from, _amount, _to);
-        emit Transform(_owner, _from, _amount, _to, _transformedAmount);
+        require(_amount > 0, "Controller::swap: BAD_AMOUNT");
+        uint256 _swappable = ticketStore.swappable(_owner, _from, _to);
+        require(_swappable >= _amount, "Controller::swap: INSUFFICIENT_FUNDS");
+        uint256 _swappedAmount =
+            treasury.swap(_from, _amount, _to, _expectedSwappedAmount);
+        ticketStore.addRedeemable(_owner, _to, _swappedAmount);
+        ticketStore.subtractSwappable(_owner, _from, _amount, _to);
+        emit Swap(_owner, _from, _amount, _to, _swappedAmount);
     }
 
     /**
@@ -377,8 +374,7 @@ contract Controller is IController, Ownable {
             IERC20 _wantedToken = _currentWantedTokens[i];
             if (
                 _cMp.want == _wantedToken ||
-                ticketStore.transformable(_owner, _wantedToken, _rewardToken) >
-                0
+                ticketStore.swappable(_owner, _wantedToken, _rewardToken) > 0
             ) {
                 store.trackAcceptedToken(
                     msg.sender,

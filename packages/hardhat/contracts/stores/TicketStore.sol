@@ -57,9 +57,9 @@ contract TicketStore is AccessControl {
     /// @notice The current cumulative amount of redeemable tokens redistributable to each issuer's Ticket holders.
     mapping(address => mapping(IERC20 => uint256)) public redeemable;
 
-    /// @notice The amount of each token that is transformable into the redeemable token for each issuer.
+    /// @notice The amount of each token that is swappable into the redeemable token for each issuer.
     mapping(address => mapping(IERC20 => mapping(IERC20 => uint256)))
-        public transformable;
+        public swappable;
 
     // --- external views --- //
 
@@ -143,36 +143,38 @@ contract TicketStore is AccessControl {
     }
 
     /**
-        @notice Adds an amount that can be transformable from one token to another.
+        @notice Adds an amount that can be swappable from one token to another.
         @param _issuer The issuer of the Tickets responsible for the funds.
         @param _from The original token.
-        @param _amount The amount of `from` tokens to make transformable.
-        @param _to The token to transform into.
+        @param _amount The amount of `from` tokens to make swappable.
+        @param _to The token to swap into.
     */
-    function addTransformable(
+    function addSwappable(
         address _issuer,
         IERC20 _from,
         uint256 _amount,
         IERC20 _to
     ) external onlyAdmin {
-        transformable[_issuer][_from][_to] = transformable[_issuer][_from][_to]
-            .add(_amount);
+        swappable[_issuer][_from][_to] = swappable[_issuer][_from][_to].add(
+            _amount
+        );
     }
 
     /**
-        @notice Subtracts the amount that can be transformable from one token to another.
+        @notice Subtracts the amount that can be swapped from one token to another.
         @param _issuer The issuer of the Tickets responsible for the funds.
         @param _from The original token.
         @param _amount The amount of `from` tokens to decrement.
-        @param _to The token to transform into.
+        @param _to The token to swap into.
     */
-    function subtractTransformable(
+    function subtractSwappable(
         address _issuer,
         IERC20 _from,
         uint256 _amount,
         IERC20 _to
     ) external onlyAdmin {
-        transformable[_issuer][_from][_to] = transformable[_issuer][_from][_to]
-            .sub(_amount);
+        swappable[_issuer][_from][_to] = swappable[_issuer][_from][_to].sub(
+            _amount
+        );
     }
 }

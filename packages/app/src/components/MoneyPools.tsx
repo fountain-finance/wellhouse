@@ -130,9 +130,11 @@ export default function MoneyPools({
               }}
             >
               {header('Current')}
-
-              {currentMp ? <MoneyPoolDetail mp={currentMp} isActive={true} /> : <div>Getting money pool...</div>}
-
+              {currentMp ? (
+                <MoneyPoolDetail mp={currentMp} showSustained={true} showTimeLeft={true} />
+              ) : (
+                <div>Getting money pool...</div>
+              )}
               {currentMp ? (
                 <div>
                   <div>
@@ -162,6 +164,15 @@ export default function MoneyPools({
                   </button>
                 </div>
               ) : null}
+
+              <a
+                href={
+                  '/history/' +
+                  (currentMp?.total?.toNumber() ? currentMp?.number?.toNumber() : currentMp?.previous?.toNumber())
+                }
+              >
+                Pool history
+              </a>
 
               {isOwner && currentMp?.total?.toNumber() === 0 ? (
                 <div style={formStyle}>

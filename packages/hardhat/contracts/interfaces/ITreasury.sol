@@ -16,23 +16,18 @@ interface ITreasury {
 
     function controller() external returns (address);
 
-    event Transform(
-        IERC20 from,
-        uint256 amount,
-        IERC20 to,
-        uint256 resultingAmount
-    );
+    event Swap(IERC20 from, uint256 amount, IERC20 to, uint256 swappedAmount);
 
     event Transition(address newTreasury);
 
     event InitializePhase(uint8 number);
 
-    function transform(
+    function swap(
         IERC20 _from,
         uint256 _amount,
         IERC20 _to,
-        uint256 _expectedTransformAmount
-    ) external returns (uint256 _converted);
+        uint256 _expectedSwappedAmount
+    ) external returns (uint256 _swapped);
 
     function payout(
         address _receiver,

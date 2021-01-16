@@ -30,11 +30,11 @@ contract Treasury is ITreasury {
     IERC20 public issuanceToken;
     /// @notice The address of the FLOW ERC20 token.
     Flow public flow;
-    /// @notice The contract managing Phase 1 token transformations.
+    /// @notice The contract managing Phase 1 token swaps.
     ITreasuryPhase public override phase1;
-    /// @notice The contract managing Phase 2 token transformations.
+    /// @notice The contract managing Phase 2 token swaps.
     ITreasuryPhase public override phase2;
-    /// @notice The contract managing Phase 3 token transformations.
+    /// @notice The contract managing Phase 3 token swaps.
     ITreasuryPhase public override phase3;
     /// @notice Amount each tokens from Phase 1 and Phase 2 that have yet to be withdrawn.
     mapping(IERC20 => uint256) public override withdrawableFunds;
@@ -108,11 +108,11 @@ contract Treasury is ITreasury {
         emit InitializePhase(3);
     }
 
-    function transform(
+    function swap(
         IERC20 _from,
         uint256 _amount,
         IERC20 _to,
-        uint256 _expectedConvertedAmount
+        uint256 _expectedSwappedAmount
     ) external override onlyController returns (uint256 _resultingAmount) {
         Phase _phase = _getPhase(_to);
         require(_phase != Phase.None, "Treasury::transform: BAD_STATE");
@@ -121,7 +121,7 @@ contract Treasury is ITreasury {
                 address(phase1) != address(0),
                 "Treasury::transform: CONTRACT_MISSING"
             );
-            _resultingAmount = phase1.transform(
+            _resultingAmount = phase1.swap(
                 _from,
                 _amount,
                 issuanceToken,
@@ -134,7 +134,7 @@ contract Treasury is ITreasury {
                 address(phase2) != address(0),
                 "Treasury::transform: CONTRACT_MISSING"
             );
-            _resultingAmount = phase2.transform(
+            _resultingAmount = phase2.swap(
                 _from,
                 _amount,
                 issuanceToken,
@@ -146,13 +146,13 @@ contract Treasury is ITreasury {
             address(phase3) != address(0),
             "Treasury::transform: CONTRACT_MISSING"
         );
-        _resultingAmount = phase3.transform(
+        _resultingAmount = phase3.swap(
             _from,
             _amount,
             _to,
-            _expectedConvertedAmount
+            _expectedSwappedAmount
         );
-        emit Transform(_from, _amount, _to, _resultingAmount);
+        emit Swap(_from, _amount, _to, _resultingAmount);
     }
 
     function payout(

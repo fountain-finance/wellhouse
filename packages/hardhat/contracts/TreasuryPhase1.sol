@@ -29,29 +29,26 @@ contract TreasuryPhase1 is ITreasuryPhase {
     }
 
     /**
-      @notice Convert the specified amount into tokens.
-      @param _from The token being converted from.
+      @notice swap the specified amount into tokens.
+      @param _from The token being swapped from.
       @param _amount The amount of tokens to use for issuing.
-      @param _to The token being converted to.
-      @param _expectedTransformAmount The amount of tokens expected in exchange.
-      @return _converted The amount of tokens issued.
+      @param _to The token being swapped to.
+      @param _expectedSwappedAmount The amount of tokens expected in exchange.
+      @return _swapped The amount of tokens issued.
     */
-    function transform(
+    function swap(
         IERC20 _from,
         uint256 _amount,
         IERC20 _to,
-        uint256 _expectedTransformAmount
+        uint256 _expectedSwappedAmount
     ) external override returns (uint256) {
+        require(msg.sender == treasury, "TreasuryPhase1::swap: UNAUTHORIZED");
         require(
-            msg.sender == treasury,
-            "TreasuryPhase1::transform: UNAUTHORIZED"
+            _validIssuance(_expectedSwappedAmount, _to),
+            "TreasuryPhase1::swap: INVALID"
         );
-        require(
-            _validIssuance(_expectedTransformAmount, _to),
-            "TreasuryPhase1::transform: INVALID"
-        );
-        tokensIssued[_to] = tokensIssued[_to].add(_expectedTransformAmount);
-        return _expectedTransformAmount;
+        tokensIssued[_to] = tokensIssued[_to].add(_expectedSwappedAmount);
+        return _expectedSwappedAmount;
     }
 
     function assignTreasury(address _treasury) external override {

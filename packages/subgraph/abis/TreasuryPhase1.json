@@ -47,25 +47,6 @@
     "inputs": [
       {
         "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "tokensIssued",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "contract IERC20",
         "name": "_from",
         "type": "address"
       },
@@ -81,11 +62,11 @@
       },
       {
         "internalType": "uint256",
-        "name": "_expectedTransformAmount",
+        "name": "_expectedSwappedAmount",
         "type": "uint256"
       }
     ],
-    "name": "transform",
+    "name": "swap",
     "outputs": [
       {
         "internalType": "uint256",
@@ -94,6 +75,25 @@
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "tokensIssued",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
