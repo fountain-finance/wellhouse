@@ -3,8 +3,8 @@ import { useState } from 'react'
 import Web3 from 'web3'
 
 import { ContractName } from '../constants/contract-name'
-import { SECONDS_IN_DAY } from '../constants/seconds-in-day'
 import { Transactor } from '../models/transactor'
+import { SECONDS_IN_DAY } from '../constants/seconds-in-day'
 
 export default function ConfigureMoneyPool({
   transactor,
@@ -24,14 +24,12 @@ export default function ConfigureMoneyPool({
 
   const eth = new Web3(Web3.givenProvider).eth
 
-  const useDays = process.env.NODE_ENV === 'production'
-
   function onSubmit() {
     if (!transactor || !contracts?.Controller || !contracts?.Token) return
 
     const _target = eth.abi.encodeParameter('uint256', target)
     // Contracts created during development use seconds for duration
-    const _duration = eth.abi.encodeParameter('uint256', duration * (useDays ? SECONDS_IN_DAY : 1))
+    const _duration = eth.abi.encodeParameter('uint256', duration * SECONDS_IN_DAY)
     const _title = title && Web3.utils.utf8ToHex(title)
     const _link = link && Web3.utils.utf8ToHex(link)
     const _bias = eth.abi.encodeParameter('uint256', bias)
@@ -135,7 +133,7 @@ export default function ConfigureMoneyPool({
           id="duration"
           placeholder="30"
         />
-        {useDays ? 'days' : 'seconds'}
+        days
       </p>
       <p>
         <label htmlFor="ownerAllocation">Reserve surplus for owner</label>

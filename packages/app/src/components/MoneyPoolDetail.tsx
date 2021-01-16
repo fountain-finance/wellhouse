@@ -21,7 +21,7 @@ export default function MoneyPoolDetail({
   showSustained?: boolean
   showTimeLeft?: boolean
 }) {
-  const secondsLeft = mp && mp.start.toNumber() + mp.duration.toNumber() - new Date().valueOf() / 1000
+  const secondsLeft = mp && Math.floor(mp.start.toNumber() + mp.duration.toNumber() - new Date().valueOf() / 1000)
 
   const label = (text: string) => (
     <label
@@ -43,13 +43,9 @@ export default function MoneyPoolDetail({
     const minutes = hours && (hours % 1) * 60
     const seconds = minutes && (minutes % 1) * 60
 
-    return (
-      <span>
-        {days && days >= 1 ? Math.floor(days) + 'd' : null} {hours && hours >= 1 ? Math.floor(hours) + 'h' : null}{' '}
-        {minutes && minutes >= 1 ? Math.floor(minutes) + 'm' : null}{' '}
-        {seconds && seconds >= 1 ? Math.floor(seconds) + 's' : null}
-      </span>
-    )
+    return `${days && days >= 1 ? Math.floor(days) + 'd ' : ''}${hours && hours >= 1 ? Math.floor(hours) + 'h ' : ''}
+        ${minutes && minutes >= 1 ? Math.floor(minutes) + 'm ' : ''}
+        ${seconds && seconds >= 1 ? Math.floor(seconds) + 's' : ''}`
   }
 
   const title = mp?.title && Web3.utils.hexToString(mp.title)
@@ -58,8 +54,8 @@ export default function MoneyPoolDetail({
 
   const rewardToken = useContractReader({
     contract: contracts?.TicketStore,
-    functionName: 'tickets',
-    formatter: tickets => (mp?.owner ? tickets[mp?.owner]?.rewardToken() : undefined),
+    functionName: 'getTicketRewardToken',
+    args: [mp?.owner],
   })
 
   const swappable: number | undefined = useContractReader({
@@ -97,37 +93,37 @@ export default function MoneyPoolDetail({
       </div>
       <br />
       <div>
-        {label('Number')} {mp.id.toNumber()}
+        {label('Number')} {mp.id.toString()}
       </div>
       <div>
-        {label('Target')} {mp.target.toNumber()}
+        {label('Target')} {mp.target.toString()}
       </div>
       {showSustained ? (
         <div>
-          {label('Sustained')} {mp.total.toNumber()}
+          {label('Sustained')} {mp.total.toString()}
         </div>
       ) : null}
       <div>
         {label('Start')} {new Date(mp.start.toNumber() * 1000).toISOString()}
       </div>
       <div>
-        {label('Duration')} {expandedTimeString(mp && mp.duration.toNumber() * 1000)}
+        {label('Duration')} <span>{expandedTimeString(mp && mp.duration.toNumber() * 1000)}</span>
       </div>
       <div>
-        {label('Reserved for owner')} {mp.o?.toNumber()}
+        {label('Reserved for owner')} {mp.o?.toString()}%
       </div>
       {mp?.bAddress ? (
         <div>
-          {label('Beneficiary')} {mp.bAddress} - {mp.b.toNumber()}%
+          {label('Beneficiary')} {mp.bAddress} - {mp.b.toString()}%
         </div>
       ) : null}
       {showTimeLeft ? (
         <div>
-          {label('Time left')} {(secondsLeft && expandedTimeString(secondsLeft * 1000)) || 'Ended'}
+          {label('Time left')} <span>{(secondsLeft && expandedTimeString(secondsLeft * 1000)) || 'Ended'}</span>
         </div>
       ) : null}
       <div>
-        {label('Bias / weight')} {`${mp.bias?.toNumber()} / ${mp.weight?.toNumber()}`}
+        {label('Bias / weight')} {`${mp.bias?.toString()} / ${mp.weight?.toString()}`}
       </div>
       <div>
         {label('Reserves')}{' '}

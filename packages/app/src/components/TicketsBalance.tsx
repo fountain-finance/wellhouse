@@ -18,13 +18,10 @@ export default function TicketsBalance({
 }) {
   const [redeemAmount, setRedeemAmount] = useState<number>(0)
 
-  const _ticketsHolderAddress = ticketsHolderAddress && Web3.utils.utf8ToHex(ticketsHolderAddress)
-  const _issuerAddress = issuerAddress && Web3.utils.utf8ToHex(issuerAddress)
-
   const balance: number | undefined = useContractReader<number>({
     contract: contracts?.TicketStore,
     functionName: 'getRedeemableAmount',
-    args: [_ticketsHolderAddress, _issuerAddress],
+    args: [ticketsHolderAddress, issuerAddress],
     formatter: (result: BigNumber) => result?.toNumber(),
   })
 
@@ -36,7 +33,7 @@ export default function TicketsBalance({
     const eth = new Web3(Web3.givenProvider).eth
     const _amount = eth.abi.encodeParameter('uint256', balance)
 
-    transactor(contracts?.Controller.redeem(_issuerAddress, _amount))
+    transactor(contracts?.Controller.redeem(issuerAddress, _amount))
   }
 
   return (
