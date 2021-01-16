@@ -2,7 +2,7 @@ import { BigNumber } from '@ethersproject/bignumber'
 
 export interface SustainEvent {
   amount: BigNumber
-  mpNumber: BigNumber
+  mpId: BigNumber
   beneficiary: string
   owner: string
   sustainer: string

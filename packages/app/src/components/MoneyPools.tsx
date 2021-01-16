@@ -12,6 +12,7 @@ import { SustainEvent } from '../models/events/sustain-event'
 import { MoneyPool } from '../models/money-pool'
 import { Transactor } from '../models/transactor'
 import ConfigureMoneyPool from './ConfigureMoneyPool'
+import KeyValRow from './KeyValRow'
 import MoneyPoolDetail from './MoneyPoolDetail'
 import TicketsBalance from './TicketsBalance'
 
@@ -25,7 +26,6 @@ export default function MoneyPools({
   contracts?: Contracts
 }) {
   const [sustainAmount, setSustainAmount] = useState<number>(0)
-  const [tapAmount, setTapAmount] = useState<number>(0)
 
   const { owner }: { owner?: string } = useParams()
 
@@ -45,13 +45,6 @@ export default function MoneyPools({
     args: [owner],
   })
 
-  const tappableAmount: number | undefined = useContractReader<number>({
-    contract: contracts?.MpStore,
-    functionName: 'getTappableAmount',
-    args: [currentMp?.id],
-    formatter: (result: BigNumber) => result?.toNumber(),
-  })
-
   const currentSustainEvents = (useEventListener({
     contracts,
     contractName: ContractName.Controller,
@@ -62,7 +55,7 @@ export default function MoneyPools({
     topics: currentMp?.id ? [BigNumber.from(currentMp?.id)] : [],
   }) as SustainEvent[])
     .filter(e => e.owner === owner)
-    .filter(e => e.mpNumber.toNumber() === currentMp?.id.toNumber())
+    .filter(e => e.mpId.toNumber() === currentMp?.id.toNumber())
 
   function sustain() {
     if (!transactor || !contracts?.Controller || !currentMp?.owner) return
@@ -71,20 +64,16 @@ export default function MoneyPools({
 
     const amount = sustainAmount !== undefined ? eth.abi.encodeParameter('uint256', sustainAmount) : undefined
 
-    transactor(contracts.Controller.sustainOwner(currentMp.owner, amount, contracts.Token.address, address), () =>
+    console.log('🧃 Calling Controller.sustain(owner, amount, want, address)', {
+      owner: currentMp.owner,
+      amount,
+      want: currentMp.want,
+      address,
+    })
+
+    transactor(contracts.Controller.sustainOwner(currentMp.owner, amount, currentMp.want, address), () =>
       setSustainAmount(0),
     )
-  }
-
-  function tap() {
-    if (!transactor || !contracts?.Controller || !currentMp) return
-
-    const eth = new Web3(Web3.givenProvider).eth
-
-    const number = eth.abi.encodeParameter('uint256', currentMp.id)
-    const amount = eth.abi.encodeParameter('uint256', tapAmount)
-
-    transactor(contracts.Controller?.tapMp(number, amount, address))
   }
 
   const configureMoneyPool = <ConfigureMoneyPool transactor={transactor} contracts={contracts} />
@@ -103,151 +92,178 @@ export default function MoneyPools({
     )
   }
 
-  const formStyle: React.CSSProperties = {
-    width: 300,
-    padding: 20,
-    borderRadius: 10,
-    border: '1px solid lightGray',
-  }
+  function section(content?: JSX.Element, background = '#f2f2f2') {
+    if (!content) return null
 
-  const pools =
-    !currentMp && !queuedMp ? null : (
-      <div>
-        <TicketsBalance
-          contracts={contracts}
-          issuerAddress={owner}
-          ticketsHolderAddress={address}
-          transactor={transactor}
-        />
-        <h3>{owner}</h3>
-        <h1 style={{ marginRight: spacing }}>Money Pool</h1>
-        <div
-          style={{
-            display: 'grid',
-            gridAutoFlow: 'column',
-            columnGap: spacing,
-          }}
-        >
-          <div>
-            <div
-              style={{
-                display: 'grid',
-                gridAutoFlow: 'row',
-                rowGap: spacing,
-              }}
-            >
-              {header('Current')}
-              {currentMp ? (
-                <MoneyPoolDetail
-                  mp={currentMp}
-                  showSustained={true}
-                  showTimeLeft={true}
-                  contracts={contracts}
-                  transactor={transactor}
-                />
-              ) : (
-                <div>Getting money pool...</div>
-              )}
-              {currentMp ? (
-                <div>
-                  <div>
-                    <label htmlFor="sustain">Sustain money pool</label>
-                  </div>
-                  <input
-                    name="sustain"
-                    placeholder="0"
-                    onChange={e => setSustainAmount(parseFloat(e.target.value))}
-                  ></input>
-                  <button onClick={sustain}>Sustain</button>
-                </div>
-              ) : null}
-
-              {currentMp && tappableAmount !== undefined && isOwner ? (
-                <div>
-                  <div>
-                    <label htmlFor="withdrawable">Withdrawable: {tappableAmount}</label>
-                  </div>
-                  <input
-                    name="withdrawable"
-                    placeholder="0"
-                    onChange={e => setTapAmount(parseFloat(e.target.value))}
-                  ></input>
-                  <button disabled={tapAmount > tappableAmount} onClick={tap}>
-                    Withdraw
-                  </button>
-                </div>
-              ) : null}
-
-              <a
-                href={
-                  '/history/' +
-                  (currentMp?.total?.toNumber() ? currentMp?.id?.toNumber() : currentMp?.previous?.toNumber())
-                }
-              >
-                Pool history
-              </a>
-
-              {isOwner && currentMp?.total?.toNumber() === 0 ? (
-                <div style={formStyle}>
-                  {header('Reconfigure')}
-                  {configureMoneyPool}
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          <div>
-            <div
-              style={{
-                display: 'grid',
-                gridAutoFlow: 'row',
-                rowGap: spacing,
-              }}
-            >
-              {header('Queued')}
-
-              {queuedMp ? <MoneyPoolDetail mp={queuedMp} /> : <div>Nada</div>}
-
-              {isOwner && currentMp?.total?.toNumber() ? (
-                <div style={formStyle}>
-                  {header('Reconfigure queued money pool')}
-                  {configureMoneyPool}
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
+    return (
+      <div
+        style={{
+          padding: spacing,
+          marginBottom: spacing,
+          background,
+          borderRadius: 10,
+        }}
+      >
+        {content}
       </div>
     )
+  }
+
+  const sustainments = (
+    <div>
+      <h3>Thanks to...</h3>
+      {currentSustainEvents.length ? (
+        currentSustainEvents.map((e, i) => (
+          <div
+            style={{
+              marginBottom: 20,
+              lineHeight: 1.2,
+            }}
+            key={i}
+          >
+            <div>Amount: {e.amount?.toNumber()}</div>
+            <div>Sustainer: {e.sustainer}</div>
+            <div>Beneficiary: {e.beneficiary}</div>
+          </div>
+        ))
+      ) : (
+        <div>No sustainments yet</div>
+      )}
+    </div>
+  )
+
+  const current = !currentMp ? null : (
+    <div
+      style={{
+        display: 'grid',
+        gridAutoFlow: 'row',
+        rowGap: spacing,
+      }}
+    >
+      <div>
+        {header('Current money pool')}
+
+        {currentMp ? (
+          <MoneyPoolDetail
+            address={address}
+            mp={currentMp}
+            showSustained={true}
+            showTimeLeft={true}
+            contracts={contracts}
+            transactor={transactor}
+          />
+        ) : (
+          <div>Getting money pool...</div>
+        )}
+      </div>
+
+      {currentMp
+        ? KeyValRow(
+            'Sustain money pool',
+            <span>
+              <input
+                style={{ marginRight: 10 }}
+                name="sustain"
+                placeholder="0"
+                onChange={e => setSustainAmount(parseFloat(e.target.value))}
+              ></input>
+              <button onClick={sustain}>Sustain</button>
+            </span>,
+          )
+        : null}
+
+      <a
+        href={
+          '/history/' + (currentMp?.total?.toNumber() ? currentMp?.id?.toNumber() : currentMp?.previous?.toNumber())
+        }
+      >
+        Pool history
+      </a>
+    </div>
+  )
 
   return (
     <div>
-      {pools}
-      {!currentMp ? (
+      <TicketsBalance
+        contracts={contracts}
+        issuerAddress={owner}
+        ticketsHolderAddress={address}
+        transactor={transactor}
+      />
+
+      <h3>{owner}</h3>
+
+      <div
+        style={{
+          display: 'grid',
+          columnGap: spacing,
+          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+        }}
+      >
         <div>
-          <div style={{ marginBottom: 30 }}>
-            <a href="/init">Initialize tickets</a> if you haven't yet!
-          </div>
-          <h1>Create money pool</h1>
-          {configureMoneyPool}
-        </div>
-      ) : null}
-      {currentMp && (
-        <div>
-          <h3>Thanks to...</h3>
-          {currentSustainEvents.length ? (
-            currentSustainEvents.map((e, i) => (
-              <div style={{ marginBottom: 20, lineHeight: 1.2 }} key={i}>
-                <div>Amount: {e.amount?.toNumber()}</div>
-                <div>Sustainer: {e.sustainer}</div>
-                <div>Beneficiary: {e.beneficiary}</div>
+          {!currentMp ? (
+            <a
+              style={{
+                fontWeight: 600,
+                color: '#fff',
+                textDecoration: 'none',
+              }}
+              href="/init"
+            >
+              {section(
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  Initialize tickets if you haven't yet!<span>&gt;</span>
+                </div>,
+                '#2255ff',
+              )}
+            </a>
+          ) : null}
+
+          {section(
+            current ?? (
+              <div>
+                <h1 style={{ marginTop: 0 }}>Create money pool</h1>
+                {configureMoneyPool}
               </div>
-            ))
-          ) : (
-            <div>No sustainments yet</div>
+            ),
+          )}
+
+          {section(
+            currentMp ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridAutoFlow: 'row',
+                  rowGap: spacing,
+                }}
+              >
+                {header('Queued Money Pool')}
+                {queuedMp ? <MoneyPoolDetail mp={queuedMp} /> : <div>Nada</div>}
+              </div>
+            ) : (
+              undefined
+            ),
+          )}
+
+          {section(
+            currentMp && isOwner ? (
+              <div>
+                {header('Reconfigure')}
+                {configureMoneyPool}
+              </div>
+            ) : (
+              undefined
+            ),
           )}
         </div>
-      )}
+
+        {currentMp ? sustainments : null}
+      </div>
     </div>
   )
 }

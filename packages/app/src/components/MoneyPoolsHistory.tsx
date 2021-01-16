@@ -20,7 +20,6 @@ export default function MoneyPoolsHistory({
 }) {
   const [moneyPools, setMoneyPools] = useState<MoneyPool[]>([])
   const [poolNumbers, setPoolNumbers] = useState<BigNumber[]>([])
-  const [tappableAmounts, setTappableAmounts] = useState<{ [key: number]: BigNumber }>({})
 
   const { number }: { number?: string } = useParams()
 
@@ -42,31 +41,6 @@ export default function MoneyPoolsHistory({
     },
   })
 
-  useContractReader<BigNumber>({
-    contract: contracts?.Controller,
-    functionName: 'getTappableAmount',
-    args: [poolNumber],
-    pollTime,
-    callback: val => poolNumber && setTappableAmounts({ ...tappableAmounts, [poolNumber.toNumber()]: val }),
-  })
-
-  function tap(mpNumber: BigNumber, amount: number) {
-    if (!transactor || !contracts?.Controller) return
-
-    const eth = new Web3(Web3.givenProvider).eth
-
-    const _mpNumber = eth.abi.encodeParameter('uint256', mpNumber)
-    const _amount = eth.abi.encodeParameter('uint256', amount)
-
-    transactor(contracts.Controller?.tapMp(_mpNumber, _amount, address), () =>
-      // reset tappable amount for withdrawn pool
-      setTappableAmounts({
-        ...tappableAmounts,
-        [mpNumber.toNumber()]: BigNumber.from(0),
-      }),
-    )
-  }
-
   return (
     <div
       style={{
@@ -75,29 +49,17 @@ export default function MoneyPoolsHistory({
         rowGap: 40,
       }}
     >
-      {moneyPools.map((mp, index) => {
-        const tappable = tappableAmounts[mp.id.toNumber()]?.toNumber()
-
-        return (
-          <div key={index}>
-            <MoneyPoolDetail mp={mp} showSustained={true} transactor={transactor} contracts={contracts} />
-            {tappable ? (
-              <button
-                style={{
-                  color: 'white',
-                  background: 'green',
-                  fontWeight: 'bold',
-                }}
-                onClick={() => tap(mp.id, tappable)}
-              >
-                Withdraw {tappable}
-              </button>
-            ) : (
-              <div style={{ color: '#888' }}>Nothing to withdraw</div>
-            )}
-          </div>
-        )
-      })}
+      {moneyPools.map((mp, index) => (
+        <div key={index}>
+          <MoneyPoolDetail
+            address={address}
+            mp={mp}
+            showSustained={true}
+            transactor={transactor}
+            contracts={contracts}
+          />
+        </div>
+      ))}
 
       {allPoolsLoaded ? null : <div>Loading...</div>}
     </div>
