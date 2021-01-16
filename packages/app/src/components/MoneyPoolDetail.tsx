@@ -115,7 +115,17 @@ export default function MoneyPoolDetail({
       {KeyValRow('Reserved for owner', <span>{mp.o?.toString()}%</span>)}
       {mp?.bAddress ? KeyValRow('Reserved for beneficiary', <span>{mp.b?.toString()}%</span>) : null}
       {mp?.bAddress
-        ? KeyValRow('Beneficiary address', <span style={{ fontWeight: 500, fontSize: 12 }}>{mp.bAddress}</span>)
+        ? KeyValRow(
+            'Beneficiary address',
+            <span
+              style={{
+                fontWeight: 500,
+                fontSize: 12,
+              }}
+            >
+              {mp.bAddress}
+            </span>,
+          )
         : null}
       {KeyValRow('Bias', <span>{mp.bias?.toString()}%</span>)}
       {KeyValRow('Weight', <span>{mp.weight?.toString()}</span>)}
@@ -150,7 +160,10 @@ export default function MoneyPoolDetail({
               {tappableAmount ? (
                 <span>
                   <input
-                    style={{ marginRight: 10, marginLeft: 20 }}
+                    style={{
+                      marginRight: 10,
+                      marginLeft: 20,
+                    }}
                     name="withdrawable"
                     placeholder="0"
                     onChange={e => setTapAmount(parseFloat(e.target.value))}

@@ -110,17 +110,23 @@ export default function ConfigureMoneyPool({
       )}
       {KeyValRow(
         'Bias (70-130)',
-        <input
-          onChange={e => setBias(parseFloat(e.target.value))}
-          style={{ width: 145 }}
-          type="number"
-          max="130"
-          min="70"
-          name="bias"
-          id="bias"
-          placeholder="100"
-          defaultValue={bias}
-        />,
+        <span>
+          <input
+            onChange={e => setBias(parseFloat(e.target.value))}
+            style={{
+              width: 145,
+              marginRight: 10,
+            }}
+            type="number"
+            max="130"
+            min="70"
+            name="bias"
+            id="bias"
+            placeholder="100"
+            defaultValue={bias}
+          />
+          %
+        </span>,
       )}
       {KeyValRow(
         'Duration',

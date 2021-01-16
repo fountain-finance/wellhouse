@@ -107,7 +107,13 @@ export default function MoneyPools({
       <h3>Thanks to...</h3>
       {currentSustainEvents.length ? (
         currentSustainEvents.map((e, i) => (
-          <div style={{ marginBottom: 20, lineHeight: 1.2 }} key={i}>
+          <div
+            style={{
+              marginBottom: 20,
+              lineHeight: 1.2,
+            }}
+            key={i}
+          >
             <div>Amount: {e.amount?.toNumber()}</div>
             <div>Sustainer: {e.sustainer}</div>
             <div>Beneficiary: {e.beneficiary}</div>
@@ -188,9 +194,21 @@ export default function MoneyPools({
         }}
       >
         <div>
-          <a style={{ fontWeight: 600, color: '#fff', textDecoration: 'none' }} href="/init">
+          <a
+            style={{
+              fontWeight: 600,
+              color: '#fff',
+              textDecoration: 'none',
+            }}
+            href="/init"
+          >
             {section(
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
                 Initialize tickets if you haven't yet!<span>&gt;</span>
               </div>,
               '#2255ff',
@@ -200,7 +218,7 @@ export default function MoneyPools({
           {section(
             current ?? (
               <div>
-                <h1>Create money pool</h1>
+                <h1 style={{ marginTop: 0 }}>Create money pool</h1>
                 {configureMoneyPool}
               </div>
             ),
