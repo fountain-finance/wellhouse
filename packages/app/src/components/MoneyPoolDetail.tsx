@@ -1,12 +1,14 @@
+import { BigNumber } from '@ethersproject/bignumber'
+import { useState } from 'react'
 import Web3 from 'web3'
 
+import { daiAddress } from '../constants/dai-address'
 import { SECONDS_IN_DAY } from '../constants/seconds-in-day'
-import { MoneyPool } from '../models/money-pool'
 import useContractReader from '../hooks/ContractReader'
 import { Contracts } from '../models/contracts'
-import { BigNumber } from '@ethersproject/bignumber'
-import { daiAddress } from '../constants/dai-address'
+import { MoneyPool } from '../models/money-pool'
 import { Transactor } from '../models/transactor'
+import KeyValRow from './KeyValRow'
 
 export default function MoneyPoolDetail({
   mp,
@@ -14,26 +16,18 @@ export default function MoneyPoolDetail({
   transactor,
   showSustained,
   showTimeLeft,
+  address,
 }: {
   mp?: MoneyPool
   contracts?: Contracts
   transactor?: Transactor
   showSustained?: boolean
   showTimeLeft?: boolean
+  address?: string
 }) {
-  const secondsLeft = mp && Math.floor(mp.start.toNumber() + mp.duration.toNumber() - new Date().valueOf() / 1000)
+  const [tapAmount, setTapAmount] = useState<number>(0)
 
-  const label = (text: string) => (
-    <label
-      style={{
-        fontWeight: 'bold',
-        textTransform: 'uppercase',
-        fontSize: 'small',
-      }}
-    >
-      {text}:
-    </label>
-  )
+  const secondsLeft = mp && Math.floor(mp.start.toNumber() + mp.duration.toNumber() - new Date().valueOf() / 1000)
 
   function expandedTimeString(millis: number) {
     if (!millis || millis <= 0) return 0
@@ -52,6 +46,8 @@ export default function MoneyPoolDetail({
 
   const link = mp?.link && Web3.utils.hexToString(mp.link)
 
+  const isOwner = mp?.owner === address
+
   const rewardToken = useContractReader({
     contract: contracts?.TicketStore,
     functionName: 'getTicketRewardToken',
@@ -63,6 +59,13 @@ export default function MoneyPoolDetail({
     functionName: 'swappable',
     args: [mp?.owner, rewardToken, daiAddress],
     formatter: (num: BigNumber | undefined) => num?.toNumber(),
+  })
+
+  const tappableAmount: number | undefined = useContractReader<number>({
+    contract: contracts?.MpStore,
+    functionName: 'getTappableAmount',
+    args: [mp?.id],
+    formatter: (result: BigNumber) => result?.toNumber(),
   })
 
   function swap() {
@@ -83,6 +86,17 @@ export default function MoneyPoolDetail({
     transactor(contracts.Controller.mintReservedTickets(mp.owner))
   }
 
+  function tap() {
+    if (!transactor || !contracts?.Controller || !mp) return
+
+    const eth = new Web3(Web3.givenProvider).eth
+
+    const number = eth.abi.encodeParameter('uint256', mp.id)
+    const amount = eth.abi.encodeParameter('uint256', tapAmount)
+
+    transactor(contracts.Controller?.tapMp(number, amount, address))
+  }
+
   return mp ? (
     <div>
       <div>
@@ -92,57 +106,63 @@ export default function MoneyPoolDetail({
         </a>
       </div>
       <br />
-      <div>
-        {label('Number')} {mp.id.toString()}
-      </div>
-      <div>
-        {label('Target')} {mp.target.toString()}
-      </div>
-      {showSustained ? (
-        <div>
-          {label('Sustained')} {mp.total.toString()}
-        </div>
-      ) : null}
-      <div>
-        {label('Start')} {new Date(mp.start.toNumber() * 1000).toISOString()}
-      </div>
-      <div>
-        {label('Duration')} <span>{expandedTimeString(mp && mp.duration.toNumber() * 1000)}</span>
-      </div>
-      <div>
-        {label('Reserved for owner')} {mp.o?.toString()}%
-      </div>
-      {mp?.bAddress ? (
-        <div>
-          {label('Beneficiary')} {mp.bAddress} - {mp.b.toString()}%
-        </div>
-      ) : null}
-      {showTimeLeft ? (
-        <div>
-          {label('Time left')} <span>{(secondsLeft && expandedTimeString(secondsLeft * 1000)) || 'Ended'}</span>
-        </div>
-      ) : null}
-      <div>
-        {label('Bias / weight')} {`${mp.bias?.toString()} / ${mp.weight?.toString()}`}
-      </div>
-      <div>
-        {label('Reserves')}{' '}
-        {mp.hasMintedReserves ? (
+      {KeyValRow('ID', mp.id.toString())}
+      {KeyValRow('Target', mp.target.toString())}
+      {showSustained ? KeyValRow('Sustained', mp.total.toString()) : null}
+      {KeyValRow('Start', new Date(mp.start.toNumber() * 1000).toISOString())}
+      {KeyValRow('Duration', expandedTimeString(mp && mp.duration.toNumber() * 1000))}
+      {showTimeLeft ? KeyValRow('Time left', (secondsLeft && expandedTimeString(secondsLeft * 1000)) || 'Ended') : null}
+      {KeyValRow('Reserved for owner', <span>{mp.o?.toString()}%</span>)}
+      {mp?.bAddress ? KeyValRow('Reserved for beneficiary', <span>{mp.b?.toString()}%</span>) : null}
+      {mp?.bAddress
+        ? KeyValRow('Beneficiary address', <span style={{ fontWeight: 500, fontSize: 12 }}>{mp.bAddress}</span>)
+        : null}
+      {KeyValRow('Bias', <span>{mp.bias?.toString()}%</span>)}
+      {KeyValRow('Weight', <span>{mp.weight?.toString()}</span>)}
+      {KeyValRow(
+        'Reserves',
+        mp.hasMintedReserves ? (
           'Minted'
         ) : (
           <button type="submit" onClick={mint}>
             Mint
           </button>
-        )}
-      </div>
-      <div>
-        {label('Swappable')} {swappable}
-        {swappable ? (
-          <button type="submit" onClick={swap}>
-            Swap
-          </button>
-        ) : null}
-      </div>
+        ),
+      )}
+      {KeyValRow(
+        'Swappable',
+        <span>
+          {swappable}
+          {swappable ? (
+            <button type="submit" onClick={swap}>
+              Swap
+            </button>
+          ) : (
+            undefined
+          )}
+        </span>,
+      )}
+      {tappableAmount !== undefined && isOwner
+        ? KeyValRow(
+            'Withdrawable',
+            <span>
+              {tappableAmount}
+              {tappableAmount ? (
+                <span>
+                  <input
+                    style={{ marginRight: 10, marginLeft: 20 }}
+                    name="withdrawable"
+                    placeholder="0"
+                    onChange={e => setTapAmount(parseFloat(e.target.value))}
+                  ></input>
+                  <button disabled={tapAmount > tappableAmount} onClick={tap}>
+                    Withdraw
+                  </button>
+                </span>
+              ) : null}
+            </span>,
+          )
+        : null}
     </div>
   ) : null
 }
