@@ -10,8 +10,8 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./interfaces/ITreasury.sol";
 import "./interfaces/IController.sol";
 
-import "./stores/MpStore.sol";
-import "./stores/TicketStore.sol";
+import "./MpStore.sol";
+import "./TicketStore.sol";
 
 /**
 @notice The contract managing the state of all Money pools.
@@ -54,9 +54,15 @@ contract Controller is IController, Ownable {
 
     // --- external transactions --- //
 
-    constructor(IERC20[] memory _wantTokenAllowList) public {
-        mpStore = new MpStore();
-        ticketStore = new TicketStore();
+    constructor(
+        MpStore _mpStore,
+        TicketStore _ticketStore,
+        IERC20[] memory _wantTokenAllowList
+    ) public {
+        mpStore = _mpStore;
+        ticketStore = _ticketStore;
+        _mpStore.claimOwnership();
+        _ticketStore.claimOwnership();
 
         for (uint256 i = 0; i < _wantTokenAllowList.length; i++)
             wantTokenIsAllowed[_wantTokenAllowList[i]] = true;
@@ -121,12 +127,7 @@ contract Controller is IController, Ownable {
         uint256 _b,
         address _bAddress
     ) external override returns (uint256) {
-        Tickets _tickets = ticketStore.tickets(msg.sender);
-        require(
-            _tickets != Tickets(0),
-            "Controller::configureMp: NEEDS_INITIALIZATION"
-        );
-        require(_duration >= 6, "Controller::configureMp: TOO_SHORT");
+        require(_duration >= 86400, "Controller::configureMp: TOO_SHORT");
         require(_target > 0, "Controller::configureMp: BAD_TARGET");
         require(
             wantTokenIsAllowed[_want],
@@ -141,7 +142,18 @@ contract Controller is IController, Ownable {
             bytes(_link).length > 0 && bytes(_link).length <= 64,
             "Controller::configureMp: BAD_LINK"
         );
+        require(
+            _b == 0 || _bAddress != address(0),
+            "Controller::configureMp: BAD_LINK"
+        );
         require(_o.add(_b) <= 100, "Controller::configureMp: BAD_PERCENTAGES");
+
+        Tickets _tickets = ticketStore.tickets(msg.sender);
+
+        require(
+            _tickets != Tickets(0),
+            "Controller::configureMp: NEEDS_INITIALIZATION"
+        );
 
         MoneyPool.Data memory _mp = mpStore.getStandbyMp(msg.sender);
 

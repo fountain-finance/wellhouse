@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-import "./../libraries/MoneyPool.sol";
+import "./libraries/MoneyPool.sol";
 
 contract MpStore is AccessControl {
     using SafeMath for uint256;
@@ -31,7 +31,10 @@ contract MpStore is AccessControl {
 
     // --- public properties --- //
 
-    /// @notice a big number to base ticket issuance off of.
+    /// @notice The owner who can manage access permissions of this store.
+    address public owner;
+
+    /// @notice A big number to base ticket issuance off of.
     uint256 public constant MP_BASE_WEIGHT = 1000000000E18;
 
     /// @notice The latest Money pool for each owner address
@@ -146,9 +149,7 @@ contract MpStore is AccessControl {
         return wantedTokens[_owner][_rewardToken];
     }
 
-    constructor() public {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    }
+    constructor() public {}
 
     // --- external transactions --- //
 
@@ -235,6 +236,14 @@ contract MpStore is AccessControl {
                 : _initMp(_owner, block.timestamp, MP_BASE_WEIGHT);
         if (_mp.id > 0) _newMp._basedOn(_mp);
         return _newMp;
+    }
+
+    /**
+        @notice Allows someone to claim ownership over this contract if it hasn't yet been claimed.
+    */
+    function claimOwnership() external {
+        require(owner == address(0), "MpStore::setAdmin: ALREADY_SET");
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     // --- public transactions --- //

@@ -51,6 +51,9 @@ contract TicketStore is AccessControl {
 
     // --- public properties --- //
 
+    /// @notice The owner who can manage access permissions of this store.
+    address public owner;
+
     /// @notice The Tickets handed out by each issuer. Each issuer has their own Ticket contract.
     mapping(address => Tickets) public tickets;
 
@@ -98,9 +101,8 @@ contract TicketStore is AccessControl {
     }
 
     // --- external transactions --- //
-    constructor() public {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    }
+
+    constructor() public {}
 
     /**
         @notice Saves a Ticket to storage for the provided issuer.
@@ -176,5 +178,13 @@ contract TicketStore is AccessControl {
         swappable[_issuer][_from][_to] = swappable[_issuer][_from][_to].sub(
             _amount
         );
+    }
+
+    /**
+        @notice Allows someone to claim ownership over this contract if it hasn't yet been claimed.
+    */
+    function claimOwnership() external {
+        require(owner == address(0), "TicketStore::setAdmin: ALREADY_SET");
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 }
