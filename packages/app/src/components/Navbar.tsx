@@ -1,19 +1,15 @@
 import { JsonRpcProvider } from '@ethersproject/providers'
 
-import { Contracts } from '../models/contracts'
 import Account from './Account'
-import Surplus from './Surplus'
 
 export default function Navbar({
   address,
   userProvider,
   onConnectWallet,
-  contracts,
 }: {
   address?: string
   userProvider?: JsonRpcProvider
   onConnectWallet: VoidFunction
-  contracts?: Contracts
 }) {
   return (
     <div
@@ -29,7 +25,6 @@ export default function Navbar({
         <a style={{ fontSize: 24 }} href="/">
           ⛲️
         </a>
-        <Surplus contracts={contracts} address={address} />
       </span>
       <Account userProvider={userProvider} loadWeb3Modal={onConnectWallet} address={address} />
     </div>

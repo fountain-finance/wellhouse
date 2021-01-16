@@ -1,15 +1,21 @@
 import { BigNumber } from '@ethersproject/bignumber'
 
 export interface MoneyPool {
-  duration: BigNumber
-  number: BigNumber
-  start: BigNumber
-  target: BigNumber
-  total: BigNumber
+  id: BigNumber
+  owner: string
   previous: BigNumber
-  tapped: BigNumber
   title: string
   link: string
   want: string
-  owner: string
+  target: BigNumber
+  total: BigNumber
+  start: BigNumber
+  duration: BigNumber
+  tapped: BigNumber
+  o: BigNumber
+  b: BigNumber
+  bAddress: string
+  hasMintedReserves: boolean
+  weight: BigNumber
+  bias: BigNumber
 }

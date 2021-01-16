@@ -17,21 +17,41 @@ export default function ConfigureMoneyPool({
   const [duration, setDuration] = useState<number>(0)
   const [title, setTitle] = useState<string>()
   const [link, setLink] = useState<string>()
+  const [bias, setBias] = useState<number>(100)
+  const [beneficiaryAddress, setBeneficiaryAddress] = useState<string>()
+  const [beneficiaryAllocation, setBeneficiaryAllocation] = useState<number>(0)
+  const [ownerAllocation, setOwnerAllocation] = useState<number>(0)
 
   const eth = new Web3(Web3.givenProvider).eth
 
   const useDays = process.env.NODE_ENV === 'production'
 
   function onSubmit() {
-    if (!transactor || !contracts?.Fountain || !contracts?.Token) return
+    if (!transactor || !contracts?.Controller || !contracts?.Token) return
 
     const _target = eth.abi.encodeParameter('uint256', target)
     // Contracts created during development use seconds for duration
     const _duration = eth.abi.encodeParameter('uint256', duration * (useDays ? SECONDS_IN_DAY : 1))
     const _title = title && Web3.utils.utf8ToHex(title)
     const _link = link && Web3.utils.utf8ToHex(link)
+    const _bias = eth.abi.encodeParameter('uint256', bias)
+    const _ownerAllocation = eth.abi.encodeParameter('uint256', ownerAllocation)
+    const _beneficiaryAllocation = eth.abi.encodeParameter('uint256', beneficiaryAllocation)
+    const _beneficiaryAddress = beneficiaryAddress && Web3.utils.utf8ToHex(beneficiaryAddress)
 
-    transactor(contracts.Fountain.configureMp(_target, _duration, contracts.Token.address, _title, _link))
+    transactor(
+      contracts.Controller.configureMp(
+        _target,
+        _duration,
+        contracts.Token.address,
+        _title,
+        _link,
+        _bias,
+        _ownerAllocation,
+        _beneficiaryAllocation,
+        _beneficiaryAddress,
+      ),
+    )
   }
 
   if (!transactor || !contracts) return null
@@ -48,7 +68,6 @@ export default function ConfigureMoneyPool({
         <br />
         <input
           onChange={e => setTitle(e.target.value)}
-          style={{ marginRight: 10 }}
           type="text"
           name="title"
           id="duration"
@@ -60,7 +79,6 @@ export default function ConfigureMoneyPool({
         <br />
         <input
           onChange={e => setLink(e.target.value)}
-          style={{ marginRight: 10 }}
           type="text"
           name="link"
           id="duration"
@@ -81,6 +99,20 @@ export default function ConfigureMoneyPool({
         DAI
       </p>
       <p>
+        <label htmlFor="bias">Bias (70-130)</label>
+        <br />
+        <input
+          onChange={e => setBias(parseFloat(e.target.value))}
+          style={{ marginRight: 10 }}
+          type="number"
+          name="bias"
+          id="bias"
+          placeholder="100"
+          defaultValue={bias}
+        />
+        (70-130)
+      </p>
+      <p>
         <label htmlFor="duration">Duration</label>
         <br />
         <input
@@ -92,6 +124,45 @@ export default function ConfigureMoneyPool({
           placeholder="30"
         />
         {useDays ? 'days' : 'seconds'}
+      </p>
+      <p>
+        <label htmlFor="ownerAllocation">Reserve surplus for owner</label>
+        <br />
+        <input
+          onChange={e => setOwnerAllocation(parseFloat(e.target.value))}
+          style={{ marginRight: 10 }}
+          type="number"
+          name="ownerAllocation"
+          id="ownerAllocation"
+          placeholder="0"
+          defaultValue={ownerAllocation}
+        />
+        %
+      </p>
+      <p>
+        <label htmlFor="beneficiaryAllocation">Reserve surplus for beneficiary</label>
+        <br />
+        <input
+          onChange={e => setBeneficiaryAllocation(parseFloat(e.target.value))}
+          style={{ marginRight: 10 }}
+          type="number"
+          name="beneficiaryAllocation"
+          id="beneficiaryAllocation"
+          placeholder="0"
+          defaultValue={beneficiaryAllocation}
+        />
+        %
+      </p>
+      <p>
+        <label htmlFor="beneficiaryAddress">Beneficiary address</label>
+        <br />
+        <input
+          onChange={e => setBeneficiaryAddress(e.target.value)}
+          type="text"
+          name="beneficiaryAddress"
+          id="beneficiaryAddress"
+          placeholder="0x01a2b3c..."
+        />
       </p>
       <button type="submit">Create</button>
     </form>

@@ -21,7 +21,7 @@ export default function Gimme({
   const allowance: BigNumber | undefined = useContractReader({
     contract: contracts?.Token,
     functionName: 'allowance',
-    args: [address, contracts?.Fountain?.address],
+    args: [address, contracts?.Controller?.address],
   })
 
   const balance: BigNumber | undefined = useContractReader({
@@ -39,12 +39,12 @@ export default function Gimme({
   }
 
   function approve() {
-    if (!transactor || !contracts?.Fountain || !contracts?.Token) return
+    if (!transactor || !contracts?.Controller || !contracts?.Token) return
 
     const eth = new Web3(Web3.givenProvider).eth
 
     transactor(
-      contracts.Token.approve(contracts.Fountain?.address, eth.abi.encodeParameter('uint256', allowanceAmount)),
+      contracts.Token.approve(contracts.Controller?.address, eth.abi.encodeParameter('uint256', allowanceAmount)),
     )
   }
 
