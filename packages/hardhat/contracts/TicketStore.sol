@@ -80,11 +80,13 @@ contract TicketStore is AccessControl {
         returns (uint256)
     {
         Tickets _tickets = tickets[_issuer];
+        uint256 _totalSupply = _tickets.totalSupply();
+        if (_totalSupply == 0) return 0;
         uint256 _currentBalance = _tickets.balanceOf(_holder);
         return
             redeemable[_issuer][_tickets.rewardToken()]
                 .mul(_currentBalance)
-                .div(_tickets.totalSupply());
+                .div(_totalSupply);
     }
 
     /**
