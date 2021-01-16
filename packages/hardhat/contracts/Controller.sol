@@ -143,7 +143,7 @@ contract Controller is IController, Ownable {
         );
         require(_o.add(_b) <= 100, "Controller::configureMp: BAD_PERCENTAGES");
 
-        MoneyPool.Data memory _mp = store.standbyMp(msg.sender);
+        MoneyPool.Data memory _mp = store.getStandbyMp(msg.sender);
 
         _mp.title = _title;
         _mp.link = _link;
@@ -151,7 +151,7 @@ contract Controller is IController, Ownable {
         _mp.duration = _duration;
         _mp.want = _want;
         // Reset the start time to now if there isn't an active Money pool.
-        _mp.start = store.activeMp(msg.sender).id == 0
+        _mp.start = store.getActiveMp(msg.sender).id == 0
             ? block.timestamp
             : _mp.start;
         _mp.bias = _bias;

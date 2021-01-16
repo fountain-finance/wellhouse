@@ -51,7 +51,7 @@ contract TicketStore is AccessControl {
 
     // --- public properties --- //
 
-    /// @notice The Tickets handed out by issuer. Each issuer has their own Ticket contract.
+    /// @notice The Tickets handed out by each issuer. Each issuer has their own Ticket contract.
     mapping(address => Tickets) public tickets;
 
     /// @notice The current cumulative amount of redeemable tokens redistributable to each issuer's Ticket holders.
