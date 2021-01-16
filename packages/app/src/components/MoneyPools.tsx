@@ -85,7 +85,7 @@ export default function MoneyPools({
     )
   }
 
-  function section(content?: JSX.Element) {
+  function section(content?: JSX.Element, background = '#f2f2f2') {
     if (!content) return null
 
     return (
@@ -93,7 +93,7 @@ export default function MoneyPools({
         style={{
           padding: spacing,
           marginBottom: spacing,
-          background: '#f2f2f2',
+          background,
           borderRadius: 10,
         }}
       >
@@ -188,32 +188,43 @@ export default function MoneyPools({
         }}
       >
         <div>
+          <a style={{ fontWeight: 600, color: '#fff', textDecoration: 'none' }} href="/init">
+            {section(
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                Initialize tickets if you haven't yet!<span>&gt;</span>
+              </div>,
+              '#2255ff',
+            )}
+          </a>
+
           {section(
             current ?? (
               <div>
-                <div style={{ marginBottom: 30 }}>
-                  <a href="/init">Initialize tickets</a> if you haven't yet!
-                </div>
                 <h1>Create money pool</h1>
+                {configureMoneyPool}
               </div>
             ),
           )}
 
           {section(
-            <div
-              style={{
-                display: 'grid',
-                gridAutoFlow: 'row',
-                rowGap: spacing,
-              }}
-            >
-              {header('Queued Money Pool')}
-              {queuedMp ? <MoneyPoolDetail mp={queuedMp} /> : <div>Nada</div>}
-            </div>,
+            currentMp ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridAutoFlow: 'row',
+                  rowGap: spacing,
+                }}
+              >
+                {header('Queued Money Pool')}
+                {queuedMp ? <MoneyPoolDetail mp={queuedMp} /> : <div>Nada</div>}
+              </div>
+            ) : (
+              undefined
+            ),
           )}
 
           {section(
-            isOwner ? (
+            currentMp && isOwner ? (
               <div>
                 {header('Reconfigure')}
                 {configureMoneyPool}
@@ -224,7 +235,7 @@ export default function MoneyPools({
           )}
         </div>
 
-        {sustainments}
+        {currentMp ? sustainments : null}
       </div>
     </div>
   )
