@@ -37,7 +37,7 @@ export default function useContractReader<V>({
 
         if (callback) callback(result)
       } catch (e) {
-        console.log('Poller >>>', e)
+        console.log('Poller >>>', functionName, e)
       }
     },
     adjustPollTime,

@@ -24,6 +24,7 @@ export default function InitTickets({ transactor, contracts }: { transactor?: Tr
         display: 'grid',
         gridAutoFlow: 'row',
         rowGap: 30,
+        width: 200,
       }}
     >
       <div>

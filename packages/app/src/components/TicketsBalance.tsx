@@ -57,7 +57,7 @@ export default function TicketsBalance({
           style={{ marginRight: 10 }}
           type="number"
           placeholder="0"
-          defaultValue={redeemAmount}
+          defaultValue="0"
         />
         <button disabled={!balance} type="submit" onClick={redeem}>
           Redeem

@@ -37,7 +37,19 @@ export default function ConfigureMoneyPool({
     const _bias = eth.abi.encodeParameter('uint256', bias)
     const _ownerAllocation = eth.abi.encodeParameter('uint256', ownerAllocation)
     const _beneficiaryAllocation = eth.abi.encodeParameter('uint256', beneficiaryAllocation)
-    const _beneficiaryAddress = beneficiaryAddress && Web3.utils.utf8ToHex(beneficiaryAddress)
+    const _beneficiaryAddress = beneficiaryAddress ?? '0'
+
+    console.log('configuring mp with params', {
+      _target,
+      _duration,
+      want: contracts.Token.address,
+      _title,
+      _link,
+      _bias,
+      _ownerAllocation,
+      _beneficiaryAllocation,
+      _beneficiaryAddress,
+    })
 
     transactor(
       contracts.Controller.configureMp(
@@ -59,8 +71,8 @@ export default function ConfigureMoneyPool({
   return (
     <form
       onSubmit={e => {
-        onSubmit()
         e.preventDefault()
+        onSubmit()
       }}
     >
       <p>

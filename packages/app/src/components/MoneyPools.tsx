@@ -34,19 +34,19 @@ export default function MoneyPools({
   const isOwner = owner === address
 
   const currentMp: MoneyPool | undefined = useContractReader({
-    contract: contracts?.Controller,
+    contract: contracts?.MpStore,
     functionName: 'getCurrentMp',
     args: [owner],
   })
 
   const queuedMp: MoneyPool | undefined = useContractReader({
-    contract: contracts?.Controller,
+    contract: contracts?.MpStore,
     functionName: 'getQueuedMp',
     args: [owner],
   })
 
   const tappableAmount: number | undefined = useContractReader<number>({
-    contract: contracts?.Controller,
+    contract: contracts?.MpStore,
     functionName: 'getTappableAmount',
     args: [currentMp?.id],
     formatter: (result: BigNumber) => result?.toNumber(),
