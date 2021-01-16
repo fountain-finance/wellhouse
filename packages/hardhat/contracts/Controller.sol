@@ -39,7 +39,7 @@ contract Controller is IController, Ownable {
 
     /// @notice The contract storing all Money pool state variables.
     /// @dev Immutable.
-    MpStore public store;
+    MpStore public mpStore;
 
     /// @notice The contract that manages the Tickets.
     /// @dev Immutable.
@@ -55,7 +55,7 @@ contract Controller is IController, Ownable {
     // --- external transactions --- //
 
     constructor(IERC20[] memory _wantTokenAllowList) public {
-        store = new MpStore();
+        mpStore = new MpStore();
         ticketStore = new TicketStore();
 
         for (uint256 i = 0; i < _wantTokenAllowList.length; i++)
@@ -143,7 +143,7 @@ contract Controller is IController, Ownable {
         );
         require(_o.add(_b) <= 100, "Controller::configureMp: BAD_PERCENTAGES");
 
-        MoneyPool.Data memory _mp = store.getStandbyMp(msg.sender);
+        MoneyPool.Data memory _mp = mpStore.getStandbyMp(msg.sender);
 
         _mp.title = _title;
         _mp.link = _link;
@@ -151,7 +151,7 @@ contract Controller is IController, Ownable {
         _mp.duration = _duration;
         _mp.want = _want;
         // Reset the start time to now if there isn't an active Money pool.
-        _mp.start = store.getActiveMp(msg.sender).id == 0
+        _mp.start = mpStore.getActiveMp(msg.sender).id == 0
             ? block.timestamp
             : _mp.start;
         _mp.bias = _bias;
@@ -159,8 +159,8 @@ contract Controller is IController, Ownable {
         _mp.b = _b;
         _mp.bAddress = _bAddress;
 
-        store.saveMp(_mp);
-        store.trackAcceptedToken(msg.sender, _tickets.rewardToken(), _want);
+        mpStore.saveMp(_mp);
+        mpStore.trackAcceptedToken(msg.sender, _tickets.rewardToken(), _want);
 
         emit ConfigureMp(
             _mp.id,
@@ -199,7 +199,7 @@ contract Controller is IController, Ownable {
         );
         require(_amount > 0, "Controller::sustainOwner: BAD_AMOUNT");
         // Find the Money pool that this sustainment should go to.
-        MoneyPool.Data memory _mp = store.activeMp(_owner);
+        MoneyPool.Data memory _mp = mpStore.getActiveMp(_owner);
         require(_want == _mp.want, "Controller::sustainOwner: UNEXPECTED_WANT");
 
         // Add the amount to the Money pool, which determines how much Flow was made available as a result.
@@ -222,7 +222,7 @@ contract Controller is IController, Ownable {
         } else {
             _mp.want.safeTransferFrom(msg.sender, address(treasury), _amount);
         }
-        store.saveMp(_mp);
+        mpStore.saveMp(_mp);
         Tickets _tickets = ticketStore.tickets(_mp.owner);
         if (_surplus > 0) {
             ticketStore.addSwappable(
@@ -301,7 +301,7 @@ contract Controller is IController, Ownable {
         address _beneficiary
     ) external override lock {
         require(treasury != ITreasury(0), "Controller::tapMp: BAD_STATE");
-        MoneyPool.Data memory _mp = store.getMp(_mpId);
+        MoneyPool.Data memory _mp = mpStore.getMp(_mpId);
         uint256 _tappableAmount = _mp._tappableAmount();
         require(
             _mp.owner == msg.sender,
@@ -312,7 +312,7 @@ contract Controller is IController, Ownable {
             "Controller::collectSustainment: INSUFFICIENT_FUNDS"
         );
         _mp.tapped = _mp.tapped.add(_amount);
-        store.saveMp(_mp);
+        mpStore.saveMp(_mp);
         treasury.payout(_beneficiary, _mp.want, _amount);
         emit TapMp(_mpId, msg.sender, _beneficiary, _amount, _mp.want);
     }
@@ -327,7 +327,7 @@ contract Controller is IController, Ownable {
             _tickets != Tickets(0),
             "Controller::mintReservedTickets: NOT_FOUND"
         );
-        MoneyPool.Data memory _mp = store.getMp(store.latestMpId(_owner));
+        MoneyPool.Data memory _mp = mpStore.getMp(mpStore.latestMpId(_owner));
         while (_mp.id > 0 && !_mp.hasMintedReserves && _mp.total > _mp.target) {
             if (_mp._state() == MoneyPool.State.Redistributing) {
                 uint256 _surplus = _mp.total.sub(_mp.target);
@@ -344,9 +344,9 @@ contract Controller is IController, Ownable {
                         );
                 }
                 _mp.hasMintedReserves = true;
-                store.saveMp(_mp);
+                mpStore.saveMp(_mp);
             }
-            _mp = store.getMp(_mp.previous);
+            _mp = mpStore.getMp(_mp.previous);
         }
         emit MintReservedTickets(msg.sender, _owner);
     }
@@ -363,20 +363,20 @@ contract Controller is IController, Ownable {
         override
     {
         IERC20[] memory _currentWantedTokens =
-            store.getWantedTokens(_owner, _rewardToken);
+            mpStore.getWantedTokens(_owner, _rewardToken);
         require(
             _currentWantedTokens.length > 0,
             "Controller::cleanTrackedAcceptedTokens: NO_OP"
         );
-        store.clearWantedTokens(_owner, _rewardToken);
-        MoneyPool.Data memory _cMp = store.getCurrentMp(_owner);
+        mpStore.clearWantedTokens(_owner, _rewardToken);
+        MoneyPool.Data memory _cMp = mpStore.getCurrentMp(_owner);
         for (uint256 i = 0; i < _currentWantedTokens.length; i++) {
             IERC20 _wantedToken = _currentWantedTokens[i];
             if (
                 _cMp.want == _wantedToken ||
                 ticketStore.swappable(_owner, _wantedToken, _rewardToken) > 0
             ) {
-                store.trackAcceptedToken(
+                mpStore.trackAcceptedToken(
                     msg.sender,
                     _rewardToken,
                     _wantedToken
@@ -408,7 +408,7 @@ contract Controller is IController, Ownable {
         override
         onlyOwner
     {
-        store.grantRole(ticketStore.DEFAULT_ADMIN_ROLE(), _newOwner);
+        mpStore.grantRole(ticketStore.DEFAULT_ADMIN_ROLE(), _newOwner);
     }
 
     /**
