@@ -6,8 +6,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { BrowserRouter, Route, Switch } from 'react-router-dom'
 
 import Gimme from './components/Gimme'
-import MoneyPools from './components/MoneyPools'
-import Navbar from './components/Navbar'
+import MoneyPools from './components/Owner'
+import Owner from './components/Navbar'
 import { localProvider } from './constants/local-provider'
 import { web3Modal } from './constants/web3-modal'
 import { createTransactor } from './helpers/Transactor'
@@ -53,7 +53,7 @@ function App() {
 
   return (
     <div className="App">
-      <Navbar address={address} userProvider={userProvider} onConnectWallet={loadWeb3Modal}></Navbar>
+      <Owner address={address} userProvider={userProvider} onConnectWallet={loadWeb3Modal} />
 
       <div style={{ padding: 20 }}>
         <BrowserRouter>

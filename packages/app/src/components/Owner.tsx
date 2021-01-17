@@ -16,7 +16,7 @@ import KeyValRow from './KeyValRow'
 import MoneyPoolDetail from './MoneyPoolDetail'
 import TicketsBalance from './TicketsBalance'
 
-export default function MoneyPools({
+export default function Owner({
   address,
   transactor,
   contracts,
@@ -33,13 +33,13 @@ export default function MoneyPools({
 
   const isOwner = owner === address
 
-  const currentMp: MoneyPool | undefined = useContractReader({
+  const currentMp = useContractReader<MoneyPool>({
     contract: contracts?.MpStore,
     functionName: 'getCurrentMp',
     args: [owner],
   })
 
-  const queuedMp: MoneyPool | undefined = useContractReader({
+  const queuedMp = useContractReader<MoneyPool>({
     contract: contracts?.MpStore,
     functionName: 'getQueuedMp',
     args: [owner],

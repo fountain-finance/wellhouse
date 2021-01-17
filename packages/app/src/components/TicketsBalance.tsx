@@ -24,6 +24,20 @@ export default function TicketsBalance({
     args: [issuerAddress, ticketsHolderAddress],
   })
 
+  const reserveTickets = useContractReader<{
+    owners: BigNumber
+    beneficiarys: BigNumber
+    admin: BigNumber
+  }>({
+    contract: contracts?.MpStore,
+    functionName: 'getReservedTickets',
+    args: [issuerAddress],
+  })
+
+  const hasReserves =
+    reserveTickets !== undefined &&
+    (reserveTickets.admin.gt(0) || reserveTickets.beneficiarys.gt(0) || reserveTickets.owners.gt(0))
+
   if (balance && balance !== redeemAmount) setRedeemAmount(balance)
 
   function redeem() {
@@ -37,6 +51,33 @@ export default function TicketsBalance({
     transactor(contracts?.Controller.redeem(issuerAddress, _amount))
   }
 
+  function mint() {
+    if (!transactor || !contracts || !issuerAddress) return
+
+    console.log('🧃 Calling Controller.mintReservedTickets(owner)', { owner: issuerAddress })
+
+    transactor(contracts.Controller.mintReservedTickets(issuerAddress))
+  }
+
+  const reserves = (
+    <div style={{ color: '#fff' }}>
+      Reserved tickets:
+      {hasReserves && reserveTickets ? (
+        <div>
+          {reserveTickets.admin.gt(0) ? <div>Admin: {reserveTickets.admin.toString()}</div> : null}
+          {reserveTickets.beneficiarys.gt(0) ? (
+            <div>Beneficiaries: {reserveTickets.beneficiarys.toString()}</div>
+          ) : null}
+          {reserveTickets.owners.gt(0) ? <div>Owners: {reserveTickets.owners.toString()}</div> : null}
+        </div>
+      ) : (
+        ' none'
+      )}
+    </div>
+  )
+
+  const mintButton = <button onClick={mint}>Mint reserves</button>
+
   return (
     <div
       style={{
@@ -49,7 +90,13 @@ export default function TicketsBalance({
       }}
     >
       <div>Ticket balance: {balance !== undefined ? balance.toString() : 'loading...'}</div>
-      <div>
+
+      <div style={{ display: 'flex', alignItems: 'baseline' }}>
+        <div style={{ marginRight: 40 }}>
+          {reserves}
+          {hasReserves ? mintButton : null}
+        </div>
+
         <input
           onChange={e => setRedeemAmount(BigNumber.from(parseFloat(e.target.value)))}
           style={{ marginRight: 10 }}
@@ -57,6 +104,7 @@ export default function TicketsBalance({
           placeholder="0"
           defaultValue="0"
         />
+
         <button disabled={!balance} type="submit" onClick={redeem}>
           Redeem
         </button>
