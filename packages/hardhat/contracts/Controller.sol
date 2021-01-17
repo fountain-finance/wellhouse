@@ -4,13 +4,12 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "./interfaces/ITreasury.sol";
 import "./interfaces/IController.sol";
+import "./interfaces/IMpStore.sol";
 
-import "./MpStore.sol";
 import "./TicketStore.sol";
 
 /**
@@ -37,16 +36,16 @@ contract Controller is IController {
 
     // --- public properties --- //
 
-    //TODO
+    /// @notice The admin of the contract who makes admin fees and can upgrade the treasury.
     address public admin;
 
     /// @notice The contract storing all Money pool state variables.
     /// @dev Immutable.
-    MpStore public mpStore;
+    IMpStore public override mpStore;
 
     /// @notice The contract that manages the Tickets.
     /// @dev Immutable.
-    TicketStore public ticketStore;
+    ITicketStore public override ticketStore;
 
     /// @notice The treasury that manages funds.
     /// @dev Reassignable by the owner.
@@ -58,29 +57,30 @@ contract Controller is IController {
     /// @notice The percent fee the contract owner takes from surplus.
     uint256 public fee;
 
-    function getWantTokenAllowList()
-        external
-        override
-        returns (IERC20[] memory)
-    {
-        return wantTokenAllowList;
-    }
+    // --- public views --- //
 
+    /**
+        @notice The amount of tickets that are reserved for owners, beneficieries, and the admin.
+        @param _owner The owner whose Money pools have reserved tickets.
+        @return _owners The ticket amount belong to owners.
+        @return _beneficiaries The ticket amount belong to beneficiaries.
+        @return _admin The ticket amount belong to the admin.
+    */
     function getReservedTickets(address _owner)
         external
         view
         returns (
             uint256 _owners,
-            uint256 _beneficiarys,
+            uint256 _beneficiaries,
             uint256 _admin
         )
     {
-        Tickets _tickets = ticketStore.tickets(_owner);
+        ITickets _tickets = ticketStore.tickets(_owner);
         require(
-            _tickets != Tickets(0),
+            _tickets != ITickets(0),
             "Controller::mintReservedTickets: NOT_FOUND"
         );
-        MoneyPool.Data memory _mp = mpStore.getMp(mpStore.latestMpId(_owner));
+        MoneyPool.Data memory _mp = mpStore.getLatestMp(_owner);
         while (_mp.id > 0 && !_mp.hasMintedReserves && _mp.total > _mp.target) {
             if (_mp._state() == MoneyPool.State.Redistributing) {
                 uint256 _surplus = _mp.total.sub(_mp.target);
@@ -89,7 +89,7 @@ contract Controller is IController {
                     if (_mp.o > 0)
                         _owners = _owners.add(_mp._weighted(_surplus, _mp.o));
                     if (_mp.b > 0)
-                        _beneficiarys = _beneficiarys.add(
+                        _beneficiaries = _beneficiaries.add(
                             _mp._weighted(_surplus, _mp.b)
                         );
                 }
@@ -100,9 +100,15 @@ contract Controller is IController {
 
     // --- external transactions --- //
 
+    /** 
+      @param _mpStore The MpStore to use.
+      @param _ticketStore The TicketStore to use.
+      @param _fee The percentage of Money pool surplus in the ecosystem to return to the admin.
+      @param _wantTokenAllowList The tokens that are allowed as `want` tokens in Money pools.
+    */
     constructor(
-        MpStore _mpStore,
-        TicketStore _ticketStore,
+        IMpStore _mpStore,
+        ITicketStore _ticketStore,
         uint256 _fee,
         IERC20[] memory _wantTokenAllowList
     ) public {
@@ -130,7 +136,7 @@ contract Controller is IController {
         IERC20 _rewardToken
     ) external override {
         require(
-            ticketStore.tickets(msg.sender) == Tickets(0),
+            ticketStore.tickets(msg.sender) == ITickets(0),
             "Controller::initializeProject: ALREADY_INITIALIZED"
         );
         require(
@@ -198,14 +204,14 @@ contract Controller is IController {
             "Controller::configureMp: BAD_PERCENTAGES"
         );
 
-        Tickets _tickets = ticketStore.tickets(msg.sender);
+        ITickets _tickets = ticketStore.tickets(msg.sender);
 
         require(
-            _tickets != Tickets(0),
+            _tickets != ITickets(0),
             "Controller::configureMp: NEEDS_INITIALIZATION"
         );
 
-        MoneyPool.Data memory _mp = mpStore.standbyMp(msg.sender);
+        MoneyPool.Data memory _mp = mpStore.ensureStandbyMp(msg.sender);
 
         _mp.title = _title;
         _mp.link = _link;
@@ -261,7 +267,7 @@ contract Controller is IController {
         );
         require(_amount > 0, "Controller::sustainOwner: BAD_AMOUNT");
         // Find the Money pool that this sustainment should go to.
-        MoneyPool.Data memory _mp = mpStore.activeMp(_owner);
+        MoneyPool.Data memory _mp = mpStore.ensureActiveMp(_owner);
         require(_want == _mp.want, "Controller::sustainOwner: UNEXPECTED_WANT");
 
         // Add the amount to the Money pool, which determines how much Flow was made available as a result.
@@ -285,7 +291,7 @@ contract Controller is IController {
             _mp.want.safeTransferFrom(msg.sender, address(treasury), _amount);
         }
         mpStore.saveMp(_mp);
-        Tickets _tickets = ticketStore.tickets(_mp.owner);
+        ITickets _tickets = ticketStore.tickets(_mp.owner);
         if (_surplus > 0) {
             ticketStore.addSwappable(
                 _mp.owner,
@@ -337,7 +343,7 @@ contract Controller is IController {
     */
     function redeem(address _owner, uint256 _amount) external override lock {
         require(treasury != ITreasury(0), "Controller::redeem: BAD_STATE");
-        Tickets _tickets = ticketStore.tickets(_owner);
+        ITickets _tickets = ticketStore.tickets(_owner);
         IERC20 _rewardToken = _tickets.rewardToken();
         uint256 _redeemableAmount =
             ticketStore.getRedeemableAmount(msg.sender, _owner);
@@ -383,12 +389,12 @@ contract Controller is IController {
         @param _owner The owner whose Money pools are being iterated through.
     */
     function mintReservedTickets(address _owner) external override {
-        Tickets _tickets = ticketStore.tickets(_owner);
+        ITickets _tickets = ticketStore.tickets(_owner);
         require(
             _tickets != Tickets(0),
             "Controller::mintReservedTickets: NOT_FOUND"
         );
-        MoneyPool.Data memory _mp = mpStore.getMp(mpStore.latestMpId(_owner));
+        MoneyPool.Data memory _mp = mpStore.getLatestMp(_owner);
         while (_mp.id > 0 && !_mp.hasMintedReserves && _mp.total > _mp.target) {
             if (_mp._state() == MoneyPool.State.Redistributing) {
                 uint256 _surplus = _mp.total.sub(_mp.target);
@@ -448,30 +454,39 @@ contract Controller is IController {
     }
 
     /**
-        @notice Allows an owner to migrate their Tickets to a proposed successor contract.
+        @notice Allows an owner to migrate their Tickets control to another contract.
         @dev Make sure you know what you're doing. This is a one way migration
     */
     function migrateTickets(address _newController) external override {
-        Tickets _tickets = ticketStore.tickets(msg.sender);
-        require(_tickets != Tickets(0), "Controller::migrate: NOT_FOUND");
-        require(
-            !_tickets.hasRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController),
-            "Controller::migrate: ALREADY_MIGRATED"
-        );
-        _tickets.grantRole(_tickets.DEFAULT_ADMIN_ROLE(), _newController);
-        _tickets.revokeRole(_tickets.DEFAULT_ADMIN_ROLE(), address(this));
+        ITickets _tickets = ticketStore.tickets(msg.sender);
+        require(_tickets != ITickets(0), "Controller::migrate: NOT_FOUND");
+        _tickets.grantRole_(_tickets.DEFAULT_ADMIN_ROLE_(), _newController);
+        _tickets.revokeRole_(_tickets.DEFAULT_ADMIN_ROLE_(), address(this));
         emit MigrateTickets(_newController);
     }
 
+    /**
+        @notice The treasury can be set for the first time by anyone, and afterwards only by the admin.
+        @param _treasury The treasury to set.
+    */
     function setTreasury(ITreasury _treasury) external override {
         //Anyone can appoint the first treasury. Only the admin can update the treasury.
         require(
             treasury == ITreasury(0) || msg.sender == admin,
             "Controller::setTreasury: UNAUTHORIZED"
         );
+
+        if (treasury != ITreasury(0))
+            treasury.peacefulTransition(address(_treasury), wantTokenAllowList);
+
         treasury = _treasury;
     }
 
+    /**
+        @notice The admin of this contract.
+        @dev Can be set once.
+        @param _admin The admin to set.
+    */
     function setAdmin(address _admin) external override {
         require(admin == address(0), "Controller::setAdmin: ALREADY_SET");
         admin = _admin;

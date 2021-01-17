@@ -3,59 +3,57 @@ pragma solidity >=0.6.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "./interfaces/IController.sol";
 
-import "./MpStore.sol";
-import "./TicketStore.sol";
+//TODO make this a Money pool owner. Make a role for devs, and a role for stakers.
+//TODO this needs to call "redeem" instead of withdraw. Proceeds go to a money pool.
 
 /// All functions in here should be governable with FLOW.
 /// Owner should eventually change to a governance contract.
 contract Admin is Ownable {
-    /// @notice The contract storing all Money pool state variables.
-    /// @dev Immutable.
-    MpStore public mpStore;
-
-    /// @notice The contract that manages the Tickets.
-    /// @dev Immutable.
-    TicketStore public ticketStore;
+    using SafeERC20 for IERC20;
 
     /// @notice The contract that manages the Tickets.
     /// @dev Immutable.
     IController public controller;
 
-    event WithdrawFunds(IERC20 token, uint256 amount);
+    event WithdrawFunds(IERC20 token, uint256 amount, address to);
+    event WithdrawFees(IERC20 token, uint256 amount, address to);
     event SetTreasury(ITreasury treasury);
     event AppointTreasury(ITreasury newTreasury);
 
-    constructor(
-        IController _controller,
-        MpStore _mpStore,
-        TicketStore _ticketStore
-    ) public {
+    /** 
+      @param _controller The controller that is being administered.
+    */
+    constructor(IController _controller, ITreasury _treasury) public {
         controller = _controller;
         controller.setAdmin(address(this));
-        mpStore = _mpStore;
-        ticketStore = _ticketStore;
-        mpStore.claimOwnership();
-        ticketStore.claimOwnership();
-        ticketStore.grantRole(
-            ticketStore.DEFAULT_ADMIN_ROLE(),
+        IMpStore _mpStore = controller.mpStore();
+        ITicketStore _ticketStore = controller.ticketStore();
+        _mpStore.claimOwnership();
+        _ticketStore.claimOwnership();
+        _ticketStore.grantRole_(
+            _ticketStore.DEFAULT_ADMIN_ROLE_(),
             address(controller)
         );
-        mpStore.grantRole(
-            ticketStore.DEFAULT_ADMIN_ROLE(),
+        _mpStore.grantRole_(
+            _mpStore.DEFAULT_ADMIN_ROLE_(),
             address(controller)
         );
+        controller.setTreasury(_treasury);
     }
 
     function addController(IController _controller) external onlyOwner {
-        ticketStore.grantRole(
-            ticketStore.DEFAULT_ADMIN_ROLE(),
+        IMpStore _mpStore = _controller.mpStore();
+        ITicketStore _ticketStore = _controller.ticketStore();
+        _ticketStore.grantRole_(
+            _ticketStore.DEFAULT_ADMIN_ROLE_(),
             address(_controller)
         );
-        mpStore.grantRole(
-            ticketStore.DEFAULT_ADMIN_ROLE(),
+        _mpStore.grantRole_(
+            _mpStore.DEFAULT_ADMIN_ROLE_(),
             address(_controller)
         );
         controller = _controller;
@@ -63,31 +61,53 @@ contract Admin is Ownable {
     }
 
     function deprecateController(IController _controller) external onlyOwner {
-        ticketStore.revokeRole(
-            ticketStore.DEFAULT_ADMIN_ROLE(),
+        IMpStore _mpStore = controller.mpStore();
+        ITicketStore _ticketStore = controller.ticketStore();
+        _ticketStore.revokeRole_(
+            _ticketStore.DEFAULT_ADMIN_ROLE_(),
             address(_controller)
         );
-        mpStore.revokeRole(
-            ticketStore.DEFAULT_ADMIN_ROLE(),
+        _mpStore.revokeRole_(
+            _ticketStore.DEFAULT_ADMIN_ROLE_(),
             address(_controller)
         );
     }
 
     /**
-        @notice Allows the owner of the contract to withdraw phase 1 funds.
+        @notice Allows the owner of the contract to withdraw funds allocated to it from the treasury.
         @param _amount The amount to withdraw.
+        @param _token The token being withdrawn.
+        @param _to The address being withdraw to.
+        @param _treasury The treasury to withdraw from.
     */
     function withdrawFunds(
         uint256 _amount,
         IERC20 _token,
+        address _to,
         ITreasury _treasury
     ) external onlyOwner {
         require(
             _treasury != ITreasury(0),
             "Controller::withdrawFunds: BAD_STATE"
         );
-        _treasury.withdraw(msg.sender, _token, _amount);
-        emit WithdrawFunds(_token, _amount);
+        _treasury.withdraw(_to, _token, _amount);
+        emit WithdrawFunds(_token, _amount, _to);
+    }
+
+    /**
+        @notice Allows the owner of the contract to withdraw fees paid to it by the controller.
+        @param _amount The amount to withdraw.
+        @param _token The token being withdrawn.
+        @param _to The address being withdraw to.
+    */
+    function withdrawFees(
+        uint256 _amount,
+        IERC20 _token,
+        address _to
+    ) external onlyOwner {
+        require(_to != address(0), "Admin::withdrawFees ZERO_ADDRESS");
+        _token.safeTransfer(_to, _amount);
+        emit WithdrawFees(_token, _amount, _to);
     }
 
     /**
@@ -100,7 +120,7 @@ contract Admin is Ownable {
             "Controller::appointTreasury: ZERO_ADDRESS"
         );
         require(
-            _newTreasury.controller() == controller,
+            _newTreasury.controller() == address(controller),
             "Controller::appointTreasury: INCOMPATIBLE"
         );
         require(
@@ -108,10 +128,6 @@ contract Admin is Ownable {
             "Controller::appointTreasury: ZERO_ADDRESS"
         );
 
-        controller.treasury().transition(
-            address(_newTreasury),
-            controller.getWantTokenAllowList()
-        );
         controller.setTreasury(_newTreasury);
         emit AppointTreasury(_newTreasury);
     }

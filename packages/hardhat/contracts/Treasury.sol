@@ -44,20 +44,26 @@ contract Treasury is ITreasury {
     /// @notice The contract managing Phase 3 token swaps.
     ITreasuryPhase public override phase3;
     /// @notice Amount each tokens from Phase 1 and Phase 2 that have yet to be withdrawn.
-    mapping(IERC20 => uint256) public override withdrawableFunds;
-    /// @notice The controller that this Treasury belongs to.
-    IController public override controller;
-
+    mapping(IERC20 => uint256) public override adminFunds;
+    /// @notice The controller that this Treasury services.
+    address public override controller;
+    /// @notice The admin that this Treasury belongs to.
     address public override admin;
 
-    constructor(
-        Flow _flow,
-        IController _controller,
-        address _admin
-    ) public {
-        controller = _controller;
-        controller.setTreasury(this);
+    constructor(Flow _flow) public {
         flow = _flow;
+    }
+
+    function setController(address _controller) external {
+        require(
+            controller == address(0),
+            "Treasury::setController: ALREADY_SET"
+        );
+        controller = _controller;
+    }
+
+    function setAdmin(address _admin) external {
+        require(admin == address(0), "Treasury::setAdmin: ALREADY_SET");
         admin = _admin;
     }
 
@@ -142,7 +148,7 @@ contract Treasury is ITreasury {
                 issuanceToken,
                 _amount.mul(PHASE_1_RATE)
             );
-            withdrawableFunds[_from] = withdrawableFunds[_from].add(_amount);
+            adminFunds[_from] = adminFunds[_from].add(_amount);
         }
         if (_phase == Phase.Two) {
             require(
@@ -155,7 +161,7 @@ contract Treasury is ITreasury {
                 issuanceToken,
                 _amount.mul(PHASE_2_RATE)
             );
-            withdrawableFunds[_from] = withdrawableFunds[_from].add(_amount);
+            adminFunds[_from] = adminFunds[_from].add(_amount);
         }
         require(
             address(phase3) != address(0),
@@ -171,11 +177,11 @@ contract Treasury is ITreasury {
     }
 
     function payout(
-        address _receiver,
+        address _to,
         IERC20 _token,
         uint256 _amount
     ) external override onlyController {
-        _token.safeTransfer(_receiver, _amount);
+        _token.safeTransfer(_to, _amount);
     }
 
     function withdraw(
@@ -184,14 +190,14 @@ contract Treasury is ITreasury {
         uint256 _amount
     ) external override onlyAdmin {
         require(
-            withdrawableFunds[_token] >= _amount,
-            "Treasury::withdrawFunds: INSUFFICIENT_FUNDS"
+            adminFunds[_token] >= _amount,
+            "Treasury::withdraw: INSUFFICIENT_FUNDS"
         );
-        withdrawableFunds[_token] = withdrawableFunds[_token].sub(_amount);
+        adminFunds[_token] = adminFunds[_token].sub(_amount);
         _token.safeTransfer(_to, _amount);
     }
 
-    function transition(address _newTreasury, IERC20[] calldata _tokens)
+    function peacefulTransition(address _newTreasury, IERC20[] calldata _tokens)
         external
         override
         onlyController

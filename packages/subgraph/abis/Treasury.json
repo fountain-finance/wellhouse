@@ -5,16 +5,6 @@
         "internalType": "contract Flow",
         "name": "_flow",
         "type": "address"
-      },
-      {
-        "internalType": "contract IController",
-        "name": "_controller",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_admin",
-        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -117,11 +107,30 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "adminFunds",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "controller",
     "outputs": [
       {
-        "internalType": "contract IController",
+        "internalType": "address",
         "name": "",
         "type": "address"
       }
@@ -198,7 +207,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_receiver",
+        "name": "_to",
         "type": "address"
       },
       {
@@ -213,6 +222,24 @@
       }
     ],
     "name": "payout",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newTreasury",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC20[]",
+        "name": "_tokens",
+        "type": "address[]"
+      }
+    ],
+    "name": "peacefulTransition",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -259,6 +286,32 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_admin",
+        "type": "address"
+      }
+    ],
+    "name": "setAdmin",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_controller",
+        "type": "address"
+      }
+    ],
+    "name": "setController",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "contract IERC20",
         "name": "_from",
         "type": "address"
@@ -294,24 +347,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_newTreasury",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IERC20[]",
-        "name": "_tokens",
-        "type": "address[]"
-      }
-    ],
-    "name": "transition",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "_to",
         "type": "address"
       },
@@ -329,25 +364,6 @@
     "name": "withdraw",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "withdrawableFunds",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   }
 ]

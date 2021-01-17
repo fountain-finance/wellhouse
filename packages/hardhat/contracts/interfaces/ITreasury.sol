@@ -13,9 +13,9 @@ interface ITreasury {
 
     function phase3() external returns (ITreasuryPhase);
 
-    function withdrawableFunds(IERC20 _token) external returns (uint256);
+    function adminFunds(IERC20 _token) external returns (uint256);
 
-    function controller() external returns (IController);
+    function controller() external returns (address);
 
     function admin() external returns (address);
 
@@ -38,7 +38,7 @@ interface ITreasury {
         uint256 _amount
     ) external;
 
-    function transition(address _newTreasury, IERC20[] calldata _tokens)
+    function peacefulTransition(address _newTreasury, IERC20[] calldata _tokens)
         external;
 
     function withdraw(

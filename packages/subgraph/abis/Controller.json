@@ -2,12 +2,12 @@
   {
     "inputs": [
       {
-        "internalType": "contract MpStore",
+        "internalType": "contract IMpStore",
         "name": "_mpStore",
         "type": "address"
       },
       {
-        "internalType": "contract TicketStore",
+        "internalType": "contract ITicketStore",
         "name": "_ticketStore",
         "type": "address"
       },
@@ -417,7 +417,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_beneficiarys",
+        "name": "_beneficiaries",
         "type": "uint256"
       },
       {
@@ -427,19 +427,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getWantTokenAllowList",
-    "outputs": [
-      {
-        "internalType": "contract IERC20[]",
-        "name": "",
-        "type": "address[]"
-      }
-    ],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -496,7 +483,7 @@
     "name": "mpStore",
     "outputs": [
       {
-        "internalType": "contract MpStore",
+        "internalType": "contract IMpStore",
         "name": "",
         "type": "address"
       }
@@ -643,7 +630,7 @@
     "name": "ticketStore",
     "outputs": [
       {
-        "internalType": "contract TicketStore",
+        "internalType": "contract ITicketStore",
         "name": "",
         "type": "address"
       }

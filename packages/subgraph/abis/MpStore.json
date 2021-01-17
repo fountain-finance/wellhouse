@@ -94,6 +94,19 @@
   },
   {
     "inputs": [],
+    "name": "DEFAULT_ADMIN_ROLE_",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "MP_BASE_WEIGHT",
     "outputs": [
       {
@@ -212,6 +225,31 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "claimOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "_token",
+        "type": "address"
+      }
+    ],
+    "name": "clearWantedTokens",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -219,7 +257,7 @@
         "type": "address"
       }
     ],
-    "name": "activeMp",
+    "name": "ensureActiveMp",
     "outputs": [
       {
         "components": [
@@ -318,27 +356,108 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "claimOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
         "name": "_owner",
         "type": "address"
-      },
-      {
-        "internalType": "contract IERC20",
-        "name": "_token",
-        "type": "address"
       }
     ],
-    "name": "clearWantedTokens",
-    "outputs": [],
+    "name": "ensureStandbyMp",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "previous",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "link",
+            "type": "string"
+          },
+          {
+            "internalType": "contract IERC20",
+            "name": "want",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "target",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "total",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "start",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "duration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tapped",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "o",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "b",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "bAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "hasMintedReserves",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "weight",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "bias",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct MoneyPool.Data",
+        "name": "_mp",
+        "type": "tuple"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -442,6 +561,112 @@
         ],
         "internalType": "struct MoneyPool.Data",
         "name": "_mp",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+      }
+    ],
+    "name": "getLatestMp",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "previous",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "link",
+            "type": "string"
+          },
+          {
+            "internalType": "contract IERC20",
+            "name": "want",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "target",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "total",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "start",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "duration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tapped",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "o",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "b",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "bAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "hasMintedReserves",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "weight",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "bias",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct MoneyPool.Data",
+        "name": "",
         "type": "tuple"
       }
     ],
@@ -796,6 +1021,24 @@
         "type": "address"
       }
     ],
+    "name": "grantRole_",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
     "name": "hasRole",
     "outputs": [
       {
@@ -884,6 +1127,24 @@
       }
     ],
     "name": "revokeRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "revokeRole_",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -985,112 +1246,6 @@
     ],
     "name": "saveMp",
     "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_owner",
-        "type": "address"
-      }
-    ],
-    "name": "standbyMp",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "id",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "owner",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "previous",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "title",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "link",
-            "type": "string"
-          },
-          {
-            "internalType": "contract IERC20",
-            "name": "want",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "target",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "total",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "start",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "duration",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "tapped",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "o",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "b",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "bAddress",
-            "type": "address"
-          },
-          {
-            "internalType": "bool",
-            "name": "hasMintedReserves",
-            "type": "bool"
-          },
-          {
-            "internalType": "uint256",
-            "name": "weight",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "bias",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct MoneyPool.Data",
-        "name": "_mp",
-        "type": "tuple"
-      }
-    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },

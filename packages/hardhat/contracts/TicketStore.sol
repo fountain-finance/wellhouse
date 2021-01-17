@@ -4,9 +4,11 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract Tickets is ERC20, AccessControl {
+import "./abstract/Store.sol";
+import "./interfaces/ITicketStore.sol";
+
+contract Tickets is ERC20, ITickets, AccessControl {
     modifier onlyAdmin {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender));
         _;
@@ -16,7 +18,7 @@ contract Tickets is ERC20, AccessControl {
     address public issuer;
 
     /// @notice The token that these Tickets are redeemable for.
-    IERC20 public rewardToken;
+    IERC20 public override rewardToken;
 
     constructor(
         string memory _name,
@@ -29,40 +31,58 @@ contract Tickets is ERC20, AccessControl {
         rewardToken = _rewardToken;
     }
 
-    function mint(address _account, uint256 _amount) external onlyAdmin {
+    function DEFAULT_ADMIN_ROLE_() external pure override returns (bytes32) {
+        return DEFAULT_ADMIN_ROLE;
+    }
+
+    function grantRole_(bytes32 role, address account) external override {
+        return grantRole(role, account);
+    }
+
+    function revokeRole_(bytes32 role, address account) external override {
+        return revokeRole(role, account);
+    }
+
+    function mint(address _account, uint256 _amount)
+        external
+        override
+        onlyAdmin
+    {
         return _mint(_account, _amount);
     }
 
-    function burn(address _account, uint256 _amount) external onlyAdmin {
+    function burn(address _account, uint256 _amount)
+        external
+        override
+        onlyAdmin
+    {
         return _burn(_account, _amount);
     }
 }
 
-contract TicketStore is AccessControl {
+contract TicketStore is Store, ITicketStore {
     using SafeMath for uint256;
 
     modifier onlyAdmin {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "TicketStand: UNAUTHORIZED"
+            "TicketStore: UNAUTHORIZED"
         );
         _;
     }
 
     // --- public properties --- //
 
-    /// @notice The owner who can manage access permissions of this store.
-    address public owner;
-
     /// @notice The Tickets handed out by each issuer. Each issuer has their own Ticket contract.
-    mapping(address => Tickets) public tickets;
+    mapping(address => ITickets) public override tickets;
 
     /// @notice The current cumulative amount of redeemable tokens redistributable to each issuer's Ticket holders.
     mapping(address => mapping(IERC20 => uint256)) public redeemable;
 
     /// @notice The amount of each token that is swappable into the redeemable token for each issuer.
     mapping(address => mapping(IERC20 => mapping(IERC20 => uint256)))
-        public swappable;
+        public
+        override swappable;
 
     // --- external views --- //
 
@@ -77,9 +97,10 @@ contract TicketStore is AccessControl {
     function getRedeemableAmount(address _holder, address _issuer)
         external
         view
+        override
         returns (uint256)
     {
-        Tickets _tickets = tickets[_issuer];
+        ITickets _tickets = tickets[_issuer];
         uint256 _totalSupply = _tickets.totalSupply();
         if (_totalSupply == 0) return 0;
         uint256 _currentBalance = _tickets.balanceOf(_holder);
@@ -94,8 +115,13 @@ contract TicketStore is AccessControl {
         @param _issuer The issuer of the Ticket to get a value for.
         @return _value The value.
     */
-    function getTicketValue(address _issuer) external view returns (uint256) {
-        Tickets _tickets = tickets[_issuer];
+    function getTicketValue(address _issuer)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        ITickets _tickets = tickets[_issuer];
         return
             redeemable[_issuer][_tickets.rewardToken()].div(
                 _tickets.totalSupply()
@@ -111,6 +137,7 @@ contract TicketStore is AccessControl {
     function getTicketBalance(address _issuer, address _holder)
         external
         view
+        override
         returns (uint256)
     {
         return tickets[_issuer].balanceOf(_holder);
@@ -121,7 +148,12 @@ contract TicketStore is AccessControl {
         @param _issuer The issuer of the Ticket to get a value for.
         @return _value The value.
     */
-    function getTicketSupply(address _issuer) external view returns (uint256) {
+    function getTicketSupply(address _issuer)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return tickets[_issuer].totalSupply();
     }
 
@@ -133,6 +165,7 @@ contract TicketStore is AccessControl {
     function getTicketRewardToken(address _issuer)
         external
         view
+        override
         returns (IERC20)
     {
         return tickets[_issuer].rewardToken();
@@ -147,8 +180,9 @@ contract TicketStore is AccessControl {
         @param _issuer The issuer of the Ticket.
         @param _tickets The Ticket to assign to the issuer.
     */
-    function issueTickets(address _issuer, Tickets _tickets)
+    function issueTickets(address _issuer, ITickets _tickets)
         external
+        override
         onlyAdmin
     {
         tickets[_issuer] = _tickets;
@@ -164,7 +198,7 @@ contract TicketStore is AccessControl {
         address _issuer,
         IERC20 _token,
         uint256 _amount
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         redeemable[_issuer][_token] = redeemable[_issuer][_token].add(_amount);
     }
 
@@ -178,7 +212,7 @@ contract TicketStore is AccessControl {
         address _issuer,
         IERC20 _token,
         uint256 _amount
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         redeemable[_issuer][_token] = redeemable[_issuer][_token].sub(_amount);
     }
 
@@ -194,7 +228,7 @@ contract TicketStore is AccessControl {
         IERC20 _from,
         uint256 _amount,
         IERC20 _to
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         swappable[_issuer][_from][_to] = swappable[_issuer][_from][_to].add(
             _amount
         );
@@ -212,17 +246,9 @@ contract TicketStore is AccessControl {
         IERC20 _from,
         uint256 _amount,
         IERC20 _to
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         swappable[_issuer][_from][_to] = swappable[_issuer][_from][_to].sub(
             _amount
         );
-    }
-
-    /**
-        @notice Allows someone to claim ownership over this contract if it hasn't yet been claimed.
-    */
-    function claimOwnership() external {
-        require(owner == address(0), "TicketStore::setAdmin: ALREADY_SET");
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 }

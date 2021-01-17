@@ -93,6 +93,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "DEFAULT_ADMIN_ROLE_",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -348,6 +361,24 @@
         "type": "address"
       }
     ],
+    "name": "grantRole_",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
     "name": "hasRole",
     "outputs": [
       {
@@ -367,7 +398,7 @@
         "type": "address"
       },
       {
-        "internalType": "contract Tickets",
+        "internalType": "contract ITickets",
         "name": "_tickets",
         "type": "address"
       }
@@ -446,6 +477,24 @@
       }
     ],
     "name": "revokeRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "revokeRole_",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -541,7 +590,7 @@
     "name": "tickets",
     "outputs": [
       {
-        "internalType": "contract Tickets",
+        "internalType": "contract ITickets",
         "name": "",
         "type": "address"
       }

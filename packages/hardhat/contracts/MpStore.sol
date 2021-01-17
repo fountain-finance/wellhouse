@@ -4,11 +4,13 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "./libraries/MoneyPool.sol";
+import "./interfaces/IMpStore.sol";
 
-contract MpStore is AccessControl {
+import "./abstract/Store.sol";
+
+contract MpStore is Store, IMpStore {
     using SafeMath for uint256;
     using MoneyPool for MoneyPool.Data;
 
@@ -31,9 +33,6 @@ contract MpStore is AccessControl {
 
     // --- public properties --- //
 
-    /// @notice The owner who can manage access permissions of this store.
-    address public owner;
-
     /// @notice A big number to base ticket issuance off of.
     uint256 public constant MP_BASE_WEIGHT = 1E18;
 
@@ -54,9 +53,10 @@ contract MpStore is AccessControl {
     function getMp(uint256 _mpId)
         external
         view
+        override
         returns (MoneyPool.Data memory)
     {
-        require(_mpId > 0 && _mpId <= mpCount, "Store::getMp: NOT_FOUND");
+        require(_mpId > 0 && _mpId <= mpCount, "MpStore::getMp: NOT_FOUND");
         return mp[_mpId];
     }
 
@@ -68,12 +68,13 @@ contract MpStore is AccessControl {
     function getQueuedMp(address _owner)
         external
         view
+        override
         returns (MoneyPool.Data memory)
     {
         MoneyPool.Data memory _sMp = _standbyMp(_owner);
         MoneyPool.Data memory _aMp = _activeMp(_owner);
         if (_sMp.id > 0 && _aMp.id > 0) return _sMp;
-        require(_aMp.id > 0, "Store::getQueuedMp: NOT_FOUND");
+        require(_aMp.id > 0, "MpStore::getQueuedMp: NOT_FOUND");
         return _aMp._nextUp();
     }
 
@@ -85,9 +86,10 @@ contract MpStore is AccessControl {
     function getCurrentMp(address _owner)
         external
         view
+        override
         returns (MoneyPool.Data memory _mp)
     {
-        require(latestMpId[_owner] > 0, "Store::getCurrentMp: NOT_FOUND");
+        require(latestMpId[_owner] > 0, "MpStore::getCurrentMp: NOT_FOUND");
         _mp = _activeMp(_owner);
         if (_mp.id > 0) return _mp;
         _mp = _standbyMp(_owner);
@@ -97,14 +99,34 @@ contract MpStore is AccessControl {
     }
 
     /**
+        @notice The Money pool that was created most recently for the owner.
+        @param _owner The owner of the money pool being looked for.
+        @return _mp The Money pool.
+    */
+
+    function getLatestMp(address _owner)
+        external
+        view
+        override
+        returns (MoneyPool.Data memory)
+    {
+        return mp[latestMpId[_owner]];
+    }
+
+    /**
         @notice The amount left to be withdrawn by the Money pool's owner.
         @param _mpId The ID of the Money pool to get the available sustainment from.
         @return amount The amount.
     */
-    function getTappableAmount(uint256 _mpId) external view returns (uint256) {
+    function getTappableAmount(uint256 _mpId)
+        external
+        view
+        override
+        returns (uint256)
+    {
         require(
             _mpId > 0 && _mpId <= mpCount,
-            "Store::getTappableAmount:: NOT_FOUND"
+            "MpStore::getTappableAmount:: NOT_FOUND"
         );
         return mp[_mpId]._tappableAmount();
     }
@@ -118,6 +140,7 @@ contract MpStore is AccessControl {
     function getWantedTokens(address _owner, IERC20 _rewardToken)
         external
         view
+        override
         returns (IERC20[] memory)
     {
         return wantedTokens[_owner][_rewardToken];
@@ -137,7 +160,7 @@ contract MpStore is AccessControl {
         address _owner,
         IERC20 _redeemableToken,
         IERC20 _token
-    ) external onlyAdmin {
+    ) external override onlyAdmin {
         if (!wantedTokenTracker[_owner][_redeemableToken][_token]) {
             wantedTokens[_owner][_redeemableToken].push(_token);
             wantedTokenTracker[_owner][_redeemableToken][_token] = true;
@@ -152,6 +175,7 @@ contract MpStore is AccessControl {
     */
     function clearWantedTokens(address _owner, IERC20 _token)
         external
+        override
         onlyAdmin
     {
         delete wantedTokens[_owner][_token];
@@ -162,8 +186,9 @@ contract MpStore is AccessControl {
         @param _owner The address who owns the Money pool to look for.
         @return _mp The resulting Money pool.
     */
-    function activeMp(address _owner)
+    function ensureActiveMp(address _owner)
         external
+        override
         onlyAdmin
         returns (MoneyPool.Data memory _mp)
     {
@@ -175,7 +200,7 @@ contract MpStore is AccessControl {
         if (_mp.id > 0) return _mp;
         // No upcoming moneyPool found, clone the latest moneyPool
         _mp = mp[latestMpId[_owner]];
-        require(_mp.id > 0, "Store::_mpToSustain: NOT_FOUND");
+        require(_mp.id > 0, "MpStore::ensureActiveMp: NOT_FOUND");
         // Use a start date that's a multiple of the duration.
         // This creates the effect that there have been scheduled Money pools ever since the `latest`, even if `latest` is a long time in the past.
         MoneyPool.Data storage _newMp =
@@ -189,8 +214,9 @@ contract MpStore is AccessControl {
         @param _owner The address who owns the Money pool to look for.
         @return _mp The resulting Money pool.
     */
-    function standbyMp(address _owner)
+    function ensureStandbyMp(address _owner)
         external
+        override
         onlyAdmin
         returns (MoneyPool.Data memory _mp)
     {
@@ -212,21 +238,13 @@ contract MpStore is AccessControl {
         return _newMp;
     }
 
-    /**
-        @notice Allows someone to claim ownership over this contract if it hasn't yet been claimed.
-    */
-    function claimOwnership() external {
-        require(owner == address(0), "MpStore::setAdmin: ALREADY_SET");
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    }
-
     // --- public transactions --- //
 
     /** 
         @notice Saves a Money pool.
         @param _mp The Money pool to save.
     */
-    function saveMp(MoneyPool.Data memory _mp) public onlyAdmin {
+    function saveMp(MoneyPool.Data memory _mp) public override onlyAdmin {
         mp[_mp.id] = _mp;
     }
 
