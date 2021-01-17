@@ -88,14 +88,6 @@ export default function MoneyPoolDetail({
     transactor(contracts.Controller.swap(mp.owner, mp.want, _swappable, daiAddress, _expectedAmount))
   }
 
-  function mint() {
-    if (!transactor || !contracts || !mp) return
-
-    console.log('🧃 Calling Controller.mintReservedTickets(owner)', { owner: mp.owner })
-
-    transactor(contracts.Controller.mintReservedTickets(mp.owner))
-  }
-
   function tap() {
     if (!transactor || !contracts?.Controller || !mp) return
 
@@ -141,16 +133,7 @@ export default function MoneyPoolDetail({
         : null}
       {KeyValRow('Bias', <span>{mp.bias?.toString()}%</span>)}
       {KeyValRow('Weight', <span>{mp.weight?.toString()}</span>)}
-      {KeyValRow(
-        'Reserves',
-        mp.hasMintedReserves ? (
-          'Minted'
-        ) : (
-          <button type="submit" onClick={mint}>
-            Mint
-          </button>
-        ),
-      )}
+      {KeyValRow('Reserves', mp.hasMintedReserves ? 'Minted' : 'Not minted')}
       {KeyValRow(
         'Swappable',
         <span>
