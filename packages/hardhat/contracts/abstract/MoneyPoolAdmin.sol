@@ -2,7 +2,9 @@
 pragma solidity >=0.6.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
-// import "@uniswap/v2-periphery/contracts/UniswapV2Router02.sol";
+import {
+    UniswapV2Router02
+} from "@uniswap/v2-periphery/contracts/UniswapV2Router02.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -40,6 +42,9 @@ abstract contract MoneyPoolAdmin is Ownable {
 
     /// @dev The deadline for approving the latest Money pool configuration proposal.
     uint256 public proposalDeadline;
+
+    //TODO
+    UniswapV2Router02 public router;
 
     /// @notice Emitted when a new Controller contract is set.
     event ResetController(
@@ -195,29 +200,30 @@ abstract contract MoneyPoolAdmin is Ownable {
         MoneyPool.Data memory _mp =
             controller.mpStore().getCurrentMp(address(this));
 
-        // require(
-        //     _rewardToken.approve(address(UniswapV2Router02), _amount),
-        //     "MoneyPoolAdmin::redeemTickets: APPROVE_FAILED."
-        // );
+        require(
+            _rewardToken.approve(address(router), _amount),
+            "MoneyPoolAdmin::redeemTickets: APPROVE_FAILED."
+        );
 
-        // address[] memory path = new address[](2);
-        // path[0] = address(_rewardToken);
-        // path[1] = UniswapV2Router02.WETH();
-        // path[2] = address(_mp.want);
-        // UniswapV2Router02.swapExactTokensForTokens(
-        //     _amount,
-        //     _minSwappedAmount,
-        //     path,
-        //     address(this),
-        //     block.timestamp
-        // );
+        address[] memory path = new address[](2);
+        path[0] = address(_rewardToken);
+        path[1] = router.WETH();
+        path[2] = address(_mp.want);
+        uint256[] memory _amounts =
+            router.swapExactTokensForTokens(
+                _amount,
+                _minSwappedAmount,
+                path,
+                address(this),
+                block.timestamp
+            );
 
-        // controller.sustainOwner(
-        //     address(this),
-        //     _expectedSwappedAmount,
-        //     _mp.want,
-        //     address(this)
-        // );
+        controller.sustainOwner(
+            address(this),
+            _amounts[2],
+            _mp.want,
+            address(this)
+        );
     }
 
     /** 
