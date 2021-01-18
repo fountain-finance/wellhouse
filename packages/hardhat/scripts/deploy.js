@@ -18,8 +18,6 @@ const main = async () => {
 
   const admin =  await deploy("Admin", [controller.address, treasury.address, "Juice Tickets", "JUICE-TICKETS", token.address, "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"]);
 
-  await deploy("TreasuryPhase1");
-
   // const exampleToken = await deploy("ExampleToken")
   // const examplePriceOracle = await deploy("ExamplePriceOracle")
   // const smartContractWallet = await deploy("SmartContractWallet",[exampleToken.address,examplePriceOracle.address])

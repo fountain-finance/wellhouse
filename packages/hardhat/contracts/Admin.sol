@@ -87,6 +87,7 @@ contract Admin is MoneyPoolAdmin {
             "Admin::appointTreasury: ZERO_ADDRESS"
         );
 
+        _newTreasury.setAdmin(address(this));
         controller.setTreasury(_newTreasury);
         emit AppointTreasury(_newTreasury);
     }
