@@ -7,12 +7,6 @@ import "./ITreasuryPhase.sol";
 import "./IController.sol";
 
 interface ITreasury {
-    function phase1() external returns (ITreasuryPhase);
-
-    function phase2() external returns (ITreasuryPhase);
-
-    function phase3() external returns (ITreasuryPhase);
-
     function adminFunds(IERC20 _token) external returns (uint256);
 
     function controller() external returns (address);

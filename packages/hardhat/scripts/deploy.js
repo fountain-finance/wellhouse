@@ -9,15 +9,14 @@ const main = async () => {
   console.log("\n\n 📡 Deploying...\n");
 
   const token = await deploy("Token");
-  const flow = await deploy("Flow");
   
   const mpStore = await deploy("MpStore");
   const ticketStore = await deploy("TicketStore");
   const controller = await deploy("Controller", [mpStore.address, ticketStore.address, 3, [token.address]]); 
   
-  const treasury = await deploy("Treasury", [flow.address]);
+  const treasury = await deploy("Treasury", ["0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"]);
 
-  const admin =  await deploy("Admin", [controller.address, treasury.address, "Juice", "JUICE", flow.address]);
+  const admin =  await deploy("Admin", [controller.address, treasury.address, "Juice Tickets", "JUICE-TICKETS", token.address, "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"]);
 
   await deploy("TreasuryPhase1");
 

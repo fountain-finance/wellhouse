@@ -9,9 +9,16 @@ contract YourContract is MoneyPoolAdmin {
     constructor(
         IController _controller,
         IERC20 _want,
-        IERC20 _rewardToken
+        IERC20 _rewardToken,
+        UniswapV2Router02 _router
     )
         public
-        MoneyPoolAdmin(_controller, "Your Contract", "SYMBOL", _rewardToken)
+        MoneyPoolAdmin(
+            _controller,
+            "Your Contract",
+            "SYMBOL",
+            _rewardToken,
+            _router
+        )
     {}
 }

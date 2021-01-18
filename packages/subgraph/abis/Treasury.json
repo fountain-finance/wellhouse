@@ -2,8 +2,8 @@
   {
     "inputs": [
       {
-        "internalType": "contract Flow",
-        "name": "_flow",
+        "internalType": "contract UniswapV2Router02",
+        "name": "_router",
         "type": "address"
       }
     ],
@@ -69,32 +69,6 @@
   },
   {
     "inputs": [],
-    "name": "PHASE_1_RATE",
-    "outputs": [
-      {
-        "internalType": "uint8",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "PHASE_2_RATE",
-    "outputs": [
-      {
-        "internalType": "uint8",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "admin",
     "outputs": [
       {
@@ -131,71 +105,6 @@
     "outputs": [
       {
         "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "flow",
-    "outputs": [
-      {
-        "internalType": "contract Flow",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "contract ITreasuryPhase",
-        "name": "_phase1",
-        "type": "address"
-      }
-    ],
-    "name": "initializePhase1",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "contract ITreasuryPhase",
-        "name": "_phase2",
-        "type": "address"
-      }
-    ],
-    "name": "initializePhase2",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "contract ITreasuryPhase",
-        "name": "_phase3",
-        "type": "address"
-      }
-    ],
-    "name": "initializePhase3",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "issuanceToken",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }
@@ -246,36 +155,10 @@
   },
   {
     "inputs": [],
-    "name": "phase1",
+    "name": "router",
     "outputs": [
       {
-        "internalType": "contract ITreasuryPhase",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "phase2",
-    "outputs": [
-      {
-        "internalType": "contract ITreasuryPhase",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "phase3",
-    "outputs": [
-      {
-        "internalType": "contract ITreasuryPhase",
+        "internalType": "contract UniswapV2Router02",
         "name": "",
         "type": "address"
       }

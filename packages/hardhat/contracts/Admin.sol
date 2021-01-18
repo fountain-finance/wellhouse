@@ -25,8 +25,12 @@ contract Admin is MoneyPoolAdmin {
         ITreasury _treasury,
         string memory _name,
         string memory _symbol,
-        IERC20 _rewardToken
-    ) public MoneyPoolAdmin(_controller, _name, _symbol, _rewardToken) {
+        IERC20 _rewardToken,
+        UniswapV2Router02 _router
+    )
+        public
+        MoneyPoolAdmin(_controller, _name, _symbol, _rewardToken, _router)
+    {
         controller.setTreasury(_treasury);
     }
 

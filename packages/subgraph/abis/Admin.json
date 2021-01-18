@@ -25,6 +25,11 @@
         "internalType": "contract IERC20",
         "name": "_rewardToken",
         "type": "address"
+      },
+      {
+        "internalType": "contract UniswapV2Router02",
+        "name": "_router",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",

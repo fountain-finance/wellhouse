@@ -56,7 +56,8 @@ abstract contract MoneyPoolAdmin is Ownable {
         IController _controller,
         string memory _name,
         string memory _symbol,
-        IERC20 _rewardToken //, // address router
+        IERC20 _rewardToken,
+        UniswapV2Router02 _router
     ) internal {
         IMpStore _mpStore = _controller.mpStore();
         ITicketStore _ticketStore = _controller.ticketStore();
@@ -64,6 +65,7 @@ abstract contract MoneyPoolAdmin is Ownable {
         _ticketStore.claimOwnership();
         appointController(_controller);
         controller.issueTickets(_name, _symbol, _rewardToken);
+        router = _router;
         redeemer = msg.sender;
     }
 
@@ -153,7 +155,7 @@ abstract contract MoneyPoolAdmin is Ownable {
         You may way to override this to create new permissions around who gets to decide
         the new Money pool parameters.
         @return _mpId The ID of the reconfigured Money pool.
-        */
+    */
     function approveMpReconfiguration() external returns (uint256) {
         require(
             proposalDeadline > block.timestamp,
