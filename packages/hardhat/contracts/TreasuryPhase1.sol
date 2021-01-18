@@ -32,22 +32,22 @@ contract TreasuryPhase1 is ITreasuryPhase {
       @param _from The token being swapped from.
       @param _amount The amount of tokens to use for issuing.
       @param _to The token being swapped to.
-      @param _expectedSwappedAmount The amount of tokens expected in exchange.
+      @param _minSwappedAmount The amount of tokens expected in exchange.
       @return _swapped The amount of tokens issued.
     */
     function swap(
         IERC20 _from,
         uint256 _amount,
         IERC20 _to,
-        uint256 _expectedSwappedAmount
+        uint256 _minSwappedAmount
     ) external override returns (uint256) {
         require(msg.sender == treasury, "TreasuryPhase1::swap: UNAUTHORIZED");
         require(
-            _validIssuance(_expectedSwappedAmount, _to),
+            _validIssuance(_minSwappedAmount, _to),
             "TreasuryPhase1::swap: INVALID"
         );
-        tokensIssued[_to] = tokensIssued[_to].add(_expectedSwappedAmount);
-        return _expectedSwappedAmount;
+        tokensIssued[_to] = tokensIssued[_to].add(_minSwappedAmount);
+        return _minSwappedAmount;
     }
 
     function assignTreasury(address _treasury) external override {

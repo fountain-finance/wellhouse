@@ -17,7 +17,7 @@ const main = async () => {
   
   const treasury = await deploy("Treasury", [flow.address]);
 
-  const admin =  await deploy("Admin", [controller.address, treasury.address]);
+  const admin =  await deploy("Admin", [controller.address, treasury.address, "Juice", "JUICE", flow.address]);
 
   await deploy("TreasuryPhase1");
 

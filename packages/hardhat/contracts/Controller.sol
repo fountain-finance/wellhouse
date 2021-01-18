@@ -130,7 +130,7 @@ contract Controller is IController {
         @param _symbol The tokens symbol.
         @param _rewardToken The token that the ticket is redeemable for.
     */
-    function initializeTickets(
+    function issueTickets(
         string calldata _name,
         string calldata _symbol,
         IERC20 _rewardToken
@@ -147,7 +147,7 @@ contract Controller is IController {
             msg.sender,
             new Tickets(_name, _symbol, msg.sender, _rewardToken)
         );
-        emit InitializeTickets(msg.sender, _name, _symbol, _rewardToken);
+        emit IssueTickets(msg.sender, _name, _symbol, _rewardToken);
     }
 
     /**
@@ -314,47 +314,54 @@ contract Controller is IController {
 
     /**
         @notice Swaps any pending surplus from an owner's `want` token to the redeemable token.
+        @param _issuer The issuer of the token to swap from, which is the owner of the Money pools.
         @param _from The token to swap from.
         @param _amount Amount to swap.
         @param _to The token to swap to.
-        @param _expectedSwappedAmount The amount of redeemable tokens  from `want` tokens.
+        @param _minSwappedAmount The minumum amount of redeemable tokens from `want` tokens.
     */
     function swap(
-        address _owner,
+        address _issuer,
         IERC20 _from,
         uint256 _amount,
         IERC20 _to,
-        uint256 _expectedSwappedAmount
+        uint256 _minSwappedAmount
     ) external override lock {
         require(_amount > 0, "Controller::swap: BAD_AMOUNT");
-        uint256 _swappable = ticketStore.swappable(_owner, _from, _to);
+        uint256 _swappable = ticketStore.swappable(_issuer, _from, _to);
         require(_swappable >= _amount, "Controller::swap: INSUFFICIENT_FUNDS");
         uint256 _swappedAmount =
-            treasury.swap(_from, _amount, _to, _expectedSwappedAmount);
-        ticketStore.addRedeemable(_owner, _to, _swappedAmount);
-        ticketStore.subtractSwappable(_owner, _from, _amount, _to);
-        emit Swap(_owner, _from, _amount, _to, _swappedAmount);
+            treasury.swap(_from, _amount, _to, _minSwappedAmount);
+        ticketStore.addRedeemable(_issuer, _to, _swappedAmount);
+        ticketStore.subtractSwappable(_issuer, _from, _amount, _to);
+        emit Swap(_issuer, _from, _amount, _to, _swappedAmount);
     }
 
     /**
         @notice A message sender can collect what's been redistributed to it by Money pools once they have expired.
-        @param _owner The owner of the Money pools being collected from.
+        @param _issuer The owner of the Money pools being collected from.
         @param _amount The amount of FLOW to collect.
+        @param _to The address to send the reward to.
+        @return _rewardToken The token that was redeemed for.
     */
-    function redeem(address _owner, uint256 _amount) external override lock {
+    function redeem(
+        address _issuer,
+        uint256 _amount,
+        address _to
+    ) external override lock returns (IERC20 _rewardToken) {
         require(treasury != ITreasury(0), "Controller::redeem: BAD_STATE");
-        ITickets _tickets = ticketStore.tickets(_owner);
-        IERC20 _rewardToken = _tickets.rewardToken();
+        ITickets _tickets = ticketStore.tickets(_issuer);
+        _rewardToken = _tickets.rewardToken();
         uint256 _redeemableAmount =
-            ticketStore.getRedeemableAmount(msg.sender, _owner);
+            ticketStore.getRedeemableAmount(msg.sender, _issuer);
         require(
             _redeemableAmount >= _amount,
             "Controller::redeem: INSUFFICIENT_FUNDS"
         );
         _tickets.burn(msg.sender, _amount);
-        ticketStore.subtractRedeemable(_owner, _rewardToken, _amount);
-        treasury.payout(msg.sender, _rewardToken, _amount);
-        emit Redeem(msg.sender, _amount);
+        ticketStore.subtractRedeemable(_issuer, _rewardToken, _amount);
+        treasury.payout(_to, _rewardToken, _amount);
+        emit Redeem(msg.sender, _to, _amount);
     }
 
     /**
@@ -386,15 +393,15 @@ contract Controller is IController {
 
     /**
         @notice Mints all Tickets reserved for owners and beneficiary addresses from the Money pools of the specified owner.
-        @param _owner The owner whose Money pools are being iterated through.
+        @param _issuer The owner whose Money pools are being iterated through.
     */
-    function mintReservedTickets(address _owner) external override {
-        ITickets _tickets = ticketStore.tickets(_owner);
+    function mintReservedTickets(address _issuer) external override {
+        ITickets _tickets = ticketStore.tickets(_issuer);
         require(
             _tickets != Tickets(0),
             "Controller::mintReservedTickets: NOT_FOUND"
         );
-        MoneyPool.Data memory _mp = mpStore.getLatestMp(_owner);
+        MoneyPool.Data memory _mp = mpStore.getLatestMp(_issuer);
         while (_mp.id > 0 && !_mp.hasMintedReserves && _mp.total > _mp.target) {
             if (_mp._state() == MoneyPool.State.Redistributing) {
                 uint256 _surplus = _mp.total.sub(_mp.target);
@@ -416,7 +423,7 @@ contract Controller is IController {
             }
             _mp = mpStore.getMp(_mp.previous);
         }
-        emit MintReservedTickets(msg.sender, _owner);
+        emit MintReservedTickets(msg.sender, _issuer);
     }
 
     /**

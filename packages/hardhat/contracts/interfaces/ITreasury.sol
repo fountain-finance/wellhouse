@@ -29,7 +29,7 @@ interface ITreasury {
         IERC20 _from,
         uint256 _amount,
         IERC20 _to,
-        uint256 _expectedSwappedAmount
+        uint256 _minSwappedAmount
     ) external returns (uint256 _swapped);
 
     function payout(

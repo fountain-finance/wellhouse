@@ -133,7 +133,7 @@ contract Treasury is ITreasury {
         IERC20 _from,
         uint256 _amount,
         IERC20 _to,
-        uint256 _expectedSwappedAmount
+        uint256 _minSwappedAmount
     ) external override onlyController returns (uint256 _resultingAmount) {
         Phase _phase = _getPhase(_to);
         require(_phase != Phase.None, "Treasury::transform: BAD_STATE");
@@ -167,12 +167,7 @@ contract Treasury is ITreasury {
             address(phase3) != address(0),
             "Treasury::transform: CONTRACT_MISSING"
         );
-        _resultingAmount = phase3.swap(
-            _from,
-            _amount,
-            _to,
-            _expectedSwappedAmount
-        );
+        _resultingAmount = phase3.swap(_from, _amount, _to, _minSwappedAmount);
         emit Swap(_from, _amount, _to, _resultingAmount);
     }
 

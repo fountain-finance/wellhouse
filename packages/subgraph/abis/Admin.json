@@ -10,6 +10,21 @@
         "internalType": "contract ITreasury",
         "name": "_treasury",
         "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "_name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_symbol",
+        "type": "string"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "_rewardToken",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -45,6 +60,25 @@
       }
     ],
     "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "contract IController",
+        "name": "previousController",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "contract IController",
+        "name": "newController",
+        "type": "address"
+      }
+    ],
+    "name": "ResetController",
     "type": "event"
   },
   {
@@ -118,7 +152,7 @@
         "type": "address"
       }
     ],
-    "name": "addController",
+    "name": "appointController",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -133,6 +167,19 @@
     ],
     "name": "appointTreasury",
     "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "approveMpReconfiguration",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -177,9 +224,155 @@
   },
   {
     "inputs": [],
+    "name": "proposalDeadline",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "proposedMpReconfiguration",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "target",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "duration",
+        "type": "uint256"
+      },
+      {
+        "internalType": "contract IERC20",
+        "name": "want",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "link",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "bias",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "o",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "b",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "bAddress",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_issuer",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minSwappedAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "redeemTickets",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "redeemer",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "renounceOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newTapper",
+        "type": "address"
+      }
+    ],
+    "name": "setTapper",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_mpId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "tapMp",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "tapper",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -211,9 +404,14 @@
         "internalType": "address",
         "name": "_to",
         "type": "address"
+      },
+      {
+        "internalType": "contract ITreasury",
+        "name": "_treasury",
+        "type": "address"
       }
     ],
-    "name": "withdrawFees",
+    "name": "withdrawFunds",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -234,14 +432,9 @@
         "internalType": "address",
         "name": "_to",
         "type": "address"
-      },
-      {
-        "internalType": "contract ITreasury",
-        "name": "_treasury",
-        "type": "address"
       }
     ],
-    "name": "withdrawFunds",
+    "name": "withdrawSurplus",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -64,10 +64,10 @@ contract TicketStore is Store, ITicketStore {
     using SafeMath for uint256;
 
     modifier onlyAdmin {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "TicketStore: UNAUTHORIZED"
-        );
+        // require(
+        //     hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+        //     "TicketStore: UNAUTHORIZED"
+        // );
         _;
     }
 
@@ -185,6 +185,10 @@ contract TicketStore is Store, ITicketStore {
         override
         onlyAdmin
     {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "TicketStore1: UNAUTHORIZED"
+        );
         tickets[_issuer] = _tickets;
     }
 
@@ -199,6 +203,10 @@ contract TicketStore is Store, ITicketStore {
         IERC20 _token,
         uint256 _amount
     ) external override onlyAdmin {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "TicketStore2: UNAUTHORIZED"
+        );
         redeemable[_issuer][_token] = redeemable[_issuer][_token].add(_amount);
     }
 
@@ -213,6 +221,10 @@ contract TicketStore is Store, ITicketStore {
         IERC20 _token,
         uint256 _amount
     ) external override onlyAdmin {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "TicketStore3: UNAUTHORIZED"
+        );
         redeemable[_issuer][_token] = redeemable[_issuer][_token].sub(_amount);
     }
 
@@ -229,6 +241,10 @@ contract TicketStore is Store, ITicketStore {
         uint256 _amount,
         IERC20 _to
     ) external override onlyAdmin {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "TicketStore4: UNAUTHORIZED"
+        );
         swappable[_issuer][_from][_to] = swappable[_issuer][_from][_to].add(
             _amount
         );
@@ -247,6 +263,10 @@ contract TicketStore is Store, ITicketStore {
         uint256 _amount,
         IERC20 _to
     ) external override onlyAdmin {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "TicketStore5: UNAUTHORIZED"
+        );
         swappable[_issuer][_from][_to] = swappable[_issuer][_from][_to].sub(
             _amount
         );

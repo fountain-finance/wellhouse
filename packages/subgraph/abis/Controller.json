@@ -104,7 +104,7 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "owner",
+        "name": "issuer",
         "type": "address"
       },
       {
@@ -126,7 +126,7 @@
         "type": "address"
       }
     ],
-    "name": "InitializeTickets",
+    "name": "IssueTickets",
     "type": "event"
   },
   {
@@ -168,6 +168,12 @@
         "indexed": true,
         "internalType": "address",
         "name": "holder",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "_to",
         "type": "address"
       },
       {
@@ -229,7 +235,7 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "owner",
+        "name": "issuer",
         "type": "address"
       },
       {
@@ -447,7 +453,7 @@
         "type": "address"
       }
     ],
-    "name": "initializeTickets",
+    "name": "issueTickets",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -469,7 +475,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_owner",
+        "name": "_issuer",
         "type": "address"
       }
     ],
@@ -495,17 +501,28 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_owner",
+        "name": "_issuer",
         "type": "address"
       },
       {
         "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_to",
+        "type": "address"
       }
     ],
     "name": "redeem",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "_rewardToken",
+        "type": "address"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -573,7 +590,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_owner",
+        "name": "_issuer",
         "type": "address"
       },
       {
@@ -593,7 +610,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_expectedSwappedAmount",
+        "name": "_minSwappedAmount",
         "type": "uint256"
       }
     ],

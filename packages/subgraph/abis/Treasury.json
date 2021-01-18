@@ -328,7 +328,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_expectedSwappedAmount",
+        "name": "_minSwappedAmount",
         "type": "uint256"
       }
     ],
