@@ -19,6 +19,8 @@ interface ITreasury {
 
     event InitializePhase(uint8 number);
 
+    function setAdmin(address _admin) external;
+
     function swap(
         IERC20 _from,
         uint256 _amount,

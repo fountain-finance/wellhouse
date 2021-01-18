@@ -36,7 +36,7 @@ contract Treasury is ITreasury {
     /// @notice The admin that this Treasury belongs to.
     address public override admin;
 
-    //TODO
+    /// @notice The router that does the swaps.
     UniswapV2Router02 public router;
 
     constructor(UniswapV2Router02 _router) public {
@@ -51,7 +51,7 @@ contract Treasury is ITreasury {
         controller = _controller;
     }
 
-    function setAdmin(address _admin) external {
+    function setAdmin(address _admin) external override {
         require(admin == address(0), "Treasury::setAdmin: ALREADY_SET");
         admin = _admin;
     }

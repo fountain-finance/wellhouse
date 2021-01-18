@@ -32,6 +32,7 @@ contract Admin is MoneyPoolAdmin {
         MoneyPoolAdmin(_controller, _name, _symbol, _rewardToken, _router)
     {
         controller.setTreasury(_treasury);
+        _treasury.setAdmin(address(this));
     }
 
     /**
