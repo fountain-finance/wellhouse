@@ -15,6 +15,7 @@ import ConfigureMoneyPool from './ConfigureMoneyPool'
 import KeyValRow from './KeyValRow'
 import MoneyPoolDetail from './MoneyPoolDetail'
 import TicketsBalance from './TicketsBalance'
+import { padding } from '../constants/styles/padding'
 
 export default function Owner({
   providerAddress,
@@ -183,7 +184,7 @@ export default function Owner({
   )
 
   return (
-    <div>
+    <div style={{ padding: padding.app }}>
       <TicketsBalance
         contracts={contracts}
         issuerAddress={owner}

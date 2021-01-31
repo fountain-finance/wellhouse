@@ -5,6 +5,7 @@ import Web3 from 'web3'
 import useContractReader from '../hooks/ContractReader'
 import { Contracts } from '../models/contracts'
 import { Transactor } from '../models/transactor'
+import { padding } from '../constants/styles/padding'
 
 export default function Gimme({
   transactor,
@@ -54,6 +55,7 @@ export default function Gimme({
         display: 'grid',
         gridAutoFlow: 'row',
         rowGap: 30,
+        padding: padding.app,
       }}
     >
       <div>

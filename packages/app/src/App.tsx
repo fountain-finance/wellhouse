@@ -7,7 +7,7 @@ import { BrowserRouter, Route, Switch } from 'react-router-dom'
 
 import Gimme from './components/Gimme'
 import InitTickets from './components/InitTickets'
-import Landing from './components/Landing'
+import Landing from './components/landing/Landing'
 import MoneyPoolsHistory from './components/MoneyPoolsHistory'
 import Navbar from './components/Navbar'
 import MoneyPools from './components/Owner'
@@ -66,7 +66,7 @@ function App() {
         onConnectWallet={loadWeb3Modal}
       />
 
-      <div style={{ padding: 20 }}>
+      <div>
         <BrowserRouter>
           <Switch>
             <Route exact path="/">

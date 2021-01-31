@@ -8,6 +8,7 @@ import { Contracts } from '../models/contracts'
 import { MoneyPool } from '../models/money-pool'
 import { Transactor } from '../models/transactor'
 import MoneyPoolDetail from './MoneyPoolDetail'
+import { padding } from '../constants/styles/padding'
 
 export default function MoneyPoolsHistory({
   contracts,
@@ -47,6 +48,7 @@ export default function MoneyPoolsHistory({
         display: 'grid',
         gridAutoFlow: 'row',
         rowGap: 40,
+        padding: padding.app,
       }}
     >
       {moneyPools.map((mp, index) => (

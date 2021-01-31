@@ -3,6 +3,7 @@ import Web3 from 'web3'
 
 import { Contracts } from '../models/contracts'
 import { Transactor } from '../models/transactor'
+import { padding } from '../constants/styles/padding'
 
 export default function InitTickets({ transactor, contracts }: { transactor?: Transactor; contracts?: Contracts }) {
   const [name, setName] = useState<string>()
@@ -27,6 +28,7 @@ export default function InitTickets({ transactor, contracts }: { transactor?: Tr
         gridAutoFlow: 'row',
         rowGap: 30,
         width: 200,
+        padding: padding.app,
       }}
     >
       <div>
