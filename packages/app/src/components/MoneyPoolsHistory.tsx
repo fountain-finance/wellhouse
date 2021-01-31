@@ -12,11 +12,11 @@ import MoneyPoolDetail from './MoneyPoolDetail'
 export default function MoneyPoolsHistory({
   contracts,
   transactor,
-  address,
+  providerAddress,
 }: {
   contracts?: Contracts
   transactor?: Transactor
-  address?: string
+  providerAddress?: string
 }) {
   const [moneyPools, setMoneyPools] = useState<MoneyPool[]>([])
   const [poolNumbers, setPoolNumbers] = useState<BigNumber[]>([])
@@ -52,7 +52,7 @@ export default function MoneyPoolsHistory({
       {moneyPools.map((mp, index) => (
         <div key={index}>
           <MoneyPoolDetail
-            address={address}
+            providerAddress={providerAddress}
             mp={mp}
             showSustained={true}
             transactor={transactor}

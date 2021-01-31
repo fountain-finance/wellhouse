@@ -1,9 +1,9 @@
 import React from 'react'
 
-export default function Wallet({ address }: { address?: string }) {
-  return address ? (
+export default function Wallet({ providerAddress }: { providerAddress?: string }) {
+  return providerAddress ? (
     <div>
-      Wallet: <span>{address}</span>
+      Wallet: <span>{providerAddress}</span>
     </div>
   ) : null
 }

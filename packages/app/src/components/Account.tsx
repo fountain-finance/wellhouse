@@ -8,11 +8,11 @@ import Balance from './Balance'
 import Wallet from './Wallet'
 
 export default function Account({
-  address,
+  providerAddress,
   userProvider,
   loadWeb3Modal,
 }: {
-  address?: string
+  providerAddress?: string
   userProvider?: JsonRpcProvider
   loadWeb3Modal: VoidFunction
 }) {
@@ -31,8 +31,8 @@ export default function Account({
 
   return (
     <div style={{ display: 'inline-grid', gridAutoFlow: 'column', columnGap: 30, alignItems: 'baseline' }}>
-      <Balance address={address} provider={userProvider} dollarMultiplier={price} />
-      <Wallet address={address}></Wallet>
+      <Balance providerAddress={providerAddress} provider={userProvider} dollarMultiplier={price} />
+      <Wallet providerAddress={providerAddress}></Wallet>
       {web3Modal?.cachedProvider ? (
         <button onClick={logoutOfWeb3Modal}>Logout</button>
       ) : (

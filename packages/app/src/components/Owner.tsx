@@ -17,11 +17,11 @@ import MoneyPoolDetail from './MoneyPoolDetail'
 import TicketsBalance from './TicketsBalance'
 
 export default function Owner({
-  address,
+  providerAddress,
   transactor,
   contracts,
 }: {
-  address?: string
+  providerAddress?: string
   transactor?: Transactor
   contracts?: Contracts
 }) {
@@ -31,7 +31,7 @@ export default function Owner({
 
   const spacing = 30
 
-  const isOwner = owner === address
+  const isOwner = owner === providerAddress
 
   const currentMp = useContractReader<MoneyPool>({
     contract: contracts?.MpStore,
@@ -64,14 +64,14 @@ export default function Owner({
 
     const amount = sustainAmount !== undefined ? eth.abi.encodeParameter('uint256', sustainAmount) : undefined
 
-    console.log('🧃 Calling Controller.sustain(owner, amount, want, address)', {
+    console.log('🧃 Calling Controller.sustain(owner, amount, want, providerAddress)', {
       owner: currentMp.owner,
       amount,
       want: currentMp.want,
-      address,
+      providerAddress,
     })
 
-    transactor(contracts.Controller.sustainOwner(currentMp.owner, amount, currentMp.want, address), () =>
+    transactor(contracts.Controller.sustainOwner(currentMp.owner, amount, currentMp.want, providerAddress), () =>
       setSustainAmount(0),
     )
   }
@@ -145,7 +145,7 @@ export default function Owner({
 
         {currentMp ? (
           <MoneyPoolDetail
-            address={address}
+            providerAddress={providerAddress}
             mp={currentMp}
             showSustained={true}
             showTimeLeft={true}
@@ -187,7 +187,7 @@ export default function Owner({
       <TicketsBalance
         contracts={contracts}
         issuerAddress={owner}
-        ticketsHolderAddress={address}
+        ticketsHolderAddress={providerAddress}
         transactor={transactor}
       />
 

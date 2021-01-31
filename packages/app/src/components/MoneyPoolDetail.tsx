@@ -16,14 +16,14 @@ export default function MoneyPoolDetail({
   transactor,
   showSustained,
   showTimeLeft,
-  address,
+  providerAddress,
 }: {
   mp?: MoneyPool
   contracts?: Contracts
   transactor?: Transactor
   showSustained?: boolean
   showTimeLeft?: boolean
-  address?: string
+  providerAddress?: string
 }) {
   const [tapAmount, setTapAmount] = useState<number>(0)
 
@@ -46,7 +46,7 @@ export default function MoneyPoolDetail({
 
   const link = mp?.link && Web3.utils.hexToString(mp.link)
 
-  const isOwner = mp?.owner === address
+  const isOwner = mp?.owner === providerAddress
 
   const rewardToken = useContractReader({
     contract: contracts?.TicketStore,
@@ -96,9 +96,9 @@ export default function MoneyPoolDetail({
     const id = eth.abi.encodeParameter('uint256', mp.id)
     const amount = eth.abi.encodeParameter('uint256', tapAmount)
 
-    console.log('🧃 Calling Controller.tapMp(number, amount, address)', { id, amount, address })
+    console.log('🧃 Calling Controller.tapMp(number, amount, address)', { id, amount, providerAddress })
 
-    transactor(contracts.Controller?.tapMp(id, amount, address))
+    transactor(contracts.Controller?.tapMp(id, amount, providerAddress))
   }
 
   return mp ? (

@@ -3,7 +3,13 @@ import { Button } from 'antd'
 
 import { colors } from '../constants/styles/colors'
 
-export default function Landing({ address, onNeedAddress }: { address?: string; onNeedAddress: VoidFunction }) {
+export default function Landing({
+  providerAddress,
+  onNeedAddress,
+}: {
+  providerAddress?: string
+  onNeedAddress: VoidFunction
+}) {
   const bulletSize = 8
 
   const bullet = (text: string) => (
@@ -53,8 +59,8 @@ export default function Landing({ address, onNeedAddress }: { address?: string; 
               addresses that helped sustain you once it has received the funds you asked for.
             </p>
             <div style={{ display: 'grid', gridAutoFlow: 'column', columnGap: 10 }}>
-              {address ? (
-                <a href={address}>
+              {providerAddress ? (
+                <a href={providerAddress}>
                   <Button type="primary">Create a project</Button>
                 </a>
               ) : (

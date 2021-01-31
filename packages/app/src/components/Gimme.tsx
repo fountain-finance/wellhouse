@@ -9,11 +9,11 @@ import { Transactor } from '../models/transactor'
 export default function Gimme({
   transactor,
   contracts,
-  address,
+  providerAddress,
 }: {
   transactor?: Transactor
   contracts?: Contracts
-  address?: string
+  providerAddress?: string
 }) {
   const [gimmeAmount, setGimmeAmount] = useState<number>(0)
   const [allowanceAmount, setAllowanceAmount] = useState<number>(0)
@@ -21,13 +21,13 @@ export default function Gimme({
   const allowance: BigNumber | undefined = useContractReader({
     contract: contracts?.Token,
     functionName: 'allowance',
-    args: [address, contracts?.Controller?.address],
+    args: [providerAddress, contracts?.Controller?.address],
   })
 
   const balance: BigNumber | undefined = useContractReader({
     contract: contracts?.Token,
     functionName: 'balanceOf',
-    args: [address],
+    args: [providerAddress],
   })
 
   function gimme() {

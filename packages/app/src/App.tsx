@@ -22,7 +22,7 @@ import { MoneyPool } from './models/money-pool'
 
 function App() {
   const [injectedProvider, setInjectedProvider] = useState<Web3Provider>()
-  const [address, setAddress] = useState<string>()
+  const [providerAddress, setProviderAddress] = useState<string>()
 
   const gasPrice = useGasPrice('fast')
 
@@ -38,8 +38,8 @@ function App() {
     userProvider
       ?.getSigner()
       .getAddress()
-      .then(address => setAddress(address))
-  }, [userProvider, setAddress])
+      .then(address => setProviderAddress(address))
+  }, [userProvider, setProviderAddress])
 
   const transactor = createTransactor({
     provider: userProvider,
@@ -53,31 +53,36 @@ function App() {
   const hasMp = useContractReader<boolean>({
     contract: contracts?.MpStore,
     functionName: 'getCurrentMp',
-    args: [address],
+    args: [providerAddress],
     formatter: (val: MoneyPool) => !!val,
   })
 
   return (
     <div className="App">
-      <Navbar hasMp={hasMp} address={address} userProvider={userProvider} onConnectWallet={loadWeb3Modal} />
+      <Navbar
+        hasMp={hasMp}
+        providerAddress={providerAddress}
+        userProvider={userProvider}
+        onConnectWallet={loadWeb3Modal}
+      />
 
       <div style={{ padding: 20 }}>
         <BrowserRouter>
           <Switch>
             <Route exact path="/">
-              <Landing address={address} onNeedAddress={loadWeb3Modal} />
+              <Landing providerAddress={providerAddress} onNeedAddress={loadWeb3Modal} />
             </Route>
             <Route exact path="/init">
               <InitTickets contracts={contracts} transactor={transactor} />
             </Route>
             <Route exact path="/gimme">
-              <Gimme contracts={contracts} transactor={transactor} address={address}></Gimme>
+              <Gimme contracts={contracts} transactor={transactor} providerAddress={providerAddress}></Gimme>
             </Route>
             <Route exact path="/:owner">
-              <MoneyPools contracts={contracts} transactor={transactor} address={address} />
+              <MoneyPools contracts={contracts} transactor={transactor} providerAddress={providerAddress} />
             </Route>
             <Route exact path="/history/:number">
-              <MoneyPoolsHistory contracts={contracts} transactor={transactor} address={address} />
+              <MoneyPoolsHistory contracts={contracts} transactor={transactor} providerAddress={providerAddress} />
             </Route>
           </Switch>
         </BrowserRouter>
