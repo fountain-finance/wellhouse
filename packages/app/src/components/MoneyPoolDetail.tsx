@@ -1,4 +1,5 @@
 import { BigNumber } from '@ethersproject/bignumber'
+import { Button } from 'antd'
 import { useState } from 'react'
 import Web3 from 'web3'
 
@@ -27,7 +28,13 @@ export default function MoneyPoolDetail({
 }) {
   const [tapAmount, setTapAmount] = useState<number>(0)
 
-  const secondsLeft = mp && Math.floor(mp.start.toNumber() + mp.duration.toNumber() - new Date().valueOf() / 1000)
+  const secondsLeft =
+    mp &&
+    Math.floor(
+      mp.start.toNumber() +
+        mp.duration.toNumber() -
+        new Date().valueOf() / 1000,
+    )
 
   function expandedTimeString(millis: number) {
     if (!millis || millis <= 0) return 0
@@ -37,7 +44,9 @@ export default function MoneyPoolDetail({
     const minutes = hours && (hours % 1) * 60
     const seconds = minutes && (minutes % 1) * 60
 
-    return `${days && days >= 1 ? Math.floor(days) + 'd ' : ''}${hours && hours >= 1 ? Math.floor(hours) + 'h ' : ''}
+    return `${days && days >= 1 ? Math.floor(days) + 'd ' : ''}${
+      hours && hours >= 1 ? Math.floor(hours) + 'h ' : ''
+    }
         ${minutes && minutes >= 1 ? Math.floor(minutes) + 'm ' : ''}
         ${seconds && seconds >= 1 ? Math.floor(seconds) + 's' : ''}`
   }
@@ -77,15 +86,26 @@ export default function MoneyPoolDetail({
     // TODO handle conversion. Use 1:1 for now
     const _expectedAmount = _swappable
 
-    console.log('🧃 Calling Controller.swap(owner, want, swappable, target, expectedAmount)', {
-      owner: mp.owner,
-      want: mp.want,
-      swappable: _swappable,
-      target: daiAddress,
-      expectedAmount: _expectedAmount,
-    })
+    console.log(
+      '🧃 Calling Controller.swap(owner, want, swappable, target, expectedAmount)',
+      {
+        owner: mp.owner,
+        want: mp.want,
+        swappable: _swappable,
+        target: daiAddress,
+        expectedAmount: _expectedAmount,
+      },
+    )
 
-    transactor(contracts.Controller.swap(mp.owner, mp.want, _swappable, daiAddress, _expectedAmount))
+    transactor(
+      contracts.Controller.swap(
+        mp.owner,
+        mp.want,
+        _swappable,
+        daiAddress,
+        _expectedAmount,
+      ),
+    )
   }
 
   function tap() {
@@ -96,7 +116,11 @@ export default function MoneyPoolDetail({
     const id = eth.abi.encodeParameter('uint256', mp.id)
     const amount = eth.abi.encodeParameter('uint256', tapAmount)
 
-    console.log('🧃 Calling Controller.tapMp(number, amount, address)', { id, amount, providerAddress })
+    console.log('🧃 Calling Controller.tapMp(number, amount, address)', {
+      id,
+      amount,
+      providerAddress,
+    })
 
     transactor(contracts.Controller?.tapMp(id, amount, providerAddress))
   }
@@ -114,10 +138,23 @@ export default function MoneyPoolDetail({
       {KeyValRow('Target', mp.target.toString())}
       {showSustained ? KeyValRow('Sustained', mp.total.toString()) : null}
       {KeyValRow('Start', new Date(mp.start.toNumber() * 1000).toISOString())}
-      {KeyValRow('Duration', expandedTimeString(mp && mp.duration.toNumber() * 1000))}
-      {showTimeLeft ? KeyValRow('Time left', (secondsLeft && expandedTimeString(secondsLeft * 1000)) || 'Ended') : null}
+      {KeyValRow(
+        'Duration',
+        expandedTimeString(mp && mp.duration.toNumber() * 1000),
+      )}
+      {showTimeLeft
+        ? KeyValRow(
+            'Time left',
+            (secondsLeft && expandedTimeString(secondsLeft * 1000)) || 'Ended',
+          )
+        : null}
       {KeyValRow('Reserved for owner', <span>{mp.o?.toString()}%</span>)}
-      {mp?.bAddress ? KeyValRow('Reserved for beneficiary', <span>{mp.b?.toString()}%</span>) : null}
+      {mp?.bAddress
+        ? KeyValRow(
+            'Reserved for beneficiary',
+            <span>{mp.b?.toString()}%</span>,
+          )
+        : null}
       {mp?.bAddress
         ? KeyValRow(
             'Beneficiary address',
@@ -139,9 +176,9 @@ export default function MoneyPoolDetail({
         <span>
           {swappable}
           {swappable ? (
-            <button type="submit" onClick={swap}>
+            <Button htmlType="submit" onClick={swap}>
               Swap
-            </button>
+            </Button>
           ) : (
             undefined
           )}
@@ -163,9 +200,9 @@ export default function MoneyPoolDetail({
                     placeholder="0"
                     onChange={e => setTapAmount(parseFloat(e.target.value))}
                   ></input>
-                  <button disabled={tapAmount > tappableAmount} onClick={tap}>
+                  <Button disabled={tapAmount > tappableAmount} onClick={tap}>
                     Withdraw
-                  </button>
+                  </Button>
                 </span>
               ) : null}
             </span>,

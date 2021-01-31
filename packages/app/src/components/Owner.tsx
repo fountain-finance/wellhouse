@@ -16,6 +16,7 @@ import KeyValRow from './KeyValRow'
 import MoneyPoolDetail from './MoneyPoolDetail'
 import TicketsBalance from './TicketsBalance'
 import { padding } from '../constants/styles/padding'
+import { Button } from 'antd'
 
 export default function Owner({
   providerAddress,
@@ -63,21 +64,35 @@ export default function Owner({
 
     const eth = new Web3(Web3.givenProvider).eth
 
-    const amount = sustainAmount !== undefined ? eth.abi.encodeParameter('uint256', sustainAmount) : undefined
+    const amount =
+      sustainAmount !== undefined
+        ? eth.abi.encodeParameter('uint256', sustainAmount)
+        : undefined
 
-    console.log('🧃 Calling Controller.sustain(owner, amount, want, providerAddress)', {
-      owner: currentMp.owner,
-      amount,
-      want: currentMp.want,
-      providerAddress,
-    })
+    console.log(
+      '🧃 Calling Controller.sustain(owner, amount, want, providerAddress)',
+      {
+        owner: currentMp.owner,
+        amount,
+        want: currentMp.want,
+        providerAddress,
+      },
+    )
 
-    transactor(contracts.Controller.sustainOwner(currentMp.owner, amount, currentMp.want, providerAddress), () =>
-      setSustainAmount(0),
+    transactor(
+      contracts.Controller.sustainOwner(
+        currentMp.owner,
+        amount,
+        currentMp.want,
+        providerAddress,
+      ),
+      () => setSustainAmount(0),
     )
   }
 
-  const configureMoneyPool = <ConfigureMoneyPool transactor={transactor} contracts={contracts} />
+  const configureMoneyPool = (
+    <ConfigureMoneyPool transactor={transactor} contracts={contracts} />
+  )
 
   function header(text: string) {
     return (
@@ -168,14 +183,17 @@ export default function Owner({
                 placeholder="0"
                 onChange={e => setSustainAmount(parseFloat(e.target.value))}
               ></input>
-              <button onClick={sustain}>Sustain</button>
+              <Button onClick={sustain}>Sustain</Button>
             </span>,
           )
         : null}
 
       <a
         href={
-          '/history/' + (currentMp?.total?.toNumber() ? currentMp?.id?.toNumber() : currentMp?.previous?.toNumber())
+          '/history/' +
+          (currentMp?.total?.toNumber()
+            ? currentMp?.id?.toNumber()
+            : currentMp?.previous?.toNumber())
         }
       >
         Pool history
@@ -184,86 +202,92 @@ export default function Owner({
   )
 
   return (
-    <div style={{ padding: padding.app }}>
+    <div>
       <TicketsBalance
         contracts={contracts}
         issuerAddress={owner}
         ticketsHolderAddress={providerAddress}
         transactor={transactor}
       />
+      <div style={{ padding: padding.app }}>
+        <h3>{owner}</h3>
 
-      <h3>{owner}</h3>
+        <div
+          style={{
+            display: 'grid',
+            columnGap: spacing,
+            marginTop: 20,
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+          }}
+        >
+          <div>
+            {!currentMp ? (
+              <a
+                style={{
+                  fontWeight: 600,
+                  color: '#fff',
+                  textDecoration: 'none',
+                }}
+                href="/init"
+              >
+                {section(
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    Initialize tickets if you haven't yet!<span>&gt;</span>
+                  </div>,
+                  '#2255ff',
+                )}
+              </a>
+            ) : null}
 
-      <div
-        style={{
-          display: 'grid',
-          columnGap: spacing,
-          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-        }}
-      >
-        <div>
-          {!currentMp ? (
-            <a
-              style={{
-                fontWeight: 600,
-                color: '#fff',
-                textDecoration: 'none',
-              }}
-              href="/init"
-            >
-              {section(
+            {section(
+              current ?? (
+                <div>
+                  <h1 style={{ marginTop: 0 }}>Create money pool</h1>
+                  {configureMoneyPool}
+                </div>
+              ),
+            )}
+
+            {section(
+              currentMp ? (
                 <div
                   style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
+                    display: 'grid',
+                    gridAutoFlow: 'row',
+                    rowGap: spacing,
                   }}
                 >
-                  Initialize tickets if you haven't yet!<span>&gt;</span>
-                </div>,
-                '#2255ff',
-              )}
-            </a>
-          ) : null}
+                  {header('Queued Money Pool')}
+                  {queuedMp ? (
+                    <MoneyPoolDetail mp={queuedMp} />
+                  ) : (
+                    <div>Nada</div>
+                  )}
+                </div>
+              ) : (
+                undefined
+              ),
+            )}
 
-          {section(
-            current ?? (
-              <div>
-                <h1 style={{ marginTop: 0 }}>Create money pool</h1>
-                {configureMoneyPool}
-              </div>
-            ),
-          )}
+            {section(
+              currentMp && isOwner ? (
+                <div>
+                  {header('Reconfigure')}
+                  {configureMoneyPool}
+                </div>
+              ) : (
+                undefined
+              ),
+            )}
+          </div>
 
-          {section(
-            currentMp ? (
-              <div
-                style={{
-                  display: 'grid',
-                  gridAutoFlow: 'row',
-                  rowGap: spacing,
-                }}
-              >
-                {header('Queued Money Pool')}
-                {queuedMp ? <MoneyPoolDetail mp={queuedMp} /> : <div>Nada</div>}
-              </div>
-            ) : (
-              undefined
-            ),
-          )}
-
-          {section(
-            currentMp && isOwner ? (
-              <div>
-                {header('Reconfigure')}
-                {configureMoneyPool}
-              </div>
-            ) : (
-              undefined
-            ),
-          )}
+          {currentMp ? sustainments : null}
         </div>
-
-        {currentMp ? sustainments : null}
       </div>
     </div>
   )

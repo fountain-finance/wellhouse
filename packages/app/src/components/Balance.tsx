@@ -55,7 +55,7 @@ export default function Balance({
       }}
       onClick={() => setDollarMode(!dollarMode)}
     >
-      Balance:{displayBalance}
+      Balance: {displayBalance}
     </span>
   )
 }

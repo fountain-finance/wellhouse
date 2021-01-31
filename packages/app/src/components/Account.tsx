@@ -1,4 +1,5 @@
 import { JsonRpcProvider } from '@ethersproject/providers'
+import { Button } from 'antd'
 import { useEffect } from 'react'
 
 import { mainnetProvider } from '../constants/mainnet-provider'
@@ -30,13 +31,24 @@ export default function Account({
   const price = useExchangePrice(mainnetProvider)
 
   return (
-    <div style={{ display: 'inline-grid', gridAutoFlow: 'column', columnGap: 30, alignItems: 'baseline' }}>
-      <Balance providerAddress={providerAddress} provider={userProvider} dollarMultiplier={price} />
+    <div
+      style={{
+        display: 'inline-grid',
+        gridAutoFlow: 'column',
+        columnGap: 30,
+        alignItems: 'baseline',
+      }}
+    >
+      <Balance
+        providerAddress={providerAddress}
+        provider={userProvider}
+        dollarMultiplier={price}
+      />
       <Wallet providerAddress={providerAddress}></Wallet>
       {web3Modal?.cachedProvider ? (
-        <button onClick={logoutOfWeb3Modal}>Logout</button>
+        <Button onClick={logoutOfWeb3Modal}>Logout</Button>
       ) : (
-        <button onClick={loadWeb3Modal}>Connect</button>
+        <Button onClick={loadWeb3Modal}>Connect</Button>
       )}
     </div>
   )

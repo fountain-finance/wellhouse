@@ -6,6 +6,7 @@ import { ContractName } from '../constants/contract-name'
 import { Transactor } from '../models/transactor'
 import { SECONDS_IN_DAY } from '../constants/seconds-in-day'
 import KeyValRow from './KeyValRow'
+import { Button } from 'antd'
 
 export default function ConfigureMoneyPool({
   transactor,
@@ -30,12 +31,18 @@ export default function ConfigureMoneyPool({
 
     const _target = eth.abi.encodeParameter('uint256', target)
     // Contracts created during development use seconds for duration
-    const _duration = eth.abi.encodeParameter('uint256', duration * SECONDS_IN_DAY)
+    const _duration = eth.abi.encodeParameter(
+      'uint256',
+      duration * SECONDS_IN_DAY,
+    )
     const _title = title && Web3.utils.utf8ToHex(title)
     const _link = link && Web3.utils.utf8ToHex(link)
     const _bias = eth.abi.encodeParameter('uint256', bias)
     const _ownerAllocation = eth.abi.encodeParameter('uint256', ownerAllocation)
-    const _beneficiaryAllocation = eth.abi.encodeParameter('uint256', beneficiaryAllocation)
+    const _beneficiaryAllocation = eth.abi.encodeParameter(
+      'uint256',
+      beneficiaryAllocation,
+    )
     const _beneficiaryAddress = beneficiaryAddress ?? '0'
 
     console.log('🧃 Calling Controller.configureMp(...)', {
@@ -179,9 +186,9 @@ export default function ConfigureMoneyPool({
           placeholder="0x01a2b3c..."
         />,
       )}
-      <button style={{ marginTop: 20 }} type="submit">
+      <Button style={{ marginTop: 20 }} htmlType="submit" type="primary">
         Submit
-      </button>
+      </Button>
     </form>
   )
 }

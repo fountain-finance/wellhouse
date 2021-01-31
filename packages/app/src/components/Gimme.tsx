@@ -6,6 +6,7 @@ import useContractReader from '../hooks/ContractReader'
 import { Contracts } from '../models/contracts'
 import { Transactor } from '../models/transactor'
 import { padding } from '../constants/styles/padding'
+import { Button } from 'antd'
 
 export default function Gimme({
   transactor,
@@ -36,7 +37,9 @@ export default function Gimme({
 
     const eth = new Web3(Web3.givenProvider).eth
 
-    transactor(contracts.Token.gimme(eth.abi.encodeParameter('uint256', gimmeAmount)))
+    transactor(
+      contracts.Token.gimme(eth.abi.encodeParameter('uint256', gimmeAmount)),
+    )
   }
 
   function approve() {
@@ -45,7 +48,10 @@ export default function Gimme({
     const eth = new Web3(Web3.givenProvider).eth
 
     transactor(
-      contracts.Token.approve(contracts.Controller?.address, eth.abi.encodeParameter('uint256', allowanceAmount)),
+      contracts.Token.approve(
+        contracts.Controller?.address,
+        eth.abi.encodeParameter('uint256', allowanceAmount),
+      ),
     )
   }
 
@@ -60,14 +66,20 @@ export default function Gimme({
     >
       <div>
         <h4>Current allowance: {allowance?.toNumber() ?? 0}</h4>
-        <input placeholder="0" onChange={e => setAllowanceAmount(parseFloat(e.target.value))} />
-        <button onClick={approve}>Update</button>
+        <input
+          placeholder="0"
+          onChange={e => setAllowanceAmount(parseFloat(e.target.value))}
+        />
+        <Button onClick={approve}>Update</Button>
       </div>
       <div>
         <h2>Current token balance {balance?.toNumber()}</h2>
         <h4>Get Token</h4>
-        <input placeholder="0" onChange={e => setGimmeAmount(parseFloat(e.target.value))} />
-        <button onClick={gimme}>Gimme</button>
+        <input
+          placeholder="0"
+          onChange={e => setGimmeAmount(parseFloat(e.target.value))}
+        />
+        <Button onClick={gimme}>Gimme</Button>
       </div>
     </div>
   )

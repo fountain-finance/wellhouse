@@ -1,6 +1,6 @@
-import React from 'react'
-import { colors } from '../constants/styles/colors'
-import { padding } from '../constants/styles/padding'
+import React from 'react';
+
+import { colors } from '../constants/styles/colors';
 
 export default function Footer() {
   const link = (text: string, link: string) => (
