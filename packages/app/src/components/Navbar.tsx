@@ -4,13 +4,21 @@ import Account from './Account'
 
 export default function Navbar({
   address,
+  hasMp,
   userProvider,
   onConnectWallet,
 }: {
   address?: string
+  hasMp?: boolean
   userProvider?: JsonRpcProvider
   onConnectWallet: VoidFunction
 }) {
+  const menuItem = (text: string, route: string) => (
+    <a style={{ textDecoration: 'none', fontWeight: 600, color: 'black' }} href={route}>
+      {text}
+    </a>
+  )
+
   return (
     <div
       style={{
@@ -22,9 +30,10 @@ export default function Navbar({
       }}
     >
       <span style={{ display: 'grid', gridAutoFlow: 'column', columnGap: 20, alignItems: 'center' }}>
-        <a style={{ fontSize: 24 }} href="/">
-          ⛲️
+        <a href="/">
+          <img style={{ height: 32 }} src="/assets/juice_logo-ol.png" alt="Juice logo" />
         </a>
+        {address ? menuItem(hasMp ? 'Your project' : 'Start a project', address) : null}
       </span>
       <Account userProvider={userProvider} loadWeb3Modal={onConnectWallet} address={address} />
     </div>

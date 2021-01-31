@@ -6,16 +6,19 @@ import { useCallback, useEffect, useState } from 'react'
 import { BrowserRouter, Route, Switch } from 'react-router-dom'
 
 import Gimme from './components/Gimme'
+import InitTickets from './components/InitTickets'
+import Landing from './components/Landing'
+import MoneyPoolsHistory from './components/MoneyPoolsHistory'
+import Navbar from './components/Navbar'
 import MoneyPools from './components/Owner'
-import Owner from './components/Navbar'
 import { localProvider } from './constants/local-provider'
 import { web3Modal } from './constants/web3-modal'
 import { createTransactor } from './helpers/Transactor'
 import { useContractLoader } from './hooks/ContractLoader'
+import useContractReader from './hooks/ContractReader'
 import { useGasPrice } from './hooks/GasPrice'
 import { useUserProvider } from './hooks/UserProvider'
-import MoneyPoolsHistory from './components/MoneyPoolsHistory'
-import InitTickets from './components/InitTickets'
+import { MoneyPool } from './models/money-pool'
 
 function App() {
   const [injectedProvider, setInjectedProvider] = useState<Web3Provider>()
@@ -35,11 +38,7 @@ function App() {
     userProvider
       ?.getSigner()
       .getAddress()
-      .then(address => {
-        setAddress(address)
-
-        if (window.location.pathname === '/') window.location.href = address
-      })
+      .then(address => setAddress(address))
   }, [userProvider, setAddress])
 
   const transactor = createTransactor({
@@ -51,14 +50,23 @@ function App() {
 
   console.log('using provider:', userProvider)
 
+  const hasMp = useContractReader<boolean>({
+    contract: contracts?.MpStore,
+    functionName: 'getCurrentMp',
+    args: [address],
+    formatter: (val: MoneyPool) => !!val,
+  })
+
   return (
     <div className="App">
-      <Owner address={address} userProvider={userProvider} onConnectWallet={loadWeb3Modal} />
+      <Navbar hasMp={hasMp} address={address} userProvider={userProvider} onConnectWallet={loadWeb3Modal} />
 
       <div style={{ padding: 20 }}>
         <BrowserRouter>
           <Switch>
-            <Route exact path="/"></Route>
+            <Route exact path="/">
+              <Landing address={address} onNeedAddress={loadWeb3Modal} />
+            </Route>
             <Route exact path="/init">
               <InitTickets contracts={contracts} transactor={transactor} />
             </Route>

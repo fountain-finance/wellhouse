@@ -1,6 +1,6 @@
-# ⛲️ fountain.finance
+# ⛲️ juice.work
 
-[fountain.finance](https://fountain.finance)
+[juice.work](https://juice.work)
 
 Built with [🏗 scaffold-eth](https://github.com/austintgriffith/scaffold-eth)
 
@@ -103,4 +103,4 @@ The frontend has three different providers that provide different levels of acce
 
 Deployment is managed via a CI workflow defined in `.github/workflows/main.yaml`, which runs for all commits to the `main` branch and depends on github secrets `GCP_PROD_SA_KEY` and `INFURA_ID`. 
 
-The react app is packaged and published to the (fountain.finance/web-production Google Cloud App Engine)[https://console.cloud.google.com/appengine?project=web-production-294102&serviceId=default]. Once new versions have been published, they must be manually promoted in App Engine before they become live.
+The react app is packaged and published to the (juice.work/web-production Google Cloud App Engine)[https://console.cloud.google.com/appengine?project=web-production-294102&serviceId=default]. Once new versions have been published, they must be manually promoted in App Engine before they become live.
