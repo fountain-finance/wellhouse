@@ -6,11 +6,25 @@ export default function Wallet({
 }: {
   providerAddress?: string
 }) {
-  const shortened = providerAddress?.substr(providerAddress.length - 6, 6)
+  const shortened =
+    providerAddress?.substring(0, 6) +
+    '...' +
+    providerAddress?.substr(providerAddress.length - 6, 6)
 
   return providerAddress ? (
-    <Tooltip title={providerAddress}>
-      Wallet: <span>...{shortened}</span>
-    </Tooltip>
+    <span
+      style={{
+        height: 30,
+        borderRadius: 15,
+        padding: '0px 10px',
+        display: 'flex',
+        alignItems: 'center',
+        background: '#5AC3D166',
+        cursor: 'default',
+        userSelect: 'all',
+      }}
+    >
+      <Tooltip title={providerAddress}>{shortened}</Tooltip>
+    </span>
   ) : null
 }

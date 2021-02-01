@@ -103,7 +103,9 @@ export default function Landing({
             <img
               style={{
                 maxWidth: totalMaxWidth / 2,
-                maxHeight: '75vh',
+                height: '75vh',
+                maxHeight: 800,
+                minHeight: 440,
               }}
               src="/assets/orange_lady.png"
               alt="GET JUICED"
@@ -216,7 +218,7 @@ export default function Landing({
             alt="Banana chilling and saying 'DO WORK GET JUICED'"
           />
           <div>
-            <h2>Why choose Juice?</h2>
+            {bigHeader('Why choose Juice?')}
             <p>
               Juice incentivizes a project owner to be measured and open with
               their intent, and provides those who get value out of the project
@@ -242,6 +244,19 @@ export default function Landing({
         </div>
       </section>
 
+      <div
+        style={{
+          background: 'black',
+          padding: 40,
+          paddingTop: 60,
+          textAlign: 'center',
+        }}
+      >
+        <h3 style={{ color: colors.juiceOrange, margin: 0 }}>
+          Big ups to the Ethereum community for crafting the infrastructure and
+          economy to make Juice possible.
+        </h3>
+      </div>
       <Footer />
     </div>
   )

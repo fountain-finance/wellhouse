@@ -35,7 +35,7 @@ export default function Account({
       style={{
         display: 'inline-grid',
         gridAutoFlow: 'column',
-        columnGap: 30,
+        columnGap: 15,
         alignItems: 'baseline',
       }}
     >

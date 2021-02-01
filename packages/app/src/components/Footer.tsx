@@ -1,6 +1,6 @@
-import React from 'react';
+import React from 'react'
 
-import { colors } from '../constants/styles/colors';
+import { colors } from '../constants/styles/colors'
 
 export default function Footer() {
   const link = (text: string, link: string) => (
@@ -16,16 +16,12 @@ export default function Footer() {
     <div
       style={{
         display: 'grid',
-        rowGap: 40,
-        padding: 80,
+        rowGap: 20,
+        padding: 30,
         background: 'black',
         textAlign: 'center',
       }}
     >
-      <h4 style={{ color: 'white' }}>
-        Big ups to the Ethereum community for crafting the infrastructure and
-        economy to make Juice possible.
-      </h4>
       <div style={{ display: 'inline-flex', justifyContent: 'center' }}>
         {link('Discord', 'https://discord.gg/H8zcWNcM')}
         {link('Github', 'https://github.com/fountain-finance')}
